@@ -37,6 +37,8 @@ each must match what Plex has including special characters in order to match.
         audio-language: Français
         subtitle-language: English
 
+If you do not want to use subfilters simply remove the section.
+
 **Once complete it should look like**
 
     collections:
