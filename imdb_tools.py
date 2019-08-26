@@ -35,16 +35,14 @@ def imdb_get_movies(plex, data):
             imdb_map[imdb_id] = m
         else:
             imdb_map[m.ratingKey] = m
-    in_library_idx = []
 
     matched_imbd_movies = []
+    missing_imdb_movies = []
     for imdb_id in title_ids:
         movie = imdb_map.pop(imdb_id, None)
         if movie:
             matched_imbd_movies.append(plex.Server.fetchItem(movie.ratingKey))
-
-    # Get list of missing movies from selected list
-    missing_imdb_movies = [imdb for idx, imdb in enumerate(title_ids)
-                           if idx not in in_library_idx]
+        else:
+            missing_imdb_movies.append(imdb_id)
 
     return matched_imbd_movies, missing_imdb_movies
