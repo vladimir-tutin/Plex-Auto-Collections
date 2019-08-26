@@ -37,7 +37,7 @@ each must match what Plex has including special characters in order to match.
     subfilters:
         video-resolution: 1080
         audio-language: Français
-        subtitle-language: Englis
+        subtitle-language: English
 
 **Once complete it should look like**
 
