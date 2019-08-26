@@ -1,0 +1,18 @@
+collections:
+  Collection Name:
+    imdb-list: https://www.imdb.com/list/ls068177081/
+    actors: Seth Rogen, Aaron Paul
+    studio: Lionsgate
+    subfilters:
+      audio-language: English
+      genres: Action, Crime, Comedy
+server:
+  library: Movies
+  token: ###################
+  url: http://192.168.1.5:32400
+radarr:
+  url: http://192.168.1.5:7878/radarr/
+  token: ###########################
+  quality_profile_id: 4
+tmdb:
+  apikey: ############################

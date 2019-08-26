@@ -1,0 +1,5 @@
+/config.yml
+/dist/config.yml
+/venv/
+/.gitignore
+/.idea
