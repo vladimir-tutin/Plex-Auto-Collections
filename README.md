@@ -42,13 +42,15 @@ If you do not want to use subfilters simply remove the section.
 **Once complete it should look like**
 
     collections:
-        Collection Name:
+        Collection Name Here:
             imdb-list: https://www.imdb.com/list/ls068177081/
             actors: Seth Rogen, Aaron Paul
             studio: Lionsgate
                 subfilters:
                     audio-language: English
                     genres: Action, Crime, Comedy
+        Documentaries:
+            genres: Documentary
     plex:
         library: Movies
         token: ###################
