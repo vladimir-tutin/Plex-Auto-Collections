@@ -69,9 +69,8 @@ If there are issues installing PyYAML 1.5.4 try
     
 Make sure that plexapi is installed from the github source in requirements.txt. The one provided by pip contains a bug 
 that will cause certain movies to crash the script when processing IMDB lists. To ensure that you are running the of 
-plexapi check utils.py contains the following:
+plexapi check utils.py contains the following around line 172:
 
-######/plexapi/utils.py line 170
     def toDatetime(value, format=None):
     """ Returns a datetime object from the specified value.
 
