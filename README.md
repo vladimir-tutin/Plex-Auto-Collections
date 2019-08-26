@@ -1,5 +1,5 @@
 # Plex Auto Collections
-Python 3 script/[standalone build]() that works off a configuration file to create/update Plex collection. Supports IMDB
+Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that works off a configuration file to create/update Plex collection. Supports IMDB
 lists as well as built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the
 [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) 
 documentation. Not everything has been tested, so results may vary based off the filter.
@@ -16,15 +16,13 @@ the idea for a configuration based collection manager.
 Subfilters also allows for a little more granular selection of movies to add to a collection. Unlike regular filters, a 
 movie must match at least one value from each subfilter to be added to a collection.
 
-# Disclaimer
-I'm not a developer. In fact this my first project I've seen to "completion". I taught myself Python as I went along.
-Because of this there are likely many bugs.
-
 # Configuration
 Modify the supplied config.yml.template file.
 
 If you do not want it to have the option to submit movies that are missing from IMDB lists do not include the api-key
 for TMBd or radarr. A TMDb apikey is not required for regular operation.
+
+If you want movies to add to Radarr but not automatically search, change search to "false".
 
 In order to find your Plex token follow 
 [this guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
@@ -37,7 +35,7 @@ each must match what Plex has including special characters in order to match.
     subfilters:
         video-resolution: 1080
         audio-language: Français
-        subtitle-language: Englis
+        subtitle-language: English
 
 **Once complete it should look like**
 
@@ -57,6 +55,7 @@ each must match what Plex has including special characters in order to match.
         url: http://192.168.1.5:7878/radarr/
         token: ###########################
         quality_profile_id: 4
+        search: false
     tmdb:
         apikey: ############################
 
@@ -73,9 +72,8 @@ If there are issues installing PyYAML 1.5.4 try
     
 Make sure that plexapi is installed from the github source in requirements.txt. The one provided by pip contains a bug 
 that will cause certain movies to crash the script when processing IMDB lists. To ensure that you are running the of 
-plexapi check utils.py contains the following:
+plexapi check utils.py contains the following around line 172:
 
-######/plexapi/utils.py line 170
     def toDatetime(value, format=None):
     """ Returns a datetime object from the specified value.
 

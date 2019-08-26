@@ -13,6 +13,7 @@ def add_to_radarr(missing):
     url = config['radarr']['url'] + "/api/movie"
     quality = config['radarr']['quality_profile_id']
     token = config['radarr']['token']
+    search = config['radarr']['search']
     querystring = {"apikey": "{}".format(token)}
 
     if "None" in (tmdb.api_key, url, quality, token):
@@ -47,7 +48,10 @@ def add_to_radarr(missing):
             "images": [{
                 "covertype": "poster",
                 "url": tmdb_poster
-            }]
+            }],
+            "addOptions": {
+                "searchForMovie": search
+            }
         }
         headers = {
             'Content-Type': "application/json",
