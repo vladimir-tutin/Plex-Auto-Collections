@@ -12,7 +12,7 @@ class Config:
         self.config_path = os.path.join(os.getcwd(), 'config.yml')
         with open(self.config_path, 'rt', encoding='utf-8') as yml:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
-        self.plex = self.data['server']
+        self.plex = self.data['plex']
         self.tmdb = self.data['tmdb']
         self.radarr = self.data['radarr']
         self.collections = self.data['collections']
