@@ -55,7 +55,7 @@ each must match what Plex has including special characters in order to match.
         url: http://192.168.1.5:7878/radarr/
         token: ###########################
         quality_profile_id: 4
-        search: false
+        search: true
     tmdb:
         apikey: ############################
 
