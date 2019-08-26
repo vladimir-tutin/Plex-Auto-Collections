@@ -16,10 +16,6 @@ the idea for a configuration based collection manager.
 Subfilters also allows for a little more granular selection of movies to add to a collection. Unlike regular filters, a 
 movie must match at least one value from each subfilter to be added to a collection.
 
-# Disclaimer
-I'm not a developer. In fact this my first project I've seen to "completion". I taught myself Python as I went along.
-Because of this there are likely many bugs.
-
 # Configuration
 Modify the supplied config.yml.template file.
 
