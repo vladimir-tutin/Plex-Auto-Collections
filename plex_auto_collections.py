@@ -11,7 +11,7 @@ import sys
 plex = Plex()
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-u", "--update", help="Automatically update collections off config and quit",
+parser.add_argument("-u", "--update", help="Automatically update collections off config and quits",
                     action="store_true")
 args = parser.parse_args()
 
