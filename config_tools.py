@@ -90,4 +90,3 @@ def modify_config(c_name, m, value):
         print("Updated config file")
         with open(config.config_path, "w") as f:
             yaml.dump(config.data, f)
-
