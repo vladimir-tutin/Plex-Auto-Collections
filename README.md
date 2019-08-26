@@ -33,7 +33,7 @@ subfilters for audio language, subtitle language and video-resolution have been 
 each must match what Plex has including special characters in order to match.
 
     subfilters:
-        video-resolution: 1080
+        video-resolution: 1080 (further examples: sd, 720, 4k)
         audio-language: Français
         subtitle-language: English
 

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import os
 import yaml
 from plex_tools import get_actor_rkey
@@ -9,7 +10,8 @@ from radarr_tools import add_to_radarr
 class Config:
     def __init__(self):
         self.config_path = os.path.join(os.getcwd(), 'config.yml')
-        self.data = yaml.load(open(self.config_path), Loader=yaml.FullLoader)
+        with open(self.config_path, 'rt', encoding='utf-8') as yml:
+            self.data = yaml.load(yml, Loader=yaml.FullLoader)
         self.plex = self.data['server']
         self.tmdb = self.data['tmdb']
         self.radarr = self.data['radarr']

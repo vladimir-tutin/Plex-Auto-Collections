@@ -2,8 +2,6 @@ from plexapi.video import Movie
 from plexapi import exceptions as PlexExceptions
 import imdb_tools
 
-import inspect
-
 
 def get_movie(plex, data):
     # If an int is passed as data, assume it is a movie's rating key
@@ -113,13 +111,13 @@ def add_to_collection(plex, method, value, c, subfilters=None):
                             mv_attrs = [str(mv_attrs)]
                     except AttributeError:
                         for media in current_m.media:
+                            if method == "video-resolution":
+                                mv_attrs = [media.videoResolution]
                             for part in media.parts:
                                 if method == "audio-language":
                                     mv_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
                                 if method == "subtitle-language":
-                                    mv_attrs = ([subtitle_stream for subtitle_stream in part.subtitleStreams()])
-                                if method == "video-resolution":
-                                    mv_attrs = ([mv_part.videoResolution for mv_part in rk.media])
+                                    mv_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
 
                     # Get the intersection of the user's terms and movie's terms
                     # If it's empty, it's not a match

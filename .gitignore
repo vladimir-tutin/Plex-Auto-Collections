@@ -3,3 +3,5 @@
 /venv/
 /.gitignore
 /.idea
+/build
+/plex_auto_collections.spec
