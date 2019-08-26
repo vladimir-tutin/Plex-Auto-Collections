@@ -1,5 +1,5 @@
 # Plex Auto Collections
-Python 3 script/[standalone build]() that works off a configuration file to create/update Plex collection. Supports IMDB
+Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that works off a configuration file to create/update Plex collection. Supports IMDB
 lists as well as built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the
 [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) 
 documentation. Not everything has been tested, so results may vary based off the filter.
