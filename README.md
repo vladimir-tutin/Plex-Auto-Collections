@@ -49,7 +49,7 @@ If you do not want to use subfilters simply remove the section.
                 subfilters:
                     audio-language: English
                     genres: Action, Crime, Comedy
-    server:
+    plex:
         library: Movies
         token: ###################
         url: http://192.168.1.5:32400
