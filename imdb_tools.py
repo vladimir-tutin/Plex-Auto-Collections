@@ -2,8 +2,9 @@ import requests
 from lxml import html
 from tmdbv3api import TMDb
 from tmdbv3api import Movie
+from tmdbv3api import Collection
 import config_tools
-
+import re
 
 def imdb_get_movies(plex, data):
     tmdb = TMDb()
@@ -46,3 +47,55 @@ def imdb_get_movies(plex, data):
             missing_imdb_movies.append(imdb_id)
 
     return matched_imbd_movies, missing_imdb_movies
+
+def tmdb_get_movies(plex, data):
+    txt = data
+    tmdb_id = re.search('.*?(\\d+)', txt)
+    tmdb_id = tmdb_id.group(1)
+
+    t_movie = Movie()
+    tmdb = Collection()
+    tmdb.api_key = "8c4321604035a7357fb41e3105f56b06"
+    t_movie.api_key = tmdb.api_key
+    t_col = tmdb.details(tmdb_id)
+
+    t_movs = []
+    for tmovie in t_col.parts:
+        t_movs.append(tmovie['id'])
+
+    # Create dictionary of movies and their guid
+    p_m_map = {}
+    p_movies = plex.MovieLibrary.all()
+    for m in p_movies:
+        guid = m.guid
+        if "themoviedb://" in guid:
+            guid = guid.split('themoviedb://')[1].split('?')[0]
+        elif "imdb://" in guid:
+            guid = guid.split('imdb://')[1].split('?')[0]
+        else:
+            guid = "None"
+        p_m_map[m] = guid
+
+    matched = []
+    missing = []
+    # We want to search for a match first to limit TMDb API calls
+    for mid in t_movs:  # For each TMBd ID in TMBd Collection
+        match = False
+        for m in p_m_map:  # For each movie in Plex
+            if "tt" not in p_m_map[m] is not "None":  # If the Plex movie's guid does not start with tt
+                if int(p_m_map[m]) == int(mid):
+                    match = True
+                    break
+        if not match:
+            imdb_id = t_movie.details(mid).entries['imdb_id']
+            for m in p_m_map:
+                if "tt" in p_m_map[m]:
+                    if p_m_map[m] == imdb_id:
+                        match = True
+                        break
+        if match:
+            matched.append(m)
+        else:
+            missing.append(t_movie.details(mid).entries['imdb_id'])
+
+    return matched, missing

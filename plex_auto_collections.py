@@ -84,19 +84,28 @@ def append_collection(config_update=None):
                             plex_tools.add_to_collection(plex, method, a_rkey, selected_collection.title)
 
                     elif method == "l":
-                        method = "imdb-list"
-                        url = input("Enter IMDB List URL: ").strip()
-                        print("Processing IMDB List: {}".format(url))
-                        try:
-                            missing = plex_tools.add_to_collection(plex, "imdb-list", url, selected_collection.title)
-                            if missing:
-                                print("{} missing movies from IMDB List: {}".format(len(missing), url))
-                                if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                                    add_to_radarr(missing)
-                        except:
-                            print("Bad IMDB List URL")
+                        l_type = input("Enter list type IMDB(i) TMDb(t): ")
+                        if l_type == "i":
+                            l_type = "IMDB"
+                            method = "imdb-list"
+                        elif l_type == "t":
+                            l_type = "TMDb"
+                            method = "tmdb-list"
+                        else:
+                            return
+                        url = input("Enter {} List URL: ".format(l_type)).strip()
+                        print("Processing {} List: {}".format(l_type, url))
                         if config_update:
                             modify_config(collection_name, method, url)
+                        else:
+                            try:
+                                missing = plex_tools.add_to_collection(plex, method, url, selected_collection.title)
+                                if missing:
+                                    print("{} missing movies from IMDB List: {}".format(len(missing), url))
+                                    if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
+                                        add_to_radarr(missing)
+                            except:
+                                print("Bad {} List URL".format(l_type))
 
                     elif method == "c":
                         print("Please read the below link to see valid filter types. "
@@ -151,17 +160,25 @@ while not mode == "q":
             update_from_config(plex)
 
         elif mode == "l":
-            url = input("Enter IMDB List URL: ")
-            c_name = input("Enter collection name: ")
-            print("Processing IMDB List: {}".format(url))
-            try:
-                missing = plex_tools.add_to_collection(plex, "imdb-list", url, c_name)
-                if missing:
-                    print("{} missing movies from IMDB List: {}".format(len(missing), url))
-                    if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                        add_to_radarr(missing)
-            except:
-                print("Bad IMDB List URL")
+            l_type = input("Enter list type IMDB(i) TMDb(t): ")
+            if l_type == "i":
+                l_type = "IMDB"
+                method = "imdb-list"
+            elif l_type == "t":
+                l_type = "TMDb"
+                method = "tmdb-list"
+            if l_type == "IMDB" or l_type == "TMDb":
+                url = input("Enter {} List URL: ".format(l_type)).strip()
+                c_name = input("Enter collection name: ")
+                print("Processing {} List: {}".format(l_type, url))
+                try:
+                    missing = plex_tools.add_to_collection(plex, method, url, c_name)
+                    if missing:
+                        print("{} missing movies from IMDB List: {}".format(len(missing), url))
+                        if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
+                            add_to_radarr(missing)
+                except NameError:
+                    print("Bad {} list URL".format(l_type))
             print("\n")
 
         elif mode == "+":

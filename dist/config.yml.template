@@ -6,6 +6,8 @@ collections:
     subfilters:
       audio-language: English
       genres: Action, Crime, Comedy
+  Jurassic Park:
+      tmdb-list: https://www.themoviedb.org/collection/328
 plex:
   library: Movies
   token: ###################

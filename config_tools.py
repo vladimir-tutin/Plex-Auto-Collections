@@ -44,8 +44,8 @@ def update_from_config(plex, skip_radarr=False):
     for c in collections:
         print("Updating collection: {}...".format(c))
         methods = [m for m in collections[c] if "subfilters" not in m]
+        subfilters = []
         if "subfilters" in collections[c]:
-            subfilters = []
             for sf in collections[c]["subfilters"]:
                 sf_string = sf, collections[c]["subfilters"][sf]
                 subfilters.append(sf_string)
@@ -64,9 +64,13 @@ def update_from_config(plex, skip_radarr=False):
                 except UnboundLocalError:
                     missing = add_to_collection(plex, m, v, c)
                 if missing:
-                    print("{} missing movies from IMDB List: {}".format(len(missing), v))
+                    if "imdb" in m:
+                        m = "IMDB"
+                    else:
+                        m = "TMDb"
+                    print("{} missing movies from {} List: {}".format(len(missing), m, v))
                     if not skip_radarr:
-                        if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
+                        if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
                             add_to_radarr(missing)
     print("\n")
 

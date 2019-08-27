@@ -1,17 +1,19 @@
 # Plex Auto Collections
-Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that works off a configuration file to create/update Plex collection. Supports IMDB
-lists as well as built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the
+Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that 
+works off a configuration file to create/update Plex collection. Supports IMDB and TMDb lists as well as built in Plex 
+filters such as actors, genres, year, studio and more. For more filters refer to the 
 [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) 
 documentation. Not everything has been tested, so results may vary based off the filter.
 
-When parsing IMDB lists the script will create a list of movies that are missing from Plex. If an TMDb and Radarr api-key
-are supplied then the option will be presented to pass the list of movies along to Radarr.
+When parsing IMDB or TMBd lists the script will create a list of movies that are missing from Plex. If an TMDb and 
+Radarr api-key are supplied then the option will be presented to pass the list of movies along to Radarr.
 
 As well as updating collections based off configuration files there is the ability to add new collections based off 
 filters, delete collections, search for collections and manage the collections in the configuration file.
 
-Thanks to [/u/deva5610](https://www.reddit.com/user/deva5610) for [IMDBList2PlexCollection](https://github.com/deva5610/IMDBList2PlexCollection) which prompted 
-the idea for a configuration based collection manager.
+Thanks to [/u/deva5610](https://www.reddit.com/user/deva5610) for 
+[IMDBList2PlexCollection](https://github.com/deva5610/IMDBList2PlexCollection) which prompted the idea for a 
+configuration based collection manager.
 
 Subfilters also allows for a little more granular selection of movies to add to a collection. Unlike regular filters, a 
 movie must match at least one value from each subfilter to be added to a collection.
@@ -19,13 +21,15 @@ movie must match at least one value from each subfilter to be added to a collect
 # Configuration
 Modify the supplied config.yml.template file.
 
-If you do not want it to have the option to submit movies that are missing from IMDB lists do not include the api-key
-for TMBd or radarr. A TMDb apikey is not required for regular operation.
+If you do not want it to have the option to submit movies that are missing from IMDB or TMBd lists do not include the 
+api-key for TMBd or radarr. A TMDb apikey is not required for regular operation including using TMBd lists.
 
 If you want movies to add to Radarr but not automatically search, change search to "false".
 
 In order to find your Plex token follow 
 [this guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
+
+Library should be the name of the Plex library that you are wanting to search and create collections in.
 
 Main filters allowed are actors, imdb-list as well as many attributes that can found in the [plexapi.video.Movie 
 documentation](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie). In addition 
@@ -51,6 +55,8 @@ If you do not want to use subfilters simply remove the section.
                     genres: Action, Crime, Comedy
         Documentaries:
             genres: Documentary
+        Jurassic Park:
+            tmdb-list: https://www.themoviedb.org/collection/328
     plex:
         library: Movies
         token: ###################
