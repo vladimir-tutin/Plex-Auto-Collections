@@ -70,7 +70,7 @@ If you do not want to use subfilters simply remove the section.
         apikey: ############################
 
 # Usage
-[Standalone binaries]() have been created for both Windows and Linux.
+[Standalone binaries](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) have been created for both Windows and Linux.
 
 If you would like to run from Python I have only tested this fully on Python 3.7.4. Dependencies must be installed by running
 
