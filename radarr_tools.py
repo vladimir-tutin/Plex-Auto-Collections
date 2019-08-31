@@ -17,7 +17,6 @@ def add_to_radarr(missing):
     querystring = {"apikey": "{}".format(token)}
 
     if "None" in (tmdb.api_key, url, quality, token):
-        print("\n")
         print("All TMDB / Radarr details must be filled out in the configuration "
               "file to import missing movies into Radarr")
         print("\n")

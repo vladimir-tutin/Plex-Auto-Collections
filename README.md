@@ -3,13 +3,15 @@ Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-
 works off a configuration file to create/update Plex collection. Supports IMDB and TMDb lists as well as built in Plex 
 filters such as actors, genres, year, studio and more. For more filters refer to the 
 [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) 
-documentation. Not everything has been tested, so results may vary based off the filter.
+documentation. Not everything has been tested, so results may vary based off the filter. A TMDb api key is required to 
+scan TMDb URLs.
 
 When parsing IMDB or TMBd lists the script will create a list of movies that are missing from Plex. If an TMDb and 
 Radarr api-key are supplied then the option will be presented to pass the list of movies along to Radarr.
 
 As well as updating collections based off configuration files there is the ability to add new collections based off 
-filters, delete collections, search for collections and manage the collections in the configuration file.
+filters, delete collections, search for collections and manage the collections in the configuration file. Collection 
+poster and summary can also be managed with this script.
 
 Thanks to [/u/deva5610](https://www.reddit.com/user/deva5610) for 
 [IMDBList2PlexCollection](https://github.com/deva5610/IMDBList2PlexCollection) which prompted the idea for a 
@@ -21,9 +23,35 @@ movie must match at least one value from each subfilter to be added to a collect
 # Configuration
 Modify the supplied config.yml.template file.
 
-If you do not want it to have the option to submit movies that are missing from IMDB or TMBd lists do not include the 
-api-key for TMBd or radarr. A TMDb apikey is not required for regular operation including using TMBd lists.
+If using TMDb lists be sure to include your TMDb api-key. If you do not have an api-key please refer to this 
+[document](https://developers.themoviedb.org/3/getting-started/introduction).
 
+If you do not want it to have the option to submit movies that are missing from IMDB or TMBd lists do not include the 
+api-key for Radarr.
+
+Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry. To
+use a TMDb entry a TMDb api-key as well as language is required, the default language is set to en. Match the following 
+in the configuration file, input only the TMDb collections page's ID.
+
+    Jurassic Park:
+        tmdb-list: https://www.themoviedb.org/collection/328
+        details:
+            tmdb-summary: 328
+
+If you would like to use a custom summary, enter as follows
+
+    Jurassic Park:
+        tmdb-list: https://www.themoviedb.org/collection/328
+        details:
+            summary: A collection of Jurassic Park movies
+            
+Adding a poster can be done by adding the URL to the image. Currently local assets are not supported.
+
+    Jurassic Park:
+        tmdb-list: https://www.themoviedb.org/collection/328
+        details:
+            tmdb-summary: 328
+            poster: https://i.imgur.com/QMjbyCX.png
 If you want movies to add to Radarr but not automatically search, change search to "false".
 
 In order to find your Plex token follow 
@@ -46,17 +74,21 @@ If you do not want to use subfilters simply remove the section.
 **Once complete it should look like**
 
     collections:
-        Collection Name Here:
-            imdb-list: https://www.imdb.com/list/ls068177081/
-            actors: Seth Rogen, Aaron Paul
-            studio: Lionsgate
-                subfilters:
-                    audio-language: English
-                    genres: Action, Crime, Comedy
-        Documentaries:
-            genres: Documentary
         Jurassic Park:
             tmdb-list: https://www.themoviedb.org/collection/328
+            details:
+              tmdb-summary: 328
+              poster: https://i.imgur.com/QMjbyCX.png
+          1080p Documentaries:
+            genres: Documentary
+            subfilters:
+              video-resolution: 1080
+            details:
+              summary: A collection of 1080p Documentaries
+          Daniel Craig only James Bonds:
+            imdb-list: https://www.imdb.com/list/ls006405458/
+            subfilters:
+              actors: Daniel Craig
     plex:
         library: Movies
         token: ###################
@@ -68,9 +100,10 @@ If you do not want to use subfilters simply remove the section.
         search: true
     tmdb:
         apikey: ############################
+        language: en
 
 # Usage
-[Standalone binaries]() have been created for both Windows and Linux.
+[Standalone binaries](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) have been created for both Windows and Linux.
 
 If you would like to run from Python I have only tested this fully on Python 3.7.4. Dependencies must be installed by running
 

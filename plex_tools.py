@@ -51,24 +51,35 @@ def get_actor_rkey(plex, data):
 def get_all_movies(plex):
     return plex.MovieLibrary.all()
 
-def get_collection(plex, data):
+def get_collection(plex, data, exact=None):
     collection_list = plex.MovieLibrary.search(title=data, libtype="collection")
     if len(collection_list) > 1:
-        c_names = [(str(i+1) + ") " + collection.title) for i, collection in enumerate(collection_list)]
-        print("\n".join(c_names))
-        while True:
-            try:
-                selection = int(input("Choose collection number: ")) - 1
-                if selection >= 0:
-                    return collection_list[selection]
-                elif selection == "q":
-                    return
-                else:
+        if exact:
+            for collection in collection_list:
+                if collection.title == data:
+                    return collection
+        else:
+            c_names = [(str(i + 1) + ") " + collection.title) for i, collection in enumerate(collection_list)]
+            print("\n".join(c_names))
+            while True:
+                try:
+                    selection = int(input("Choose collection number: ")) - 1
+                    if selection >= 0:
+                        return collection_list[selection]
+                    elif selection == "q":
+                        return
+                    else:
+                        print("Invalid entry")
+                except (IndexError, ValueError) as E:
                     print("Invalid entry")
-            except (IndexError, ValueError) as E:
-                print("Invalid entry")
     elif len(collection_list) == 1:
-        return collection_list[0]
+        if exact:
+            if collection_list[0] == data:
+                return collection_list[0]
+            else:
+                return "Collection not in Plex, please update from config first"
+        else:
+            return collection_list[0]
     else:
         return "No collection found"
 

@@ -1,11 +1,15 @@
 # -*- coding: UTF-8 -*-
 import os
 import yaml
+import requests
 from plex_tools import get_actor_rkey
 from plex_tools import add_to_collection
+from plex_tools import get_collection
 from plexapi.server import PlexServer
 from plexapi.video import Movie
 from radarr_tools import add_to_radarr
+from imdb_tools import tmdb_get_summary
+
 
 class Config:
     def __init__(self):
@@ -17,15 +21,17 @@ class Config:
         self.radarr = self.data['radarr']
         self.collections = self.data['collections']
 
+
 class Plex:
     def __init__(self):
         config = Config().plex
-        url = config['url']
-        token = config['token']
-        library = config['library']
-        self.Server = PlexServer(url, token)
-        self.MovieLibrary = self.Server.library.section(library)
+        self.url = config['url']
+        self.token = config['token']
+        self.library = config['library']
+        self.Server = PlexServer(self.url, self.token)
+        self.MovieLibrary = self.Server.library.section(self.library)
         self.Movie = Movie
+
 
 class Radarr:
     def __init__(self):
@@ -34,16 +40,19 @@ class Radarr:
         self.token = config['token']
         self.quality = config['quality_profile_id']
 
+
 class TMDB:
     def __init__(self):
         config = Config().tmdb
         self.apikey = config['apikey']
+        self.language = config['language']
+
 
 def update_from_config(plex, skip_radarr=False):
     collections = Config().collections
     for c in collections:
         print("Updating collection: {}...".format(c))
-        methods = [m for m in collections[c] if "subfilters" not in m]
+        methods = [m for m in collections[c] if m not in ("details", "subfilters")]
         subfilters = []
         if "subfilters" in collections[c]:
             for sf in collections[c]["subfilters"]:
@@ -61,8 +70,11 @@ def update_from_config(plex, skip_radarr=False):
                     v = get_actor_rkey(plex, v)
                 try:
                     missing = add_to_collection(plex, m, v, c, subfilters)
-                except UnboundLocalError:
+                except UnboundLocalError:  # No sub-filters
                     missing = add_to_collection(plex, m, v, c)
+                except KeyError as e:
+                    print(e)
+                    missing = False
                 if missing:
                     if "imdb" in m:
                         m = "IMDB"
@@ -72,7 +84,33 @@ def update_from_config(plex, skip_radarr=False):
                     if not skip_radarr:
                         if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
                             add_to_radarr(missing)
-    print("\n")
+        if "details" in collections[c]:
+            for dt in collections[c]["details"]:
+                c_name = c
+                rkey = get_collection(plex, c_name).ratingKey
+                dt_m = collections[c]["details"][dt]
+                if "tmdb" in dt:
+                    dt_m = tmdb_get_summary(dt_m)
+
+                    library_name = plex.library
+                    section = plex.Server.library.section(library_name).key
+                    url = plex.url + "/library/sections/" + str(section) + "/all"
+
+                    querystring = {"type":"18",
+                                   "id": str(rkey),
+                                   "summary.value": dt_m,
+                                   "X-Plex-Token": Config().plex['token']}
+
+                    response = requests.request("PUT", url, params=querystring)
+                    print(response.text)
+                if "poster" in dt:
+
+                    url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
+                    querystring = {"url": dt_m}
+                    response = requests.request("POST", url, params=querystring)
+
+                    print(response.text)
+
 
 def modify_config(c_name, m, value):
     config = Config()

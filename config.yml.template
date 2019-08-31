@@ -1,13 +1,19 @@
 collections:
-  Collection Name:
-    imdb-list: https://www.imdb.com/list/ls068177081/
-    actors: Seth Rogen, Aaron Paul
-    studio: Lionsgate
-    subfilters:
-      audio-language: English
-      genres: Action, Crime, Comedy
   Jurassic Park:
-      tmdb-list: https://www.themoviedb.org/collection/328
+    tmdb-list: https://www.themoviedb.org/collection/328
+    details:
+      tmdb-summary: 328
+      poster: https://i.imgur.com/QMjbyCX.png
+  1080p Documentaries:
+    genres: Documentary
+    subfilters:
+      video-resolution: 1080
+    details:
+      summary: A collection of 1080p Documentaries
+  Daniel Craig only James Bonds:
+    imdb-list: https://www.imdb.com/list/ls006405458/
+    subfilters:
+      actors: Daniel Craig
 plex:
   library: Movies
   token: ###################
@@ -19,3 +25,4 @@ radarr:
   search: true
 tmdb:
   apikey: ############################
+  language: en
