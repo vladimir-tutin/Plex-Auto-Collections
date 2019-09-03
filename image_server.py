@@ -44,7 +44,7 @@ def start_srv():
         for img in images:
             if (c_name + ".") in img:
                 return send_from_directory(app.upload_folder, img)
-        return abort("404")
+        return abort(404)
 
     try:
         app.run(host=server.host, port=server.port)

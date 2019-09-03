@@ -140,11 +140,16 @@ def update_from_config(plex, skip_radarr=False):
                     c_name = c.replace(" ", "%20")
                     # Create url to where image would be if exists
                     poster = "http://" + host + ":" + str(port) + "/images/" + c_name
-                # Create url for request to Plex
-                url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
-                querystring = {"url": poster,
-                                   "X-Plex-Token": config.plex['token']}
-                response = requests.request("POST", url, params=querystring)
+                    try:
+                        r = requests.request("GET", poster)
+                    except:
+                        False
+                if not r.status_code == 404:
+                    # Create url for request to Plex
+                    url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
+                    querystring = {"url": poster,
+                                       "X-Plex-Token": config.plex['token']}
+                    response = requests.request("POST", url, params=querystring)
 
 def modify_config(c_name, m, value):
     config = Config()
