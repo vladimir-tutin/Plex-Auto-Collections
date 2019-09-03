@@ -1,6 +1,8 @@
 # Plex Auto Collections
-Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that 
-works off a configuration file to create/update Plex collection. Supports IMDB and TMDb lists as well as built in Plex 
+![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
+Plex Auto Collections is a Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that 
+works off a configuration file to create/update Plex collection. Collection management with this tool can be automated 
+in a varying degree of customizability. Supports IMDB and TMDb lists as well as built in Plex 
 filters such as actors, genres, year, studio and more. For more filters refer to the 
 [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) 
 documentation. Not everything has been tested, so results may vary based off the filter. A TMDb api key is required to 
