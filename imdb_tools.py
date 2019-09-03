@@ -1,10 +1,11 @@
+import re
 import requests
 from lxml import html
 from tmdbv3api import TMDb
 from tmdbv3api import Movie
 from tmdbv3api import Collection
+from tmdbv3api import Person
 import config_tools
-import re
 
 
 def imdb_get_movies(plex, data):
@@ -52,8 +53,6 @@ def imdb_get_movies(plex, data):
                 missing_imdb_movies.append(imdb_id)
 
         return matched_imbd_movies, missing_imdb_movies
-    else:
-        return
 
 
 def tmdb_get_movies(plex, data):
@@ -115,10 +114,15 @@ def tmdb_get_movies(plex, data):
     return matched, missing
 
 
-def tmdb_get_summary(data):
+def tmdb_get_summary(data, type):
     collection = Collection()
+    person = Person()
     collection.api_key = config_tools.TMDB().apikey
+    person.api_key = collection.api_key
     collection.language = config_tools.TMDB().language
+    person.language = collection.language
 
-    summary = collection.details(data).overview
-    return summary
+    if type == "overview":
+        return collection.details(data).overview
+    elif type == "biography":
+        return person.details(data).biography

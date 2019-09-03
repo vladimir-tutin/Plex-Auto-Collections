@@ -2,4 +2,5 @@ PyYAML==5.1.2
 tmdbv3api
 lxml
 requests
+flask
 git+git://github.com/pkkid/python-plexapi.git#egg=plexapi

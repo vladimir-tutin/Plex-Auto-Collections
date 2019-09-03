@@ -10,10 +10,10 @@ collections:
       video-resolution: 1080
     details:
       summary: A collection of 1080p Documentaries
-  Daniel Craig only James Bonds:
-    imdb-list: https://www.imdb.com/list/ls006405458/
-    subfilters:
-      actors: Daniel Craig
+  Dave Chappelle:
+    actors: Dave Chappelle
+    details:
+      tmdb-summary: 4169
 plex:
   library: Movies
   token: ###################

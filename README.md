@@ -31,7 +31,8 @@ api-key for Radarr.
 
 Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry. To
 use a TMDb entry a TMDb api-key as well as language is required, the default language is set to en. Match the following 
-in the configuration file, input only the TMDb collections page's ID.
+in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMBd if you wish to 
+use their biography as the summary.
 
     Jurassic Park:
         tmdb-list: https://www.themoviedb.org/collection/328
@@ -45,13 +46,18 @@ If you would like to use a custom summary, enter as follows
         details:
             summary: A collection of Jurassic Park movies
             
-Adding a poster can be done by adding the URL to the image. Currently local assets are not supported.
+Adding a poster can be done by adding the URL to the image.
 
     Jurassic Park:
         tmdb-list: https://www.themoviedb.org/collection/328
         details:
             tmdb-summary: 328
             poster: https://i.imgur.com/QMjbyCX.png
+            
+Local assets are supported by running the script with the image server running. If there are no details filled out for 
+the poster in the configuration file and the image server is running the script will attempt to match a collection name 
+with an image file of the same name. Images should be placed in the ./images folder. Port forwarding is not required.
+
 If you want movies to add to Radarr but not automatically search, change search to "false".
 
 In order to find your Plex token follow 
@@ -101,6 +107,9 @@ If you do not want to use subfilters simply remove the section.
     tmdb:
         apikey: ############################
         language: en
+    image-server:
+        host: 192.168.1.41
+        port: 5000
 
 # Usage
 [Standalone binaries](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) have been created for both Windows and Linux.
@@ -140,3 +149,6 @@ based off the collection and then quit by running. This applies to the standalon
 
     python plex_auto_collections.py --update
 
+If you would like to not run the image server add the --noserver flag to the command
+
+    python plex_auto_collections.py --noserver

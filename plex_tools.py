@@ -27,6 +27,7 @@ def get_actor_rkey(plex, data):
     # We must first perform standard search against the Plex Server
     # Searching in the Library via Actor only works if the ratingKey is already known
     results = plex.Server.search(search)
+
     for entry in results:
         entry = str(entry)
         entry = entry.split(":")
@@ -34,7 +35,6 @@ def get_actor_rkey(plex, data):
         if entry[0] == "Movie":
             movie_id = int(entry[1])
             break
-
     try:
         # We need to pull details from a movie to correspond the actor's name to their Plex Rating Key
         movie_roles = plex.Server.fetchItem(movie_id).roles

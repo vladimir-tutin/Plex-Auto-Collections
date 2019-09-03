@@ -1,14 +1,16 @@
-from config_tools import Plex
-from config_tools import update_from_config
-from config_tools import modify_config
-from config_tools import Config
-from plexapi.video import Movie
-import plex_tools
-from radarr_tools import add_to_radarr
 import argparse
 import sys
+import threading
 
-plex = Plex()
+from plexapi.video import Movie
+
+import image_server
+import plex_tools
+from config_tools import Config
+from config_tools import Plex
+from config_tools import modify_config
+from config_tools import update_from_config
+from radarr_tools import add_to_radarr
 
 
 def append_collection(config_update=None):
@@ -127,23 +129,38 @@ def append_collection(config_update=None):
             print("No collection found")
 
 
+if hasattr(__builtins__, 'raw_input'):
+    input = raw_input
+
 plex = Plex()
 
+mv = plex.Server.fetchItem(41974)
+print(mv)
+
 parser = argparse.ArgumentParser()
-parser.add_argument("-u", "--update", help="Automatically update collections off config and quits",
+parser.add_argument("-u", "--update",
+                    help="Automatically update collections off config and quits",
+                    action="store_true")
+parser.add_argument("-ns", "--noserver",
+                    help="Don't start the image server",
                     action="store_true")
 args = parser.parse_args()
-
-if args.update:
-    update_from_config(plex, True)
-    sys.exit(0)
 
 print("==================================================================")
 print(" Plex Auto Collections by /u/iRawrz  ")
 print("==================================================================")
 
-if hasattr(__builtins__, 'raw_input'):
-    input = raw_input
+if not args.noserver:
+    print("Attempting to start image server")
+    pid = threading.Thread(target=image_server.start_srv)
+    pid.daemon = True
+    pid.start()
+    print(image_server.check_running())
+
+if args.update:
+    # sys.stdout = open("pac.log", "w")
+    update_from_config(plex, True)
+    sys.exit(0)
 
 if input("Update Collections from Config? (y/n): ").upper() == "Y":
     update_from_config(plex)
@@ -231,5 +248,6 @@ while not mode == "q":
                 print(collection)
             print("\n")
     except KeyboardInterrupt:
-        print("\n")
+        print("\n"),
         pass
+
