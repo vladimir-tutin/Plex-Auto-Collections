@@ -134,9 +134,6 @@ if hasattr(__builtins__, 'raw_input'):
 
 plex = Plex()
 
-mv = plex.Server.fetchItem(41974)
-print(mv)
-
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--update",
                     help="Automatically update collections off config and quits",
