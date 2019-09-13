@@ -142,14 +142,14 @@ def update_from_config(plex, skip_radarr=False):
                     poster = "http://" + host + ":" + str(port) + "/images/" + c_name
                     try:
                         r = requests.request("GET", poster)
+                        if not r.status_code == 404:
+                            # Create url for request to Plex
+                            url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
+                            querystring = {"url": poster,
+                                               "X-Plex-Token": config.plex['token']}
+                            response = requests.request("POST", url, params=querystring)
                     except:
                         False
-                if not r.status_code == 404:
-                    # Create url for request to Plex
-                    url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
-                    querystring = {"url": poster,
-                                       "X-Plex-Token": config.plex['token']}
-                    response = requests.request("POST", url, params=querystring)
 
 def modify_config(c_name, m, value):
     config = Config()
