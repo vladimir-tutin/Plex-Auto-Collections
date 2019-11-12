@@ -18,6 +18,7 @@ class Config:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
         self.plex = self.data['plex']
         self.tmdb = self.data['tmdb']
+        self.trakt = self.data['trakt']
         self.radarr = self.data['radarr']
         self.collections = self.data['collections']
         self.image_server = self.data['image-server']
@@ -47,6 +48,14 @@ class TMDB:
         config = Config().tmdb
         self.apikey = config['apikey']
         self.language = config['language']
+
+
+class Trakt:
+    def __init__(self):
+        config = Config().trakt
+        self.client_id = config['client_id']
+        self.client_secret = config['client_secret']
+
 
 class ImageServer:
     def __init__(self):
@@ -90,7 +99,7 @@ def update_from_config(plex, skip_radarr=False):
                     missing = False
                 if missing:
                     if "imdb" in m:
-                        m = "IMDB"
+                        m = "IMDb"
                     else:
                         m = "TMDb"
                     print("{} missing movies from {} List: {}".format(len(missing), m, v))
