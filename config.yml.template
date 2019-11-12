@@ -14,6 +14,8 @@ collections:
     actors: Dave Chappelle
     details:
       tmdb-summary: 4169
+  Marvel Cinematic Universe:
+    trakt-list: https://trakt.tv/users/signoftheshadow/lists/mcu
 plex:
   library: Movies
   token: ###################
