@@ -27,7 +27,7 @@ def append_collection(config_update=None):
                 finished = False
                 while not finished:
                     try:
-                        method = input("Add Movie(m), Actor(a), IMDB/TMDb List(l), Custom (c)?: ")
+                        method = input("Add Movie(m), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
                         if method == "m":
                             if not config_update:
                                 method = "movie"
@@ -70,13 +70,16 @@ def append_collection(config_update=None):
                                 plex_tools.add_to_collection(plex, method, a_rkey, selected_collection.title)
 
                         elif method == "l":
-                            l_type = input("Enter list type IMDB(i) TMDb(t): ")
+                            l_type = input("Enter list type IMDb(i) TMDb(t) Trakt(k): ")
                             if l_type == "i":
-                                l_type = "IMDB"
+                                l_type = "IMDb"
                                 method = "imdb-list"
                             elif l_type == "t":
                                 l_type = "TMDb"
                                 method = "tmdb-list"
+                            elif l_type == "k":
+                                l_type = "Trakt"
+                                method = "trakt-list"
                             else:
                                 return
                             url = input("Enter {} List URL: ".format(l_type)).strip()
@@ -166,8 +169,8 @@ print("\n")
 mode = None
 while not mode == "q":
     try:
-        print("Modes: Rescan (r), Actor(a), IMDB/TMDb List(l), "
-              "Add to Existing Collection (+), Delete(-), "
+        print("Modes: Rescan(r), Actor(a), IMDb/TMDb/Trakt List(l), "
+              "Add to Existing Collection(+), Delete(-), "
               "Search(s), Quit(q)\n")
         mode = input("Select Mode: ")
 
@@ -185,10 +188,10 @@ while not mode == "q":
             print("\n")
 
         elif mode == "l":
-            l_type = input("Enter list type IMDB(i) TMDb(t): ")
-            if l_type in ("i", "t"):
-                method = "{}mdb-list".format(l_type)
-                l_type = "{}MDB".format(l_type.upper())
+            l_type = input("Enter list type IMDb(i) TMDb(t) Trakt(k): ")
+            method_map = {"i": ("IMDb", "imdb-list"), "t": ("TMDb", "tmdb-list"), "k": ("Trakt", "trakt-list")}
+            if l_type in ("i", "t", "k"):
+                l_type, method = method_map[l_type]
                 url = input("Enter {} List URL: ".format(l_type)).strip()
                 c_name = input("Enter collection name: ")
                 print("Processing {} List: {}".format(l_type, url))
@@ -247,4 +250,3 @@ while not mode == "q":
     except KeyboardInterrupt:
         print("\n"),
         pass
-

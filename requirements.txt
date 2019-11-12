@@ -4,3 +4,4 @@ lxml
 requests
 flask
 git+git://github.com/pkkid/python-plexapi.git#egg=plexapi
+trakt.py
