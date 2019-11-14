@@ -1,6 +1,7 @@
 from plexapi.video import Movie
 from plexapi import exceptions as PlexExceptions
 import imdb_tools
+import trakt_tools
 
 
 def get_movie(plex, data):
@@ -98,7 +99,7 @@ def add_to_collection(plex, method, value, c, subfilters=None):
         elif method == "tmdb-list":
             movies, missing = imdb_tools.tmdb_get_movies(plex, value)
         elif method == "trakt-list":
-            movies, missing = imdb_tools.trakt_get_movies(plex, value)
+            movies, missing = trakt_tools.trakt_get_movies(plex, value)
     if movies:
         # Check if already in collection
         cols = plex.MovieLibrary.search(title=c, libtype="collection")

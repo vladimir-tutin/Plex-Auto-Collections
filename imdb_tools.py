@@ -6,8 +6,6 @@ from tmdbv3api import Movie
 from tmdbv3api import Collection
 from tmdbv3api import Person
 import config_tools
-from urllib.parse import urlparse
-import trakt
 
 
 def imdb_get_movies(plex, data):
@@ -114,53 +112,6 @@ def tmdb_get_movies(plex, data):
             missing.append(t_movie.details(mid).entries['imdb_id'])
 
     return matched, missing
-
-
-def trakt_get_movies(plex, data):
-    tmdb = TMDb()
-    tmdb.api_key = config_tools.TMDB().apikey  # Set TMDb api key for Collection
-    trakt.Trakt.configuration.defaults.client(config_tools.Trakt().client_id, config_tools.Trakt().client_secret)
-    movie = Movie()
-    tmdb.api_key = config_tools.TMDB().apikey
-    trakt_url = data
-    if trakt_url[-1:] == " ":
-        trakt_url = trakt_url[:-1]
-    imdb_map = {}
-    library_language = plex.MovieLibrary.language
-    trakt_list_path = urlparse(trakt_url).path
-    trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
-
-    plex_movies = plex.MovieLibrary.all()
-    if title_ids:
-        for m in plex_movies:
-            if 'themoviedb://' in m.guid:
-                if not tmdb.api_key == "None":
-                    tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
-                    tmdbapi = movie.details(tmdb_id)
-                    imdb_id = tmdbapi.imdb_id
-                else:
-                    imdb_id = None
-            elif 'imdb://' in m.guid:
-                imdb_id = m.guid.split('imdb://')[1].split('?')[0]
-            else:
-                imdb_id = None
-
-            if imdb_id and imdb_id in title_ids:
-                imdb_map[imdb_id] = m
-            else:
-                imdb_map[m.ratingKey] = m
-
-        matched_imbd_movies = []
-        missing_imdb_movies = []
-        for imdb_id in title_ids:
-            movie = imdb_map.pop(imdb_id, None)
-            if movie:
-                matched_imbd_movies.append(plex.Server.fetchItem(movie.ratingKey))
-            else:
-                missing_imdb_movies.append(imdb_id)
-
-        return matched_imbd_movies, missing_imdb_movies
 
 
 def tmdb_get_summary(data, type):
