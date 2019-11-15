@@ -1,4 +1,5 @@
 from plexapi.video import Movie
+from plexapi.video import Show
 from plexapi import exceptions as PlexExceptions
 import imdb_tools
 import trakt_tools
@@ -20,6 +21,27 @@ def get_movie(plex, data):
             return movie_list
         else:
             return "Movie: " + data + " not found"
+
+def get_item(plex, data):
+    # If an int is passed as data, assume it is a movie's rating key
+    if isinstance(data, int):
+        try:
+            return plex.Server.fetchItem(data)
+        except PlexExceptions.BadRequest:
+            return "Nothing found"
+    elif isinstance(data, Movie):
+        return data
+    elif isinstance(data, Show):
+        return data
+    else:
+        print(data)
+        movie_list = plex.MovieLibrary.search(title=data)
+        show_list = plex.ShowLibrary.search(title=data)
+        item_list = movie_list + show_list
+        if item_list:
+            return item_list
+        else:
+            return "Item: " + data + " not found"
 
 def get_actor_rkey(plex, data):
     """Takes in actors name as str and returns as Plex's corresponding rating key ID"""
@@ -52,8 +74,16 @@ def get_actor_rkey(plex, data):
 def get_all_movies(plex):
     return plex.MovieLibrary.all()
 
+def get_all_shows(plex):
+    return plex.ShowLibrary.all()
+
+def get_all_items(plex):
+    return plex.MovieLibrary.all() + plex.ShowLibrary.all()
+
 def get_collection(plex, data, exact=None):
-    collection_list = plex.MovieLibrary.search(title=data, libtype="collection")
+    collection_movie_list = plex.MovieLibrary.search(title=data, libtype="collection")
+    collection_show_list = plex.ShowLibrary.search(title=data, libtype="collection")
+    collection_list = list(set(collection_movie_list + collection_show_list))
     if len(collection_list) > 1:
         if exact:
             for collection in collection_list:
@@ -85,6 +115,8 @@ def get_collection(plex, data, exact=None):
         return "No collection found"
 
 def add_to_collection(plex, method, value, c, subfilters=None):
+    movies = []
+    shows = []
     if method in Movie.__doc__ or hasattr(Movie, method):
         try:
             movies = plex.MovieLibrary.search(**{method: value})
@@ -93,13 +125,23 @@ def add_to_collection(plex, method, value, c, subfilters=None):
             if method[-1:] == "s":
                 movies = plex.MovieLibrary.search(**{method[:-1]: value})
                 movies = [m.ratingKey for m in movies if movies]
+    # elif method in Show.__doc__ or hasattr(Show, method):
+    if method in Show.__doc__ or hasattr(Show, method):
+        try:
+            shows = plex.ShowLibrary.search(**{method: value})
+        except PlexExceptions.BadRequest:
+            # If last character is "s" remove it and try again
+            if method[-1:] == "s":
+                shows = plex.ShowLibrary.search(**{method[:-1]: value})
+                shows = [s.ratingKey for s in shows if shows]
     else:
         if method == "imdb-list":
             movies, missing = imdb_tools.imdb_get_movies(plex, value)
         elif method == "tmdb-list":
             movies, missing = imdb_tools.tmdb_get_movies(plex, value)
         elif method == "trakt-list":
-            movies, missing = trakt_tools.trakt_get_movies(plex, value)
+            shows, missing_shows = trakt_tools.trakt_get_shows(plex, value)
+            movies, missing_movies = trakt_tools.trakt_get_movies(plex, value)
     if movies:
         # Check if already in collection
         cols = plex.MovieLibrary.search(title=c, libtype="collection")
@@ -146,6 +188,53 @@ def add_to_collection(plex, method, value, c, subfilters=None):
             elif not subfilters:
                 print("+++ Adding {} to collection: {}".format(current_m.title, c))
                 current_m.addCollection(c)
+    if shows:
+        # Check if already in collection
+        cols = plex.ShowLibrary.search(title=c, libtype="collection")
+        try:
+            fs = cols[0].children
+        except IndexError:
+            fs = []
+        for rk in shows:
+            # current_s = get_show(plex, rk)
+            current_s = get_item(plex, rk)
+            current_s.reload()
+            if current_s in fs:
+                print("{} is already in collection: {}".format(current_s.title, c))
+            elif subfilters:
+                match = True
+                for sf in subfilters:
+                    method = sf[0]
+                    terms = str(sf[1]).split(", ")
+                    try:
+                        show_attrs = getattr(current_s, method)
+                        # If it returns a list, get the 'tag' attribute
+                        # Otherwise, it's a string. Make it a list.
+                        if isinstance(show_attrs, list) and "-" not in method:
+                            show_attrs = [getattr(x, 'tag') for x in show_attrs]
+                        else:
+                            show_attrs = [str(show_attrs)]
+                    except AttributeError:
+                        for media in current_s.media:
+                            if method == "video-resolution":
+                                show_attrs = [media.videoResolution]
+                            for part in media.parts:
+                                if method == "audio-language":
+                                    show_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
+                                if method == "subtitle-language":
+                                    show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
+
+                    # Get the intersection of the user's terms and movie's terms
+                    # If it's empty, it's not a match
+                    if not list(set(terms) & set(show_attrs)):
+                        match = False
+                        break
+                if match:
+                    print("+++ Adding {} to collection {}".format(current_s.title, c))
+                    current_s.addCollection(c)
+            elif not subfilters:
+                print("+++ Adding {} to collection: {}".format(current_s.title, c))
+                current_s.addCollection(c)
     try:
         missing
     except UnboundLocalError:

@@ -3,6 +3,7 @@ import sys
 import threading
 
 from plexapi.video import Movie
+from plexapi.video import Show
 
 import image_server
 import plex_tools
@@ -27,7 +28,7 @@ def append_collection(config_update=None):
                 finished = False
                 while not finished:
                     try:
-                        method = input("Add Movie(m), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
+                        method = input("Add Movie(m), Add Show(s), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
                         if method == "m":
                             if not config_update:
                                 method = "movie"
@@ -59,6 +60,38 @@ def append_collection(config_update=None):
                                                 break
                             else:
                                 print("Movies in configuration file not yet supported")
+
+                        elif method == "s":
+                            if not config_update:
+                                method = "show"
+                                value = input("Enter Show (Name or Rating Key): ")
+                                if value is int:
+                                    plex_show = plex_tools.get_show(int(value))
+                                    print('+++ Adding %s to collection %s' % (
+                                        plex_show.title, selected_collection.title))
+                                    plex_show.addCollection(selected_collection.title)
+                                else:
+                                    results = plex_tools.get_show(plex, value)
+                                    if len(results) > 1:
+                                        while True:
+                                            i = 1
+                                            for result in results:
+                                                print("{POS}) {TITLE} - {RATINGKEY}".format(POS=i, TITLE=result.title,
+                                                                                            RATINGKEY=result.ratingKey))
+                                                i += 1
+                                            s = input("Select show (N for None): ")
+                                            if int(s):
+                                                s = int(s)
+                                                if len(results) >= s > 0:
+                                                    result = results[s - 1]
+                                                    print('+++ Adding %s to collection %s' % (
+                                                        result.title, selected_collection.title))
+                                                    result.addCollection(selected_collection.title)
+                                                    break
+                                            else:
+                                                break
+                            else:
+                                print("Shows in configuration file not yet supported")
 
                         elif method == "a":
                             method = "actors"
@@ -198,10 +231,10 @@ while not mode == "q":
                 try:
                     missing = plex_tools.add_to_collection(plex, method, url, c_name)
                     if missing:
-                        print("{} missing movies from IMDB List: {}".format(len(missing), url))
-                        if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                            add_to_radarr(missing)
-                except (NameError, TypeError):
+                        print("{} missing items from {}} List: {}".format(len(missing), l_type, url))
+                        # if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
+                        #     add_to_radarr(missing)
+                except (NameError, TypeError) as f:
                     print("Bad {} list URL".format(l_type))
                 except KeyError as e:
                     print(e)

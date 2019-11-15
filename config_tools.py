@@ -5,6 +5,9 @@ import requests
 import socket
 from plexapi.server import PlexServer
 from plexapi.video import Movie
+from plexapi.video import Show
+from plexapi.library import MovieSection
+from plexapi.library import ShowSection
 from plex_tools import get_actor_rkey
 from plex_tools import add_to_collection
 from plex_tools import get_collection
@@ -29,10 +32,18 @@ class Plex:
         config = Config().plex
         self.url = config['url']
         self.token = config['token']
-        self.library = config['library']
-        self.Server = PlexServer(self.url, self.token)
-        self.MovieLibrary = self.Server.library.section(self.library)
+        self.timeout = 60
+        # self.library = config['library']
+        self.movie_library = config['movie_library']
+        self.show_library = config['show_library']
+        self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
+        self.Sections = self.Server.library.sections()
+        print(self.Sections)
+        # self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library)) and (isinstance(s, MovieSection)), None)
+        self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library)), None)
+        self.ShowLibrary = next(s for s in self.Sections if (s.title == self.show_library) and isinstance(s, ShowSection))
         self.Movie = Movie
+        self.Show = Show
 
 
 class Radarr:
