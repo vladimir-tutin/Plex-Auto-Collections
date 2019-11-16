@@ -14,10 +14,13 @@ collections:
     actors: Dave Chappelle
     details:
       tmdb-summary: 4169
-  Marvel Cinematic Universe:
-    trakt-list: https://trakt.tv/users/signoftheshadow/lists/mcu
+  Disney+:
+    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-tv-shows
+  Disney+:
+    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-movies
 plex:
-  library: Movies
+  movie_library: Movies
+  show_library: TV Shows
   token: ###################
   url: http://192.168.1.5:32400
 radarr:
