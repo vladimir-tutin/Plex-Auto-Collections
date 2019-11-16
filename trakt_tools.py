@@ -21,7 +21,12 @@ def trakt_get_movies(plex, data):
                 imdb_id = guid.netloc
             elif item_type == 'themoviedb':
                 tmdb_id = guid.netloc
-                imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie').get_key('imdb')
+                # lookup can sometimes return a list
+                lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
+                if isinstance(lookup, list):
+                    imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')[0].get_key('imdb')
+                else:
+                    imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie').get_key('imdb')
             else:
                 imdb_id = None
 
@@ -42,7 +47,7 @@ def trakt_get_movies(plex, data):
         return matched_imbd_movies, missing_imdb_movies
     else:
         # No movies
-        return False, False
+        return None, None
 
 def trakt_get_shows(plex, data):
     trakt.Trakt.configuration.defaults.client(config_tools.Trakt().client_id, config_tools.Trakt().client_secret)
@@ -58,10 +63,10 @@ def trakt_get_shows(plex, data):
             if m.pk[1] not in title_ids:
                 title_ids.append(m.pk[1])
         elif isinstance(m, trakt.objects.season.Season):
-            if m.pk[1] not in title_ids:
+            if m.show.pk[1] not in title_ids:
                 title_ids.append(m.show.pk[1])
         elif isinstance(m, trakt.objects.episode.Episode):
-            if m.pk[1] not in title_ids:
+            if m.show.pk[1] not in title_ids:
                 title_ids.append(m.show.pk[1])
     # Remove dupes
     # title_ids = set(title_ids)
@@ -75,10 +80,11 @@ def trakt_get_shows(plex, data):
                 tvdb_id = guid.netloc
             elif item_type == 'themoviedb':
                 tmdb_id = guid.netloc
-                tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show').get_key('tvdb')
-            elif item_type == 'imdb':
-                 imdb_id = guid.netloc
-                 tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie').get_key('tvdb')
+                lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
+                if isinstance(lookup, list):
+                    tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')[0].get_key('tvdb')
+                else:
+                    tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show').get_key('tvdb')
             else:
                 tvdb_id = None
 
@@ -100,4 +106,4 @@ def trakt_get_shows(plex, data):
         return matched_tvdb_shows, missing_tvdb_shows
     else:
         # No shows
-        return False, False
+        return None, None
