@@ -13,6 +13,8 @@ from plex_tools import add_to_collection
 from plex_tools import get_collection
 from radarr_tools import add_to_radarr
 from imdb_tools import tmdb_get_summary
+from trakt import Trakt
+import trakt_helpers
 
 class Config:
     def __init__(self):
@@ -38,7 +40,6 @@ class Plex:
         self.show_library = config['show_library']
         self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
         self.Sections = self.Server.library.sections()
-        print(self.Sections)
         # self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library)) and (isinstance(s, MovieSection)), None)
         self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library)), None)
         self.ShowLibrary = next(s for s in self.Sections if (s.title == self.show_library) and isinstance(s, ShowSection))
@@ -61,11 +62,17 @@ class TMDB:
         self.language = config['language']
 
 
-class Trakt:
+class TraktClient:
     def __init__(self):
+        import copy
         config = Config().trakt
         self.client_id = config['client_id']
         self.client_secret = config['client_secret']
+        self.authorization = config['authorization']
+        Trakt.configuration.defaults.client(self.client_id, self.client_secret)
+        self.authorization = trakt_helpers.authenticate(self.authorization)
+        Trakt.configuration.defaults.oauth.from_response(self.authorization)
+        trakt_helpers.save_authorization(Config().config_path, self.authorization)
 
 
 class ImageServer:
