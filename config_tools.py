@@ -40,9 +40,8 @@ class Plex:
         self.show_library = config['show_library']
         self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
         self.Sections = self.Server.library.sections()
-        # self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library)) and (isinstance(s, MovieSection)), None)
-        self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library)), None)
-        self.ShowLibrary = next(s for s in self.Sections if (s.title == self.show_library) and isinstance(s, ShowSection))
+        self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library) and (isinstance(s, MovieSection))), None)
+        self.ShowLibrary = next((s for s in self.Sections if (s.title == self.show_library) and (isinstance(s, ShowSection))), None)
         self.Movie = Movie
         self.Show = Show
 
@@ -64,15 +63,16 @@ class TMDB:
 
 class TraktClient:
     def __init__(self):
-        import copy
         config = Config().trakt
         self.client_id = config['client_id']
         self.client_secret = config['client_secret']
         self.authorization = config['authorization']
         Trakt.configuration.defaults.client(self.client_id, self.client_secret)
-        self.authorization = trakt_helpers.authenticate(self.authorization)
-        Trakt.configuration.defaults.oauth.from_response(self.authorization)
-        trakt_helpers.save_authorization(Config().config_path, self.authorization)
+        # Try the token from the config
+        self.updated_authorization = trakt_helpers.authenticate(self.authorization)
+        Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
+        if self.updated_authorization != self.authorization:
+            trakt_helpers.save_authorization(Config().config_path, self.updated_authorization)
 
 
 class ImageServer:

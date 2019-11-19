@@ -34,6 +34,17 @@ tmdb:
 trakt:
   client_id: ############################
   client_secret: ############################
+trakt:
+  client_id: ############################
+  client_secret: ############################
+  # Below is filled in automatically when the script is run
+  authorization:
+    access_token:
+    token_type:
+    expires_in:
+    refresh_token:
+    scope:
+    created_at:
 image-server:
   host: 0.0.0.0
   port: 5000

@@ -4,7 +4,6 @@ import plex_tools
 import trakt
 
 def trakt_get_movies(plex, data):
-    # trakt.Trakt.configuration.defaults.client(config_tools.Trakt().client_id, config_tools.Trakt().client_secret)
     config_tools.TraktClient()
     trakt_url = data
     if trakt_url[-1:] == " ":
@@ -48,10 +47,9 @@ def trakt_get_movies(plex, data):
         return matched_imbd_movies, missing_imdb_movies
     else:
         # No movies
-        return False, False
+        return None, None
 
 def trakt_get_shows(plex, data):
-    # trakt.Trakt.configuration.defaults.client(config_tools.Trakt().client_id, config_tools.Trakt().client_secret)
     config_tools.TraktClient()
     trakt_url = data
     if trakt_url[-1:] == " ":
@@ -70,8 +68,6 @@ def trakt_get_shows(plex, data):
         elif isinstance(m, trakt.objects.episode.Episode):
             if m.show.pk[1] not in title_ids:
                 title_ids.append(m.show.pk[1])
-    # Remove dupes
-    # title_ids = set(title_ids)
 
     if title_ids:
         for item in plex.ShowLibrary.all():
