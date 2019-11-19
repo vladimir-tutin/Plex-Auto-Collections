@@ -2,14 +2,14 @@
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
 Plex Auto Collections is a Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that 
 works off a configuration file to create/update Plex collection. Collection management with this tool can be automated 
-in a varying degree of customizability. Supports IMDB and TMDb lists as well as built in Plex 
+in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex 
 filters such as actors, genres, year, studio and more. For more filters refer to the 
 [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) 
 documentation. Not everything has been tested, so results may vary based off the filter. A TMDb api key is required to 
 scan TMDb URLs.
 
 When parsing IMDB or TMBd lists the script will create a list of movies that are missing from Plex. If an TMDb and 
-Radarr api-key are supplied then the option will be presented to pass the list of movies along to Radarr.
+Radarr api-key are supplied then the option will be presented to pass the list of movies along to Radarr. Trakt lists will be matched against items in both a Movie and a TV library each.
 
 As well as updating collections based off configuration files there is the ability to add new collections based off 
 filters, delete collections, search for collections and manage the collections in the configuration file. Collection 
@@ -29,7 +29,7 @@ If using TMDb lists be sure to include your TMDb api-key. If you do not have an 
 [document](https://developers.themoviedb.org/3/getting-started/introduction).
 
 If you do not want it to have the option to submit movies that are missing from IMDB or TMBd lists do not include the 
-api-key for Radarr.
+api-key for Radarr. Radarr support has not been tested with Trakt lists. Sonarr support has not yet been implemented.
 
 Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry. To
 use a TMDb entry a TMDb api-key as well as language is required, the default language is set to en. Match the following 
