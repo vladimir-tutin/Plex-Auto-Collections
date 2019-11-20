@@ -104,6 +104,10 @@ collections:
     imdb-list: https://www.imdb.com/list/ls006405458/
     subfilters:
       actors: Daniel Craig
+  Disney+ TV:
+    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-tv-shows
+  Disney+ Movies:
+    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-movies
 plex:
   movie_library: Movies
   show_library: TV Shows
@@ -120,6 +124,7 @@ tmdb:
 trakt:
   client_id: ################ 
   client_secret: ################ 
+  # Below is filled in automatically when the script is run
   authorization:
     access_token:
     token_type:
