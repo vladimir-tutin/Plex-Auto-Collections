@@ -28,7 +28,11 @@ def append_collection(config_update=None):
                 finished = False
                 while not finished:
                     try:
-                        method = input("Add Movie(m), Add Show(s), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
+                        collection_type = selected_collection.subtype
+                        if collection_type == 'movie':
+                            method = input("Add Movie(m), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
+                        else:
+                            method = input("Add Show(s), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
                         if method == "m":
                             if not config_update:
                                 method = "movie"
@@ -120,11 +124,15 @@ def append_collection(config_update=None):
                             if config_update:
                                 modify_config(collection_name, method, url)
                             else:
-                                missing = plex_tools.add_to_collection(plex, method, url, selected_collection.title)
-                                if missing:
-                                    print("{} missing movies from IMDB List: {}".format(len(missing), url))
+                                missing_movies, missing_shows = plex_tools.add_to_collection(plex, method, url, selected_collection.title)
+                                if missing_movies:
+                                    print("{} missing movies from {} List: {}".format(len(missing_movies), l_type, url))
                                     if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                                        add_to_radarr(missing)
+                                        add_to_radarr(missing_movies)
+                                if missing_shows:
+                                    print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
+                                #     if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
+                                #         add_to_sonarr(missing_shows)
                                 print("Bad {} List URL".format(l_type))
 
                         elif method == "c":
@@ -229,11 +237,15 @@ while not mode == "q":
                 c_name = input("Enter collection name: ")
                 print("Processing {} List: {}".format(l_type, url))
                 try:
-                    missing = plex_tools.add_to_collection(plex, method, url, c_name)
-                    if missing:
-                        print("{} missing items from {}} List: {}".format(len(missing), l_type, url))
-                        # if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                        #     add_to_radarr(missing)
+                    missing_movies, missing_shows = plex_tools.add_to_collection(plex, method, url, c_name)
+                    if missing_movies:
+                        print("{} missing items from {} List: {}".format(len(missing_movies), l_type, url))
+                        if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
+                            add_to_radarr(missing)
+                    if missing_shows:
+                        print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
+                        # if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
+                        #     add_to_sonarr(missing)
                 except (NameError, TypeError) as f:
                     print("Bad {} list URL".format(l_type))
                 except KeyError as e:
@@ -272,10 +284,10 @@ while not mode == "q":
             data = input("Enter collection name to search for (blank for all): ")
             collection = plex_tools.get_collection(plex, data)
             if not isinstance(collection, str):
-                print("Found collection {}".format(collection.title))
-                movies = collection.children
-                print("Movies in collection: ")
-                for i, m in enumerate(movies):
+                print("Found {} collection {}".format(collection.subtype, collection.title))
+                items = collection.children
+                print("{}s in collection: ".format(collection.subtype).capitalize())
+                for i, m in enumerate(items):
                     print("{}) {}".format(i + 1, m.title))
             else:
                 print(collection)

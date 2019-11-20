@@ -80,17 +80,23 @@ def get_all_shows(plex):
 def get_all_items(plex):
     return plex.MovieLibrary.all() + plex.ShowLibrary.all()
 
-def get_collection(plex, data, exact=None):
-    collection_movie_list = plex.MovieLibrary.search(title=data, libtype="collection")
-    collection_show_list = plex.ShowLibrary.search(title=data, libtype="collection")
-    collection_list = list(set(collection_movie_list + collection_show_list))
+# subtype can be 'movie', 'show', or None (movie/tv combined)
+def get_collection(plex, data, exact=None, subtype=None):
+    if subtype == 'movie':
+        collection_list = plex.MovieLibrary.search(title=data, libtype="collection")
+    elif subtype == 'show':
+        collection_list = plex.ShowLibrary.search(title=data, libtype="collection")
+    else:
+        collection_movie_list = plex.MovieLibrary.search(title=data, libtype="collection")
+        collection_show_list = plex.ShowLibrary.search(title=data, libtype="collection")
+        collection_list = list(set(collection_movie_list + collection_show_list))
     if len(collection_list) > 1:
         if exact:
             for collection in collection_list:
                 if collection.title == data:
                     return collection
         else:
-            c_names = [(str(i + 1) + ") " + collection.title) for i, collection in enumerate(collection_list)]
+            c_names = [(str(i + 1) + ") " + collection.title + " (" + collection.subtype + ")") for i, collection in enumerate(collection_list)]
             print("\n".join(c_names))
             while True:
                 try:
@@ -105,7 +111,8 @@ def get_collection(plex, data, exact=None):
                     print("Invalid entry")
     elif len(collection_list) == 1:
         if exact:
-            if collection_list[0] == data:
+            # if collection_list[0] == data:
+            if collection_list[0].title == data:
                 return collection_list[0]
             else:
                 return "Collection not in Plex, please update from config first"
@@ -116,7 +123,9 @@ def get_collection(plex, data, exact=None):
 
 def add_to_collection(plex, method, value, c, subfilters=None):
     movies = []
+    missing_movies = []
     shows = []
+    missing_shows = []
     if method in Movie.__doc__ or hasattr(Movie, method):
         try:
             movies = plex.MovieLibrary.search(**{method: value})
@@ -129,19 +138,16 @@ def add_to_collection(plex, method, value, c, subfilters=None):
     if method in Show.__doc__ or hasattr(Show, method):
         try:
             shows = plex.ShowLibrary.search(**{method: value})
-        except PlexExceptions.BadRequest:
-            # If last character is "s" remove it and try again
-            if method[-1:] == "s":
-                shows = plex.ShowLibrary.search(**{method[:-1]: value})
-                shows = [s.ratingKey for s in shows if shows]
+        except PlexExceptions.BadRequest as e:
+            print(e)
     else:
         if method == "imdb-list":
-            movies, missing = imdb_tools.imdb_get_movies(plex, value)
+            movies, missing_movies = imdb_tools.imdb_get_movies(plex, value)
         elif method == "tmdb-list":
-            movies, missing = imdb_tools.tmdb_get_movies(plex, value)
+            movies, missing_movies = imdb_tools.tmdb_get_movies(plex, value)
         elif method == "trakt-list":
-            shows, missing_shows = trakt_tools.trakt_get_shows(plex, value)
             movies, missing_movies = trakt_tools.trakt_get_movies(plex, value)
+            shows, missing_shows = trakt_tools.trakt_get_shows(plex, value)
     if movies:
         # Check if already in collection
         cols = plex.MovieLibrary.search(title=c, libtype="collection")
@@ -214,15 +220,16 @@ def add_to_collection(plex, method, value, c, subfilters=None):
                             show_attrs = [getattr(x, 'tag') for x in show_attrs]
                         else:
                             show_attrs = [str(show_attrs)]
-                    except AttributeError:
-                        for media in current_s.media:
-                            if method == "video-resolution":
-                                show_attrs = [media.videoResolution]
-                            for part in media.parts:
-                                if method == "audio-language":
-                                    show_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
-                                if method == "subtitle-language":
-                                    show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
+                    except AttributeError as e:
+                        print(e)
+                        # for media in current_s.media:
+                        #     if method == "video-resolution":
+                        #         show_attrs = [media.videoResolution]
+                        #     for part in media.parts:
+                        #         if method == "audio-language":
+                        #             show_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
+                        #         if method == "subtitle-language":
+                        #             show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
 
                     # Get the intersection of the user's terms and movie's terms
                     # If it's empty, it's not a match
@@ -236,11 +243,12 @@ def add_to_collection(plex, method, value, c, subfilters=None):
                 print("+++ Adding {} to collection: {}".format(current_s.title, c))
                 current_s.addCollection(c)
     try:
-        missing
+        missing_movies
+        missing_shows
     except UnboundLocalError:
         return
     else:
-        return missing
+        return missing_movies, missing_shows
 
 def delete_collection(data):
     confirm = input("{} selected. Confirm deletion (y/n):".format(data.title))

@@ -109,24 +109,45 @@ def update_from_config(plex, skip_radarr=False):
                 if m == "actors" or m == "actor":
                     v = get_actor_rkey(plex, v)
                 try:
-                    missing = add_to_collection(plex, m, v, c, subfilters)
+                    missing_movies, missing_shows = add_to_collection(plex, m, v, c, subfilters)
                 except UnboundLocalError:  # No sub-filters
-                    missing = add_to_collection(plex, m, v, c)
-                except KeyError as e:
+                    missing_movies, missing_shows = add_to_collection(plex, m, v, c)
+                except (KeyError, ValueError) as e:
                     print(e)
-                    missing = False
-                if missing:
+                    missing_movies = False
+                    missing_shows = False
+                if missing_movies:
                     if "imdb" in m:
                         m = "IMDb"
+                    elif "trakt in m":
+                        m = "Trakt"
                     else:
                         m = "TMDb"
-                    print("{} missing movies from {} List: {}".format(len(missing), m, v))
+                    print("{} missing movies from {} List: {}".format(len(missing_movies), m, v))
                     if not skip_radarr:
                         if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                            add_to_radarr(missing)
+                            add_to_radarr(missing_movies)
+                if missing_shows:
+                    if "trakt in m":
+                        m = "Trakt"
+                    else:
+                        m = "TMDb"
+                    print("{} missing shows from {} List: {}".format(len(missing_shows), m, v))
+                    if not skip_radarr:
+                        if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                            add_to_radarr(missing_shows)
+        # Multiple collections of the same name
         if "details" in collections[c]:
+            # Check if there are multiple collections with the same name
+            movie_collections = plex.MovieLibrary.search(title=c, libtype="collection")
+            show_collections = plex.ShowLibrary.search(title=c, libtype="collection")
+            if len(movie_collections + show_collections) > 1:
+                print("Multiple collections named {}.\nUpdate of \"details\" is currently unsupported.".format(c))
+                continue
+            plex_collection = get_collection(plex, c)
             for dt_m in collections[c]["details"]:
-                rkey = get_collection(plex, c).ratingKey
+                rkey = plex_collection.ratingKey
+                subtype = plex_collection.subtype
                 dt_v = collections[c]["details"][dt_m]
                 if "summary" in dt_m:
                     if "tmdb" in dt_m:
@@ -134,9 +155,13 @@ def update_from_config(plex, skip_radarr=False):
                             dt_v = tmdb_get_summary(dt_v, "overview")
                         except AttributeError:
                             dt_v = tmdb_get_summary(dt_v, "biography")
+                    if subtype == 'movie':
+                        library_name = plex.MovieLibrary
+                    elif subtype == 'show':
+                        library_name = plex.ShowLibrary
 
-                    library_name = plex.library
-                    section = plex.Server.library.section(library_name).key
+                    #section = plex.Server.library.section(library_name).key
+                    section = library_name.key
                     url = plex.url + "/library/sections/" + str(section) + "/all"
 
                     querystring = {"type":"18",

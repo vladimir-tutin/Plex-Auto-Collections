@@ -7,7 +7,6 @@ import copy
 import ruamel.yaml
 
 def authenticate(authorization=None):
-    # authorization = os.environ.get('AUTHORIZATION')
 
     if authorization['access_token']:
         # Test authorization
@@ -30,6 +29,7 @@ def authenticate(authorization=None):
     return authorization
 
 def save_authorization(config_file, authorization):
+    ruamel.yaml.YAML().allow_duplicate_keys = True
     from ruamel.yaml.util import load_yaml_guess_indent
     config, ind, bsi = load_yaml_guess_indent(open(config_file))
     config['trakt']['authorization']['access_token'] = authorization['access_token']
