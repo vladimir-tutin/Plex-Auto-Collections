@@ -5,11 +5,16 @@ import requests
 import socket
 from plexapi.server import PlexServer
 from plexapi.video import Movie
+from plexapi.video import Show
+from plexapi.library import MovieSection
+from plexapi.library import ShowSection
 from plex_tools import get_actor_rkey
 from plex_tools import add_to_collection
 from plex_tools import get_collection
 from radarr_tools import add_to_radarr
 from imdb_tools import tmdb_get_summary
+from trakt import Trakt
+import trakt_helpers
 
 class Config:
     def __init__(self):
@@ -29,10 +34,16 @@ class Plex:
         config = Config().plex
         self.url = config['url']
         self.token = config['token']
-        self.library = config['library']
-        self.Server = PlexServer(self.url, self.token)
-        self.MovieLibrary = self.Server.library.section(self.library)
+        self.timeout = 60
+        # self.library = config['library']
+        self.movie_library = config['movie_library']
+        self.show_library = config['show_library']
+        self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
+        self.Sections = self.Server.library.sections()
+        self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library) and (isinstance(s, MovieSection))), None)
+        self.ShowLibrary = next((s for s in self.Sections if (s.title == self.show_library) and (isinstance(s, ShowSection))), None)
         self.Movie = Movie
+        self.Show = Show
 
 
 class Radarr:
@@ -50,11 +61,18 @@ class TMDB:
         self.language = config['language']
 
 
-class Trakt:
+class TraktClient:
     def __init__(self):
         config = Config().trakt
         self.client_id = config['client_id']
         self.client_secret = config['client_secret']
+        self.authorization = config['authorization']
+        Trakt.configuration.defaults.client(self.client_id, self.client_secret)
+        # Try the token from the config
+        self.updated_authorization = trakt_helpers.authenticate(self.authorization)
+        Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
+        if self.updated_authorization != self.authorization:
+            trakt_helpers.save_authorization(Config().config_path, self.updated_authorization)
 
 
 class ImageServer:
@@ -91,24 +109,45 @@ def update_from_config(plex, skip_radarr=False):
                 if m == "actors" or m == "actor":
                     v = get_actor_rkey(plex, v)
                 try:
-                    missing = add_to_collection(plex, m, v, c, subfilters)
+                    missing_movies, missing_shows = add_to_collection(plex, m, v, c, subfilters)
                 except UnboundLocalError:  # No sub-filters
-                    missing = add_to_collection(plex, m, v, c)
-                except KeyError as e:
+                    missing_movies, missing_shows = add_to_collection(plex, m, v, c)
+                except (KeyError, ValueError) as e:
                     print(e)
-                    missing = False
-                if missing:
+                    missing_movies = False
+                    missing_shows = False
+                if missing_movies:
                     if "imdb" in m:
                         m = "IMDb"
+                    elif "trakt in m":
+                        m = "Trakt"
                     else:
                         m = "TMDb"
-                    print("{} missing movies from {} List: {}".format(len(missing), m, v))
+                    print("{} missing movies from {} List: {}".format(len(missing_movies), m, v))
                     if not skip_radarr:
                         if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                            add_to_radarr(missing)
+                            add_to_radarr(missing_movies)
+                if missing_shows:
+                    if "trakt in m":
+                        m = "Trakt"
+                    else:
+                        m = "TMDb"
+                    print("{} missing shows from {} List: {}".format(len(missing_shows), m, v))
+                    # if not skip_sonarr:
+                    #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                    #         add_to_radarr(missing_shows)
+        # Multiple collections of the same name
         if "details" in collections[c]:
+            # Check if there are multiple collections with the same name
+            movie_collections = plex.MovieLibrary.search(title=c, libtype="collection")
+            show_collections = plex.ShowLibrary.search(title=c, libtype="collection")
+            if len(movie_collections + show_collections) > 1:
+                print("Multiple collections named {}.\nUpdate of \"details\" is currently unsupported.".format(c))
+                continue
+            plex_collection = get_collection(plex, c)
             for dt_m in collections[c]["details"]:
-                rkey = get_collection(plex, c).ratingKey
+                rkey = plex_collection.ratingKey
+                subtype = plex_collection.subtype
                 dt_v = collections[c]["details"][dt_m]
                 if "summary" in dt_m:
                     if "tmdb" in dt_m:
@@ -116,9 +155,13 @@ def update_from_config(plex, skip_radarr=False):
                             dt_v = tmdb_get_summary(dt_v, "overview")
                         except AttributeError:
                             dt_v = tmdb_get_summary(dt_v, "biography")
+                    if subtype == 'movie':
+                        library_name = plex.MovieLibrary
+                    elif subtype == 'show':
+                        library_name = plex.ShowLibrary
 
-                    library_name = plex.library
-                    section = plex.Server.library.section(library_name).key
+                    #section = plex.Server.library.section(library_name).key
+                    section = library_name.key
                     url = plex.url + "/library/sections/" + str(section) + "/all"
 
                     querystring = {"type":"18",

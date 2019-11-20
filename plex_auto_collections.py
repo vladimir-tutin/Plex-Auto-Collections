@@ -3,6 +3,7 @@ import sys
 import threading
 
 from plexapi.video import Movie
+from plexapi.video import Show
 
 import image_server
 import plex_tools
@@ -27,7 +28,11 @@ def append_collection(config_update=None):
                 finished = False
                 while not finished:
                     try:
-                        method = input("Add Movie(m), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
+                        collection_type = selected_collection.subtype
+                        if collection_type == 'movie':
+                            method = input("Add Movie(m), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
+                        else:
+                            method = input("Add Show(s), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c)?: ")
                         if method == "m":
                             if not config_update:
                                 method = "movie"
@@ -60,6 +65,38 @@ def append_collection(config_update=None):
                             else:
                                 print("Movies in configuration file not yet supported")
 
+                        elif method == "s":
+                            if not config_update:
+                                method = "show"
+                                value = input("Enter Show (Name or Rating Key): ")
+                                if value is int:
+                                    plex_show = plex_tools.get_show(int(value))
+                                    print('+++ Adding %s to collection %s' % (
+                                        plex_show.title, selected_collection.title))
+                                    plex_show.addCollection(selected_collection.title)
+                                else:
+                                    results = plex_tools.get_show(plex, value)
+                                    if len(results) > 1:
+                                        while True:
+                                            i = 1
+                                            for result in results:
+                                                print("{POS}) {TITLE} - {RATINGKEY}".format(POS=i, TITLE=result.title,
+                                                                                            RATINGKEY=result.ratingKey))
+                                                i += 1
+                                            s = input("Select show (N for None): ")
+                                            if int(s):
+                                                s = int(s)
+                                                if len(results) >= s > 0:
+                                                    result = results[s - 1]
+                                                    print('+++ Adding %s to collection %s' % (
+                                                        result.title, selected_collection.title))
+                                                    result.addCollection(selected_collection.title)
+                                                    break
+                                            else:
+                                                break
+                            else:
+                                print("Shows in configuration file not yet supported")
+
                         elif method == "a":
                             method = "actors"
                             value = input("Enter Actor Name: ")
@@ -87,11 +124,15 @@ def append_collection(config_update=None):
                             if config_update:
                                 modify_config(collection_name, method, url)
                             else:
-                                missing = plex_tools.add_to_collection(plex, method, url, selected_collection.title)
-                                if missing:
-                                    print("{} missing movies from IMDB List: {}".format(len(missing), url))
+                                missing_movies, missing_shows = plex_tools.add_to_collection(plex, method, url, selected_collection.title)
+                                if missing_movies:
+                                    print("{} missing movies from {} List: {}".format(len(missing_movies), l_type, url))
                                     if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                                        add_to_radarr(missing)
+                                        add_to_radarr(missing_movies)
+                                if missing_shows:
+                                    print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
+                                #     if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
+                                #         add_to_sonarr(missing_shows)
                                 print("Bad {} List URL".format(l_type))
 
                         elif method == "c":
@@ -196,12 +237,16 @@ while not mode == "q":
                 c_name = input("Enter collection name: ")
                 print("Processing {} List: {}".format(l_type, url))
                 try:
-                    missing = plex_tools.add_to_collection(plex, method, url, c_name)
-                    if missing:
-                        print("{} missing movies from IMDB List: {}".format(len(missing), url))
+                    missing_movies, missing_shows = plex_tools.add_to_collection(plex, method, url, c_name)
+                    if missing_movies:
+                        print("{} missing items from {} List: {}".format(len(missing_movies), l_type, url))
                         if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
                             add_to_radarr(missing)
-                except (NameError, TypeError):
+                    if missing_shows:
+                        print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
+                        # if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
+                        #     add_to_sonarr(missing)
+                except (NameError, TypeError) as f:
                     print("Bad {} list URL".format(l_type))
                 except KeyError as e:
                     print(e)
@@ -239,10 +284,10 @@ while not mode == "q":
             data = input("Enter collection name to search for (blank for all): ")
             collection = plex_tools.get_collection(plex, data)
             if not isinstance(collection, str):
-                print("Found collection {}".format(collection.title))
-                movies = collection.children
-                print("Movies in collection: ")
-                for i, m in enumerate(movies):
+                print("Found {} collection {}".format(collection.subtype, collection.title))
+                items = collection.children
+                print("{}s in collection: ".format(collection.subtype).capitalize())
+                for i, m in enumerate(items):
                     print("{}) {}".format(i + 1, m.title))
             else:
                 print(collection)

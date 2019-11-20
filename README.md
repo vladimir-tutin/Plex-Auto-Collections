@@ -2,14 +2,14 @@
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
 Plex Auto Collections is a Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that 
 works off a configuration file to create/update Plex collection. Collection management with this tool can be automated 
-in a varying degree of customizability. Supports IMDB and TMDb lists as well as built in Plex 
+in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex 
 filters such as actors, genres, year, studio and more. For more filters refer to the 
 [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) 
 documentation. Not everything has been tested, so results may vary based off the filter. A TMDb api key is required to 
 scan TMDb URLs.
 
 When parsing IMDB or TMBd lists the script will create a list of movies that are missing from Plex. If an TMDb and 
-Radarr api-key are supplied then the option will be presented to pass the list of movies along to Radarr.
+Radarr api-key are supplied then the option will be presented to pass the list of movies along to Radarr. Trakt lists will be matched against items in both a Movie and a TV library, each.
 
 As well as updating collections based off configuration files there is the ability to add new collections based off 
 filters, delete collections, search for collections and manage the collections in the configuration file. Collection 
@@ -29,7 +29,7 @@ If using TMDb lists be sure to include your TMDb api-key. If you do not have an 
 [document](https://developers.themoviedb.org/3/getting-started/introduction).
 
 If you do not want it to have the option to submit movies that are missing from IMDB or TMBd lists do not include the 
-api-key for Radarr.
+api-key for Radarr. Radarr support has not been tested with Trakt lists. Sonarr support has not yet been implemented.
 
 Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry. To
 use a TMDb entry a TMDb api-key as well as language is required, the default language is set to en. Match the following 
@@ -55,7 +55,7 @@ Adding a poster can be done by adding the URL to the image.
         details:
             tmdb-summary: 328
             poster: https://i.imgur.com/QMjbyCX.png
-            
+
 Local assets are supported by running the script with the image server running. If there are no details filled out for 
 the poster in the configuration file and the image server is running the script will attempt to match a collection name 
 with an image file of the same name. Images should be placed in the ./images folder. Port forwarding is not required.
@@ -64,6 +64,13 @@ If you want movies to add to Radarr but not automatically search, change search 
 
 In order to find your Plex token follow 
 [this guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
+
+Trakt lists require a client id and client secret.
+1. [Create](https://trakt.tv/oauth/applications/new) a Trakt API application.
+2. Enter a `Name` for the application.
+3. Enter `urn:ietf:wg:oauth:2.0:oob` for `Redirect uri`.
+4. Click the `SAVE APP` button.
+5. Record the `Client ID` and `Client Secret`. 
 
 Library should be the name of the Plex library that you are wanting to search and create collections in.
 
@@ -80,38 +87,55 @@ each must match what Plex has including special characters in order to match.
 If you do not want to use subfilters simply remove the section.
 
 **Once complete it should look like**
-
-    collections:
-        Jurassic Park:
-            tmdb-list: https://www.themoviedb.org/collection/328
-            details:
-              tmdb-summary: 328
-              poster: https://i.imgur.com/QMjbyCX.png
-          1080p Documentaries:
-            genres: Documentary
-            subfilters:
-              video-resolution: 1080
-            details:
-              summary: A collection of 1080p Documentaries
-          Daniel Craig only James Bonds:
-            imdb-list: https://www.imdb.com/list/ls006405458/
-            subfilters:
-              actors: Daniel Craig
-    plex:
-        library: Movies
-        token: ###################
-        url: http://192.168.1.5:32400
-    radarr:
-        url: http://192.168.1.5:7878/radarr/
-        token: ###########################
-        quality_profile_id: 4
-        search: true
-    tmdb:
-        apikey: ############################
-        language: en
-    image-server:
-        host: 192.168.1.41
-        port: 5000
+```
+collections:
+  Jurassic Park:
+    tmdb-list: https://www.themoviedb.org/collection/328
+       details:
+         tmdb-summary: 328
+         poster: https://i.imgur.com/QMjbyCX.png
+  1080p Documentaries:
+    genres: Documentary
+    subfilters:
+      video-resolution: 1080
+    details:
+       summary: A collection of 1080p Documentaries
+  Daniel Craig only James Bonds:
+    imdb-list: https://www.imdb.com/list/ls006405458/
+    subfilters:
+      actors: Daniel Craig
+  Disney+ TV:
+    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-tv-shows
+  Disney+ Movies:
+    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-movies
+plex:
+  movie_library: Movies
+  show_library: TV Shows
+  token: ################ 
+  url: http://192.168.1.5:32400
+radarr:
+  url: http://192.168.1.5:7878/radarr/
+  token: ################ 
+  quality_profile_id: 4
+  search: true
+tmdb:
+  apikey: ################ 
+  language: en
+trakt:
+  client_id: ################ 
+  client_secret: ################ 
+  # Below is filled in automatically when the script is run
+  authorization:
+    access_token:
+    token_type:
+    expires_in:
+    refresh_token:
+    scope:
+    created_at:
+image-server:
+  host: 192.168.1.41
+  port: 5000
+```
 
 # Usage
 [Standalone binaries](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) have been created for both Windows and Linux.

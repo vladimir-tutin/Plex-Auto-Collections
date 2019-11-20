@@ -5,3 +5,4 @@
 /.idea
 /build
 /plex_auto_collections.spec
+/__pycache__/
