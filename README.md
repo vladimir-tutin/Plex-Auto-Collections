@@ -87,7 +87,7 @@ each must match what Plex has including special characters in order to match.
 If you do not want to use subfilters simply remove the section.
 
 **Once complete it should look like**
-
+```
 collections:
   Jurassic Park:
     tmdb-list: https://www.themoviedb.org/collection/328
@@ -107,20 +107,19 @@ collections:
 plex:
   movie_library: Movies
   show_library: TV Shows
-  token: ###################
+  token: ################ 
   url: http://192.168.1.5:32400
 radarr:
   url: http://192.168.1.5:7878/radarr/
-  token: ###########################
+  token: ################ 
   quality_profile_id: 4
   search: true
 tmdb:
-  apikey: ############################
+  apikey: ################ 
   language: en
 trakt:
-  client_id: ############################
-  client_secret: ############################
-  # Below is filled in automatically when the script is run
+  client_id: ################ 
+  client_secret: ################ 
   authorization:
     access_token:
     token_type:
@@ -131,6 +130,7 @@ trakt:
 image-server:
   host: 192.168.1.41
   port: 5000
+```
 
 # Usage
 [Standalone binaries](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) have been created for both Windows and Linux.
