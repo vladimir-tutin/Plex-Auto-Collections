@@ -133,9 +133,9 @@ def update_from_config(plex, skip_radarr=False):
                     else:
                         m = "TMDb"
                     print("{} missing shows from {} List: {}".format(len(missing_shows), m, v))
-                    if not skip_radarr:
-                        if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
-                            add_to_radarr(missing_shows)
+                    # if not skip_sonarr:
+                    #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                    #         add_to_radarr(missing_shows)
         # Multiple collections of the same name
         if "details" in collections[c]:
             # Check if there are multiple collections with the same name

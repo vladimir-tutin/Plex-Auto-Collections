@@ -34,9 +34,6 @@ tmdb:
 trakt:
   client_id: ############################
   client_secret: ############################
-trakt:
-  client_id: ############################
-  client_secret: ############################
   # Below is filled in automatically when the script is run
   authorization:
     access_token:
