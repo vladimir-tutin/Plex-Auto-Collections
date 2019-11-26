@@ -78,11 +78,14 @@ def trakt_get_shows(plex, data):
                 tvdb_id = guid.netloc
             elif item_type == 'themoviedb':
                 tmdb_id = guid.netloc
-                lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
-                if isinstance(lookup, list):
-                    tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')[0].get_key('tvdb')
+                lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')
+                if lookup:
+                    if isinstance(lookup, list):
+                        tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')[0].get_key('tvdb')
+                    else:
+                        tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show').get_key('tvdb')
                 else:
-                    tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show').get_key('tvdb')
+                    tvdb_id = None
             else:
                 tvdb_id = None
 
