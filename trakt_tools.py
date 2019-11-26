@@ -23,10 +23,13 @@ def trakt_get_movies(plex, data):
                 tmdb_id = guid.netloc
                 # lookup can sometimes return a list
                 lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
-                if isinstance(lookup, list):
-                    imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')[0].get_key('imdb')
+                if lookup:
+                    if isinstance(lookup, list):
+                        imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')[0].get_key('imdb')
+                    else:
+                        imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie').get_key('imdb')
                 else:
-                    imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie').get_key('imdb')
+                    imdb_id = None
             else:
                 imdb_id = None
 
