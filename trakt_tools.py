@@ -14,7 +14,7 @@ def trakt_get_movies(config_path, plex, data):
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     if title_ids:
-        for item in plex.MovieLibrary.all():
+        for item in plex.Library.all():
             guid = urlparse(item.guid)
             item_type = guid.scheme.split('.')[-1]
             if item_type == 'imdb':
@@ -73,7 +73,7 @@ def trakt_get_shows(config_path, plex, data):
                 title_ids.append(m.show.pk[1])
 
     if title_ids:
-        for item in plex.ShowLibrary.all():
+        for item in plex.Library.all():
             guid = urlparse(item.guid)
             item_type = guid.scheme.split('.')[-1]
             # print('item_type', item, item_type)

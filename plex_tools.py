@@ -1,6 +1,8 @@
 from plexapi.video import Movie
 from plexapi.video import Show
 from plexapi import exceptions as PlexExceptions
+from plexapi.library import MovieSection
+from plexapi.library import ShowSection
 import imdb_tools
 import trakt_tools
 
@@ -16,7 +18,7 @@ def get_movie(plex, data):
         return data
     else:
         print(data)
-        movie_list = plex.MovieLibrary.search(title=data)
+        movie_list = plex.Library.search(title=data)
         if movie_list:
             return movie_list
         else:
@@ -35,9 +37,7 @@ def get_item(plex, data):
         return data
     else:
         print(data)
-        movie_list = plex.MovieLibrary.search(title=data)
-        show_list = plex.ShowLibrary.search(title=data)
-        item_list = movie_list + show_list
+        item_list = plex.Library.search(title=data)
         if item_list:
             return item_list
         else:
@@ -71,25 +71,12 @@ def get_actor_rkey(plex, data):
     except UnboundLocalError:
         return "Actor: " + search + " not found"
 
-def get_all_movies(plex):
-    return plex.MovieLibrary.all()
-
-def get_all_shows(plex):
-    return plex.ShowLibrary.all()
-
 def get_all_items(plex):
-    return plex.MovieLibrary.all() + plex.ShowLibrary.all()
+    return plex.Library.all()
 
 # subtype can be 'movie', 'show', or None (movie/tv combined)
 def get_collection(plex, data, exact=None, subtype=None):
-    if subtype == 'movie':
-        collection_list = plex.MovieLibrary.search(title=data, libtype="collection")
-    elif subtype == 'show':
-        collection_list = plex.ShowLibrary.search(title=data, libtype="collection")
-    else:
-        collection_movie_list = plex.MovieLibrary.search(title=data, libtype="collection")
-        collection_show_list = plex.ShowLibrary.search(title=data, libtype="collection")
-        collection_list = list(set(collection_movie_list + collection_show_list))
+    collection_list = plex.Library.search(title=data, libtype="collection")
     if len(collection_list) > 1:
         if exact:
             for collection in collection_list:
@@ -123,34 +110,35 @@ def get_collection(plex, data, exact=None, subtype=None):
 
 def add_to_collection(config_path, plex, method, value, c, subfilters=None):
     movies = []
-    missing_movies = []
     shows = []
-    missing_shows = []
+    items = []
     if method in Movie.__doc__ or hasattr(Movie, method):
         try:
-            movies = plex.MovieLibrary.search(**{method: value})
+            movies = plex.Library.search(**{method: value})
         except PlexExceptions.BadRequest:
             # If last character is "s" remove it and try again
             if method[-1:] == "s":
-                movies = plex.MovieLibrary.search(**{method[:-1]: value})
+                movies = plex.Library.search(**{method[:-1]: value})
                 movies = [m.ratingKey for m in movies if movies]
-    # elif method in Show.__doc__ or hasattr(Show, method):
-    if method in Show.__doc__ or hasattr(Show, method):
+    elif method in Show.__doc__ or hasattr(Show, method):
         try:
-            shows = plex.ShowLibrary.search(**{method: value})
+            shows = plex.Library.search(**{method: value})
         except PlexExceptions.BadRequest as e:
             print(e)
     else:
-        if method == "imdb-list":
-            movies, missing_movies = imdb_tools.imdb_get_movies(plex, value)
-        elif method == "tmdb-list":
-            movies, missing_movies = imdb_tools.tmdb_get_movies(plex, value)
-        elif method == "trakt-list":
-            movies, missing_movies = trakt_tools.trakt_get_movies(config_path, plex, value)
-            shows, missing_shows = trakt_tools.trakt_get_shows(config_path, plex, value)
+        if isinstance(plex.Library, MovieSection):
+            if method == "imdb-list":
+                movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
+            elif method == "tmdb-list":
+                movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
+            elif method == "trakt-list":
+                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
+        elif isinstance(plex.Library, ShowSection):
+            if method == "trakt-list":
+                shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
     if movies:
         # Check if already in collection
-        cols = plex.MovieLibrary.search(title=c, libtype="collection")
+        cols = plex.Library.search(title=c, libtype="collection")
         try:
             fs = cols[0].children
         except IndexError:
@@ -196,13 +184,12 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                 current_m.addCollection(c)
     if shows:
         # Check if already in collection
-        cols = plex.ShowLibrary.search(title=c, libtype="collection")
+        cols = plex.Library.search(title=c, libtype="collection")
         try:
             fs = cols[0].children
         except IndexError:
             fs = []
         for rk in shows:
-            # current_s = get_show(plex, rk)
             current_s = get_item(plex, rk)
             current_s.reload()
             if current_s in fs:
@@ -243,12 +230,11 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                 print("+++ Adding {} to collection: {}".format(current_s.title, c))
                 current_s.addCollection(c)
     try:
-        missing_movies
-        missing_shows
+        missing
     except UnboundLocalError:
         return
     else:
-        return missing_movies, missing_shows
+        return missing
 
 def delete_collection(data):
     confirm = input("{} selected. Confirm deletion (y/n):".format(data.title))

@@ -124,15 +124,16 @@ def append_collection(config_path, config_update=None):
                             if config_update:
                                 modify_config(config_path, collection_name, method, url)
                             else:
-                                missing_movies, missing_shows = plex_tools.add_to_collection(config_path, plex, method, url, selected_collection.title)
-                                if missing_movies:
-                                    print("{} missing movies from {} List: {}".format(len(missing_movies), l_type, url))
-                                    if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                                        add_to_radarr(config_path, missing_movies)
-                                if missing_shows:
-                                    print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
-                                #     if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
-                                #         add_to_sonarr(missing_shows)
+                                missing = plex_tools.add_to_collection(config_path, plex, method, url, selected_collection.title)
+                                if missing:
+                                    if collection_type == 'movie':
+                                        print("{} missing movies from {} List: {}".format(len(missing), l_type, url))
+                                        if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
+                                            add_to_radarr(config_path, missing)
+                                    elif collection_type == 'show':
+                                        print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
+                                    #     if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
+                                    #         add_to_sonarr(missing_shows)
                                 print("Bad {} List URL".format(l_type))
 
                         elif method == "c":
@@ -198,7 +199,6 @@ print(" Plex Auto Collections by /u/iRawrz  ")
 print("==================================================================")
 
 config_path = args.config_path
-print('arg', args)
 
 if not args.noserver:
     print("Attempting to start image server")
@@ -248,15 +248,16 @@ while not mode == "q":
                 c_name = input("Enter collection name: ")
                 print("Processing {} List: {}".format(l_type, url))
                 try:
-                    missing_movies, missing_shows = plex_tools.add_to_collection(config_path, plex, method, url, c_name)
-                    if missing_movies:
-                        print("{} missing items from {} List: {}".format(len(missing_movies), l_type, url))
-                        if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                            add_to_radarr(config_path, missing)
-                    if missing_shows:
-                        print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
-                        # if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
-                        #     add_to_sonarr(missing)
+                    missing = plex_tools.add_to_collection(config_path, plex, method, url, c_name)
+                    if missing:
+                        if isinstance(plex.Library, MovieSection):
+                            print("{} missing items from {} List: {}".format(len(missing), l_type, url))
+                            if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
+                                add_to_radarr(config_path, missing)
+                        elif isinstance(plex.Library, ShowSection):
+                            print("{} missing shows from {} List: {}".format(len(missing), l_type, url))
+                            # if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
+                            #     add_to_sonarr(missing)
                 except (NameError, TypeError) as f:
                     print("Bad {} list URL".format(l_type))
                 except KeyError as e:
@@ -265,7 +266,7 @@ while not mode == "q":
 
         elif mode == "+":
             if input("Add to collection in config file? (y/n): ") == "y":
-                collections = Config().collections
+                collections = Config(config_path).collections
                 for i, collection in enumerate(collections):
                     print("{}) {}".format(i + 1, collection))
                 selection = None
@@ -278,9 +279,9 @@ while not mode == "q":
                             print("Invalid selection")
                     except (IndexError, ValueError) as e:
                         print("Invalid selection")
-                append_collection(selection)
+                append_collection(config_path, selection)
             else:
-                append_collection()
+                append_collection(config_path)
 
         elif mode == "-":
             data = input("Enter collection name to search for (blank for all): ")
