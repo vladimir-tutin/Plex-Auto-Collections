@@ -14,10 +14,8 @@ collections:
     actors: Dave Chappelle
     details:
       tmdb-summary: 4169
-  Disney+ TV:
-    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-tv-shows
-  Disney+ Movies:
-    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-movies
+  Marvel:
+    trakt-list: https://trakt.tv/users/movistapp/lists/marvel
 plex:
   library: Movies
   library_type: ### 'movie' or 'show' ###
