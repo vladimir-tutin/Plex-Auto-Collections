@@ -8,15 +8,15 @@ from tmdbv3api import Person
 import config_tools
 
 
-def imdb_get_movies(plex, data):
+def imdb_get_movies(config_path, plex, data):
     tmdb = TMDb()
     movie = Movie()
-    tmdb.api_key = config_tools.TMDB().apikey
+    tmdb.api_key = config_tools.TMDB(config_path).apikey
     imdb_url = data
     if imdb_url[-1:] == " ":
         imdb_url = imdb_url[:-1]
     imdb_map = {}
-    library_language = plex.MovieLibrary.language
+    library_language = plex.Library.language
     try:
         r = requests.get(imdb_url, headers={'Accept-Language': library_language})
     except requests.exceptions.MissingSchema:
@@ -25,7 +25,7 @@ def imdb_get_movies(plex, data):
     title_ids = tree.xpath("//div[contains(@class, 'lister-item-image')]"
                            "//a/img//@data-tconst")
     if title_ids:
-        for m in plex.MovieLibrary.all():
+        for m in plex.Library.all():
             if 'themoviedb://' in m.guid:
                 if not tmdb.api_key == "None":
                     tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
@@ -55,7 +55,7 @@ def imdb_get_movies(plex, data):
         return matched_imbd_movies, missing_imdb_movies
 
 
-def tmdb_get_movies(plex, data):
+def tmdb_get_movies(config_path, plex, data):
     try:
         tmdb_id = re.search('.*?(\\d+)', data)
         tmdb_id = tmdb_id.group(1)
@@ -64,7 +64,7 @@ def tmdb_get_movies(plex, data):
 
     t_movie = Movie()
     tmdb = Collection()
-    tmdb.api_key = config_tools.TMDB().apikey  # Set TMDb api key for Collection
+    tmdb.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Collection
     if tmdb.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
     t_movie.api_key = tmdb.api_key  # Copy same api key to Movie
@@ -76,7 +76,7 @@ def tmdb_get_movies(plex, data):
     # Create dictionary of movies and their guid
     # GUIDs reference from which source Plex has pulled the metadata
     p_m_map = {}
-    p_movies = plex.MovieLibrary.all()
+    p_movies = plex.Library.all()
     for m in p_movies:
         guid = m.guid
         if "themoviedb://" in guid:
@@ -114,12 +114,12 @@ def tmdb_get_movies(plex, data):
     return matched, missing
 
 
-def tmdb_get_summary(data, type):
+def tmdb_get_summary(config_path, data, type):
     collection = Collection()
     person = Person()
-    collection.api_key = config_tools.TMDB().apikey
+    collection.api_key = config_tools.TMDB(config_path).apikey
     person.api_key = collection.api_key
-    collection.language = config_tools.TMDB().language
+    collection.language = config_tools.TMDB(config_path).language
     person.language = collection.language
 
     if type == "overview":

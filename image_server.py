@@ -8,8 +8,8 @@ import os
 import time
 
 class Server:
-    def __init__(self):
-        self.server = ImageServer()
+    def __init__(self, config_path):
+        self.server = ImageServer(config_path)
         try:
             self.host = self.server.host
         except AttributeError:
@@ -20,9 +20,9 @@ class Server:
             self.port = "5000"
 
 
-def check_running():
+def check_running(config_path):
     time.sleep(1)
-    srv = Server()
+    srv = Server(config_path)
     try:
         r = requests.get("http://" + srv.host + ":" + str(srv.port), verify=False, timeout=1)
         return "IMAGE SERVER RUNNING ON http://{}:{}/images/".format(srv.host, srv.port)
@@ -30,8 +30,8 @@ def check_running():
         return "IMAGE SERVER NOT RUNNING"
 
 
-def start_srv():
-    server = Server()
+def start_srv(config_path):
+    server = Server(config_path)
     app = Flask(__name__)
     app.upload_folder = "images"
     log = logging.getLogger("werkzeug")
@@ -53,6 +53,4 @@ def start_srv():
 
 
 if __name__ == '__main__':
-    start_srv()
-
-
+    start_srv(config_path)

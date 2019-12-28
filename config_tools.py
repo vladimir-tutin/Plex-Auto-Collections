@@ -8,6 +8,7 @@ from plexapi.video import Movie
 from plexapi.video import Show
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
+from plexapi.library import Collections
 from plex_tools import get_actor_rkey
 from plex_tools import add_to_collection
 from plex_tools import get_collection
@@ -17,8 +18,9 @@ from trakt import Trakt
 import trakt_helpers
 
 class Config:
-    def __init__(self):
-        self.config_path = os.path.join(os.getcwd(), 'config.yml')
+    def __init__(self, config_path):
+        #self.config_path = os.path.join(os.getcwd(), 'config.yml')
+        self.config_path = config_path
         with open(self.config_path, 'rt', encoding='utf-8') as yml:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
         self.plex = self.data['plex']
@@ -30,40 +32,43 @@ class Config:
 
 
 class Plex:
-    def __init__(self):
-        config = Config().plex
+    def __init__(self, config_path):
+        config = Config(config_path).plex
         self.url = config['url']
         self.token = config['token']
         self.timeout = 60
-        # self.library = config['library']
-        self.movie_library = config['movie_library']
-        self.show_library = config['show_library']
+        self.library = config['library']
+        self.library_type = config['library_type']
         self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
         self.Sections = self.Server.library.sections()
-        self.MovieLibrary = next((s for s in self.Sections if (s.title == self.movie_library) and (isinstance(s, MovieSection))), None)
-        self.ShowLibrary = next((s for s in self.Sections if (s.title == self.show_library) and (isinstance(s, ShowSection))), None)
+        if self.library_type == "movie":
+            self.Library = next((s for s in self.Sections if (s.title == self.library) and (isinstance(s, MovieSection))), None)
+        elif self.library_type == "show":
+            self.Library = next((s for s in self.Sections if (s.title == self.library) and (isinstance(s, ShowSection))), None)
+        else:
+            print("Unsupported library type!")
         self.Movie = Movie
         self.Show = Show
 
 
 class Radarr:
-    def __init__(self):
-        config = Config().radarr
+    def __init__(self, config_path):
+        config = Config(config_path).radarr
         self.url = config['url']
         self.token = config['token']
         self.quality = config['quality_profile_id']
 
 
 class TMDB:
-    def __init__(self):
-        config = Config().tmdb
+    def __init__(self, config_path):
+        config = Config(config_path).tmdb
         self.apikey = config['apikey']
         self.language = config['language']
 
 
 class TraktClient:
-    def __init__(self):
-        config = Config().trakt
+    def __init__(self, config_path):
+        config = Config(config_path).trakt
         self.client_id = config['client_id']
         self.client_secret = config['client_secret']
         self.authorization = config['authorization']
@@ -72,12 +77,12 @@ class TraktClient:
         self.updated_authorization = trakt_helpers.authenticate(self.authorization)
         Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
         if self.updated_authorization != self.authorization:
-            trakt_helpers.save_authorization(Config().config_path, self.updated_authorization)
+            trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
 
 
 class ImageServer:
-    def __init__(self):
-        config = Config().image_server
+    def __init__(self, config_path):
+        config = Config(config_path).image_server
         try:
             self.host = config['host']
         except:
@@ -87,9 +92,13 @@ class ImageServer:
         except:
             a = 1
 
-def update_from_config(plex, skip_radarr=False):
-    config = Config()
+def update_from_config(config_path, plex, skip_radarr=False):
+    config = Config(config_path)
     collections = config.collections
+    if isinstance(plex.Library, MovieSection):
+        libtype = "movie"
+    elif isinstance(plex.Library, ShowSection):
+        libtype = "show"
     for c in collections:
         print("Updating collection: {}...".format(c))
         methods = [m for m in collections[c] if m not in ("details", "subfilters")]
@@ -109,56 +118,57 @@ def update_from_config(plex, skip_radarr=False):
                 if m == "actors" or m == "actor":
                     v = get_actor_rkey(plex, v)
                 try:
-                    missing_movies, missing_shows = add_to_collection(plex, m, v, c, subfilters)
+                    missing = add_to_collection(config_path, plex, m, v, c, subfilters)
                 except UnboundLocalError:  # No sub-filters
-                    missing_movies, missing_shows = add_to_collection(plex, m, v, c)
+                    missing = add_to_collection(config_path, plex, m, v, c)
                 except (KeyError, ValueError) as e:
                     print(e)
-                    missing_movies = False
-                    missing_shows = False
-                if missing_movies:
-                    if "imdb" in m:
-                        m = "IMDb"
-                    elif "trakt in m":
-                        m = "Trakt"
-                    else:
-                        m = "TMDb"
-                    print("{} missing movies from {} List: {}".format(len(missing_movies), m, v))
-                    if not skip_radarr:
-                        if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                            add_to_radarr(missing_movies)
-                if missing_shows:
-                    if "trakt in m":
-                        m = "Trakt"
-                    else:
-                        m = "TMDb"
-                    print("{} missing shows from {} List: {}".format(len(missing_shows), m, v))
-                    # if not skip_sonarr:
-                    #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
-                    #         add_to_radarr(missing_shows)
+                    missing = False
+                if missing:
+                    if libtype == "movie":
+                        if "imdb" in m:
+                            m = "IMDb"
+                        elif "trakt in m":
+                            m = "Trakt"
+                        else:
+                            m = "TMDb"
+                        print("{} missing movies from {} List: {}".format(len(missing), m, v))
+                        if not skip_radarr:
+                            if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                                add_to_radarr(config_path, missing)
+                    elif libtype == "show":
+                        if "trakt in m":
+                            m = "Trakt"
+                        else:
+                            m = "TMDb"
+                        print("{} missing shows from {} List: {}".format(len(missing), m, v))
+                        # if not skip_sonarr:
+                        #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                        #         add_to_radarr(missing_shows)
         # Multiple collections of the same name
         if "details" in collections[c]:
-            # Check if there are multiple collections with the same name
-            movie_collections = plex.MovieLibrary.search(title=c, libtype="collection")
-            show_collections = plex.ShowLibrary.search(title=c, libtype="collection")
-            if len(movie_collections + show_collections) > 1:
-                print("Multiple collections named {}.\nUpdate of \"details\" is currently unsupported.".format(c))
-                continue
+            # # Check if there are multiple collections with the same name
+            # movie_collections = plex.MovieLibrary.search(title=c, libtype="collection")
+            # show_collections = plex.ShowLibrary.search(title=c, libtype="collection")
+            # if len(movie_collections + show_collections) > 1:
+            #     print("Multiple collections named {}.\nUpdate of \"details\" is currently unsupported.".format(c))
+            #     continue
             plex_collection = get_collection(plex, c)
+            if not isinstance(plex_collection, Collections):
+                # No collections created with requested criteria
+                continue
             for dt_m in collections[c]["details"]:
                 rkey = plex_collection.ratingKey
-                subtype = plex_collection.subtype
+                # subtype = plex_collection.subtype
                 dt_v = collections[c]["details"][dt_m]
                 if "summary" in dt_m:
                     if "tmdb" in dt_m:
                         try:
-                            dt_v = tmdb_get_summary(dt_v, "overview")
+                            dt_v = tmdb_get_summary(config_path, dt_v, "overview")
                         except AttributeError:
-                            dt_v = tmdb_get_summary(dt_v, "biography")
-                    if subtype == 'movie':
-                        library_name = plex.MovieLibrary
-                    elif subtype == 'show':
-                        library_name = plex.ShowLibrary
+                            dt_v = tmdb_get_summary(config_path, dt_v, "biography")
+
+                    library_name = plex.Library
 
                     #section = plex.Server.library.section(library_name).key
                     section = library_name.key
@@ -203,8 +213,8 @@ def update_from_config(plex, skip_radarr=False):
                     except:
                         False
 
-def modify_config(c_name, m, value):
-    config = Config()
+def modify_config(config_path, c_name, m, value):
+    config = Config(config_path)
     if m == "movie":
         print("Movie's in config not supported yet")
     else:

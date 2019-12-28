@@ -3,8 +3,8 @@ from urllib.parse import urlparse
 import plex_tools
 import trakt
 
-def trakt_get_movies(plex, data):
-    config_tools.TraktClient()
+def trakt_get_movies(config_path, plex, data):
+    config_tools.TraktClient(config_path)
     trakt_url = data
     if trakt_url[-1:] == " ":
         trakt_url = trakt_url[:-1]
@@ -14,7 +14,7 @@ def trakt_get_movies(plex, data):
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     if title_ids:
-        for item in plex.MovieLibrary.all():
+        for item in plex.Library.all():
             guid = urlparse(item.guid)
             item_type = guid.scheme.split('.')[-1]
             if item_type == 'imdb':
@@ -52,8 +52,8 @@ def trakt_get_movies(plex, data):
         # No movies
         return None, None
 
-def trakt_get_shows(plex, data):
-    config_tools.TraktClient()
+def trakt_get_shows(config_path, plex, data):
+    config_tools.TraktClient(config_path)
     trakt_url = data
     if trakt_url[-1:] == " ":
         trakt_url = trakt_url[:-1]
@@ -73,7 +73,7 @@ def trakt_get_shows(plex, data):
                 title_ids.append(m.show.pk[1])
 
     if title_ids:
-        for item in plex.ShowLibrary.all():
+        for item in plex.Library.all():
             guid = urlparse(item.guid)
             item_type = guid.scheme.split('.')[-1]
             # print('item_type', item, item_type)
