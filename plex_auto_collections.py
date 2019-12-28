@@ -199,6 +199,7 @@ print(" Plex Auto Collections by /u/iRawrz  ")
 print("==================================================================")
 
 config_path = args.config_path
+plex = Plex(config_path)
 
 if not args.noserver:
     print("Attempting to start image server")
@@ -211,8 +212,6 @@ if args.update:
     # sys.stdout = open("pac.log", "w")
     update_from_config(config_path, plex, True)
     sys.exit(0)
-
-plex = Plex(config_path)
 
 if input("Update Collections from Config? (y/n): ").upper() == "Y":
     update_from_config(config_path, plex)
