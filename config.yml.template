@@ -19,8 +19,8 @@ collections:
   Disney+ Movies:
     trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-movies
 plex:
-  movie_library: Movies
-  show_library: TV Shows
+  library: Movies
+  library_type: ### 'movie' or 'show' ###
   token: ###################
   url: http://192.168.1.5:32400
 radarr:
