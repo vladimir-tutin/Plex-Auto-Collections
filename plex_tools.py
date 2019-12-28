@@ -121,7 +121,7 @@ def get_collection(plex, data, exact=None, subtype=None):
     else:
         return "No collection found"
 
-def add_to_collection(plex, method, value, c, subfilters=None):
+def add_to_collection(config_path, plex, method, value, c, subfilters=None):
     movies = []
     missing_movies = []
     shows = []
@@ -146,8 +146,8 @@ def add_to_collection(plex, method, value, c, subfilters=None):
         elif method == "tmdb-list":
             movies, missing_movies = imdb_tools.tmdb_get_movies(plex, value)
         elif method == "trakt-list":
-            movies, missing_movies = trakt_tools.trakt_get_movies(plex, value)
-            shows, missing_shows = trakt_tools.trakt_get_shows(plex, value)
+            movies, missing_movies = trakt_tools.trakt_get_movies(config_path, plex, value)
+            shows, missing_shows = trakt_tools.trakt_get_shows(config_path, plex, value)
     if movies:
         # Check if already in collection
         cols = plex.MovieLibrary.search(title=c, libtype="collection")

@@ -17,8 +17,9 @@ from trakt import Trakt
 import trakt_helpers
 
 class Config:
-    def __init__(self):
-        self.config_path = os.path.join(os.getcwd(), 'config.yml')
+    def __init__(self, config_path):
+        #self.config_path = os.path.join(os.getcwd(), 'config.yml')
+        self.config_path = config_path
         with open(self.config_path, 'rt', encoding='utf-8') as yml:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
         self.plex = self.data['plex']
@@ -30,8 +31,8 @@ class Config:
 
 
 class Plex:
-    def __init__(self):
-        config = Config().plex
+    def __init__(self, config_path):
+        config = Config(config_path).plex
         self.url = config['url']
         self.token = config['token']
         self.timeout = 60
@@ -47,23 +48,23 @@ class Plex:
 
 
 class Radarr:
-    def __init__(self):
-        config = Config().radarr
+    def __init__(self, config_path):
+        config = Config(config_path).radarr
         self.url = config['url']
         self.token = config['token']
         self.quality = config['quality_profile_id']
 
 
 class TMDB:
-    def __init__(self):
-        config = Config().tmdb
+    def __init__(self, config_path):
+        config = Config(config_path).tmdb
         self.apikey = config['apikey']
         self.language = config['language']
 
 
 class TraktClient:
-    def __init__(self):
-        config = Config().trakt
+    def __init__(self, config_path):
+        config = Config(config_path).trakt
         self.client_id = config['client_id']
         self.client_secret = config['client_secret']
         self.authorization = config['authorization']
@@ -76,8 +77,8 @@ class TraktClient:
 
 
 class ImageServer:
-    def __init__(self):
-        config = Config().image_server
+    def __init__(self, config_path):
+        config = Config(config_path).image_server
         try:
             self.host = config['host']
         except:
@@ -87,8 +88,8 @@ class ImageServer:
         except:
             a = 1
 
-def update_from_config(plex, skip_radarr=False):
-    config = Config()
+def update_from_config(config_path, plex, skip_radarr=False):
+    config = Config(config_path)
     collections = config.collections
     for c in collections:
         print("Updating collection: {}...".format(c))
@@ -109,9 +110,9 @@ def update_from_config(plex, skip_radarr=False):
                 if m == "actors" or m == "actor":
                     v = get_actor_rkey(plex, v)
                 try:
-                    missing_movies, missing_shows = add_to_collection(plex, m, v, c, subfilters)
+                    missing_movies, missing_shows = add_to_collection(config_path, plex, m, v, c, subfilters)
                 except UnboundLocalError:  # No sub-filters
-                    missing_movies, missing_shows = add_to_collection(plex, m, v, c)
+                    missing_movies, missing_shows = add_to_collection(config_path, plex, m, v, c)
                 except (KeyError, ValueError) as e:
                     print(e)
                     missing_movies = False
@@ -126,7 +127,7 @@ def update_from_config(plex, skip_radarr=False):
                     print("{} missing movies from {} List: {}".format(len(missing_movies), m, v))
                     if not skip_radarr:
                         if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                            add_to_radarr(missing_movies)
+                            add_to_radarr(config_path, missing_movies)
                 if missing_shows:
                     if "trakt in m":
                         m = "Trakt"
@@ -203,8 +204,8 @@ def update_from_config(plex, skip_radarr=False):
                     except:
                         False
 
-def modify_config(c_name, m, value):
-    config = Config()
+def modify_config(config_path, c_name, m, value):
+    config = Config(config_path)
     if m == "movie":
         print("Movie's in config not supported yet")
     else:

@@ -102,9 +102,9 @@ def append_collection(config_update=None):
                             value = input("Enter Actor Name: ")
                             a_rkey = plex_tools.get_actor_rkey(plex, value)
                             if config_update:
-                                modify_config(collection_name, method, value)
+                                modify_config(config_path, collection_name, method, value)
                             else:
-                                plex_tools.add_to_collection(plex, method, a_rkey, selected_collection.title)
+                                plex_tools.add_to_collection(config_path, plex, method, a_rkey, selected_collection.title)
 
                         elif method == "l":
                             l_type = input("Enter list type IMDb(i) TMDb(t) Trakt(k): ")
@@ -122,9 +122,9 @@ def append_collection(config_update=None):
                             url = input("Enter {} List URL: ".format(l_type)).strip()
                             print("Processing {} List: {}".format(l_type, url))
                             if config_update:
-                                modify_config(collection_name, method, url)
+                                modify_config(config_path, collection_name, method, url)
                             else:
-                                missing_movies, missing_shows = plex_tools.add_to_collection(plex, method, url, selected_collection.title)
+                                missing_movies, missing_shows = plex_tools.add_to_collection(config_path, plex, method, url, selected_collection.title)
                                 if missing_movies:
                                     print("{} missing movies from {} List: {}".format(len(missing_movies), l_type, url))
                                     if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
@@ -152,9 +152,9 @@ def append_collection(config_update=None):
                                         method_p = method
                                     value = input("Enter {}: ".format(method_p))
                                     if config_update:
-                                        modify_config(collection_name, method, value)
+                                        modify_config(config_path, collection_name, method, value)
                                     else:
-                                        plex_tools.add_to_collection(plex, method, value, selected_collection.title)
+                                        plex_tools.add_to_collection(config_path, plex, method, value, selected_collection.title)
                                     break
                                 else:
                                     print("Filter method did not match an attribute for plexapi.video.Movie")
@@ -176,35 +176,46 @@ def append_collection(config_update=None):
 if hasattr(__builtins__, 'raw_input'):
     input = raw_input
 
-plex = Plex()
-
 parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--config_path",
+                    help="Configuration file",
+                    nargs='?',
+                    const=1,
+                    type=str,
+                    default="config.yml")
 parser.add_argument("-u", "--update",
                     help="Automatically update collections off config and quits",
                     action="store_true")
 parser.add_argument("-ns", "--noserver",
                     help="Don't start the image server",
                     action="store_true")
+
 args = parser.parse_args()
+
 
 print("==================================================================")
 print(" Plex Auto Collections by /u/iRawrz  ")
 print("==================================================================")
 
+config_path = args.config_path
+print('arg', args)
+
 if not args.noserver:
     print("Attempting to start image server")
-    pid = threading.Thread(target=image_server.start_srv)
+    pid = threading.Thread(target=image_server.start_srv, args=(config_path,))
     pid.daemon = True
     pid.start()
-    print(image_server.check_running())
+    print(image_server.check_running(config_path))
 
 if args.update:
     # sys.stdout = open("pac.log", "w")
-    update_from_config(plex, True)
+    update_from_config(config_path, plex, True)
     sys.exit(0)
 
+plex = Plex(config_path)
+
 if input("Update Collections from Config? (y/n): ").upper() == "Y":
-    update_from_config(plex)
+    update_from_config(config_path, plex)
 
 print("\n")
 mode = None
@@ -216,14 +227,14 @@ while not mode == "q":
         mode = input("Select Mode: ")
 
         if mode == "r":
-            update_from_config(plex)
+            update_from_config(config_path, plex)
 
         elif mode == "a":
             actor = input("Enter actor name: ")
             a_rkey = plex_tools.get_actor_rkey(plex, actor)
             if isinstance(a_rkey, int):
                 c_name = input("Enter collection name: ")
-                plex_tools.add_to_collection(plex, "actors", a_rkey, c_name)
+                plex_tools.add_to_collection(config_path, plex, "actors", a_rkey, c_name)
             else:
                 print("Invalid actor")
             print("\n")
@@ -237,7 +248,7 @@ while not mode == "q":
                 c_name = input("Enter collection name: ")
                 print("Processing {} List: {}".format(l_type, url))
                 try:
-                    missing_movies, missing_shows = plex_tools.add_to_collection(plex, method, url, c_name)
+                    missing_movies, missing_shows = plex_tools.add_to_collection(config_path, plex, method, url, c_name)
                     if missing_movies:
                         print("{} missing items from {} List: {}".format(len(missing_movies), l_type, url))
                         if input("Add missing movies to Radarr? (y/n)").upper() == "Y":

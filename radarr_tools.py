@@ -2,8 +2,8 @@ import re, json, requests, os, yaml
 from tmdbv3api import TMDb
 from tmdbv3api import Movie
 
-def add_to_radarr(missing):
-    config_path = os.path.join(os.getcwd(), 'config.yml')
+def add_to_radarr(config_path, missing):
+    # config_path = os.path.join(os.getcwd(), 'config.yml')
     config = yaml.load(open(config_path), Loader=yaml.FullLoader)
 
     tmdb = TMDb()

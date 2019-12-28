@@ -3,8 +3,8 @@ from urllib.parse import urlparse
 import plex_tools
 import trakt
 
-def trakt_get_movies(plex, data):
-    config_tools.TraktClient()
+def trakt_get_movies(config_path, plex, data):
+    config_tools.TraktClient(config_path)
     trakt_url = data
     if trakt_url[-1:] == " ":
         trakt_url = trakt_url[:-1]
@@ -52,8 +52,8 @@ def trakt_get_movies(plex, data):
         # No movies
         return None, None
 
-def trakt_get_shows(plex, data):
-    config_tools.TraktClient()
+def trakt_get_shows(config_path, plex, data):
+    config_tools.TraktClient(config_path)
     trakt_url = data
     if trakt_url[-1:] == " ":
         trakt_url = trakt_url[:-1]
