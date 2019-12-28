@@ -14,7 +14,7 @@ from config_tools import update_from_config
 from radarr_tools import add_to_radarr
 
 
-def append_collection(config_update=None):
+def append_collection(config_path, config_update=None):
     while True:
         if config_update:
             collection_name = config_update
@@ -128,7 +128,7 @@ def append_collection(config_update=None):
                                 if missing_movies:
                                     print("{} missing movies from {} List: {}".format(len(missing_movies), l_type, url))
                                     if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                                        add_to_radarr(missing_movies)
+                                        add_to_radarr(config_path, missing_movies)
                                 if missing_shows:
                                     print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
                                 #     if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
@@ -252,7 +252,7 @@ while not mode == "q":
                     if missing_movies:
                         print("{} missing items from {} List: {}".format(len(missing_movies), l_type, url))
                         if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
-                            add_to_radarr(missing)
+                            add_to_radarr(config_path, missing)
                     if missing_shows:
                         print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
                         # if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
