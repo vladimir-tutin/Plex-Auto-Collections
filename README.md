@@ -105,10 +105,11 @@ collections:
     subfilters:
       actors: Daniel Craig
   Christmas:
-    - https://trakt.tv/users/movistapp/lists/christmas-movies
-    - https://trakt.tv/users/2borno2b/lists/christmas-movies-extravanganza
+    trakt-list:
+      - https://trakt.tv/users/movistapp/lists/christmas-movies
+      - https://trakt.tv/users/2borno2b/lists/christmas-movies-extravanganza
   Marvel:
-    -https://trakt.tv/users/movistapp/lists/marvel
+    trakt-list: https://trakt.tv/users/movistapp/lists/marvel
 plex:
   library: Movies
   library_type: movie # or 'show'
