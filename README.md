@@ -180,3 +180,7 @@ based off the collection and then quit by running. This applies to the standalon
 If you would like to not run the image server add the --noserver flag to the command
 
     python plex_auto_collections.py --noserver
+    
+A different configuration file can be specified with the -c <path_to_config> or --config_path <path_to_config>. This is useful for creating collections against different libraries, such as a Movie and TV library. In this case, be sure to update the `library_type` in the configuration file.
+
+```python plex_auto_collections.py -c <path_to_config>```
