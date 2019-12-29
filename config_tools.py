@@ -132,7 +132,7 @@ def update_from_config(config_path, plex, skip_radarr=False):
                     if libtype == "movie":
                         if "imdb" in m:
                             method_name = "IMDb"
-                        elif "trakt" in m":
+                        elif "trakt" in m:
                             method_name = "Trakt"
                         else:
                             method_name = "TMDb"
