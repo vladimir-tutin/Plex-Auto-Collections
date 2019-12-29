@@ -108,7 +108,11 @@ def update_from_config(config_path, plex, skip_radarr=False):
                 sf_string = sf, collections[c]["subfilters"][sf]
                 subfilters.append(sf_string)
         for m in methods:
-            values = collections[c][m].split(", ")
+            if isinstance(collections[c][m], list):
+                # Support multiple imdb/tmdb/trakt lists
+                values = collections[c][m]
+            else:
+                values = collections[c][m].split(", ")
             for v in values:
                 if m[-1:] == "s":
                     m_print = m[:-1]
@@ -127,21 +131,21 @@ def update_from_config(config_path, plex, skip_radarr=False):
                 if missing:
                     if libtype == "movie":
                         if "imdb" in m:
-                            m = "IMDb"
-                        elif "trakt in m":
-                            m = "Trakt"
+                            method_name = "IMDb"
+                        elif "trakt" in m:
+                            method_name = "Trakt"
                         else:
-                            m = "TMDb"
-                        print("{} missing movies from {} List: {}".format(len(missing), m, v))
+                            method_name = "TMDb"
+                        print("{} missing movies from {} List: {}".format(len(missing), method_name, v))
                         if not skip_radarr:
                             if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
                                 add_to_radarr(config_path, missing)
                     elif libtype == "show":
-                        if "trakt in m":
-                            m = "Trakt"
+                        if "trakt" in m:
+                            method_name = "Trakt"
                         else:
-                            m = "TMDb"
-                        print("{} missing shows from {} List: {}".format(len(missing), m, v))
+                            method_name = "TMDb"
+                        print("{} missing shows from {} List: {}".format(len(missing), method_name, v))
                         # if not skip_sonarr:
                         #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
                         #         add_to_radarr(missing_shows)
