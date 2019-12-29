@@ -104,13 +104,14 @@ collections:
     imdb-list: https://www.imdb.com/list/ls006405458/
     subfilters:
       actors: Daniel Craig
-  Disney+ TV:
-    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-tv-shows
-  Disney+ Movies:
-    trakt-list: https://trakt.tv/users/drew-casteo/lists/disney-movies
+  Christmas:
+    - https://trakt.tv/users/movistapp/lists/christmas-movies
+    - https://trakt.tv/users/2borno2b/lists/christmas-movies-extravanganza
+  Marvel:
+    -https://trakt.tv/users/movistapp/lists/marvel
 plex:
-  movie_library: Movies
-  show_library: TV Shows
+  library: Movies
+  library_type: movie # or 'show'
   token: ################ 
   url: http://192.168.1.5:32400
 radarr:
