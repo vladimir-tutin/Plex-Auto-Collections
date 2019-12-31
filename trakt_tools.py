@@ -126,7 +126,7 @@ def trakt_get_shows(config_path, plex, data):
                 log.debug('Found {}'.format(show))
                 matched_tvdb_shows.append(plex.Server.fetchItem(show.ratingKey))
             else:
-                log.debug('*** {} NOT found.'.format(imdb_id))
+                log.debug('*** {} NOT found.'.format(tvdb_id))
                 missing_tvdb_shows.append(tvdb_id)
 
         return matched_tvdb_shows, missing_tvdb_shows
