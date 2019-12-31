@@ -262,10 +262,12 @@ while not mode == "q":
                     if missing:
                         if isinstance(plex.Library, MovieSection):
                             log.info("{} missing items from {} List: {}".format(len(missing), l_type, url))
+                            log.debug(missing)
                             if input("Add missing movies to Radarr? (y/n)").upper() == "Y":
                                 add_to_radarr(config_path, missing)
                         elif isinstance(plex.Library, ShowSection):
                             log.info("{} missing shows from {} List: {}".format(len(missing), l_type, url))
+                            log.debug(missing)
                             # if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
                             #     add_to_sonarr(missing)
                 except (NameError, TypeError) as f:
