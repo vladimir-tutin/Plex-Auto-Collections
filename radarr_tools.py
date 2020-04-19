@@ -11,12 +11,13 @@ def add_to_radarr(config_path, missing):
     tmdb.language = "en"
 
     url = config['radarr']['url'] + "/api/movie"
-    quality = config['radarr']['quality_profile_id']
     token = config['radarr']['token']
+    quality = config['radarr']['quality_profile_id']
+    rootfolder = config['radarr']['root_folder_path']
     search = config['radarr']['search']
     querystring = {"apikey": "{}".format(token)}
 
-    if "None" in (tmdb.api_key, url, quality, token):
+    if "None" in (tmdb.api_key, url, token, quality, rootfolder):
         print("All TMDB / Radarr details must be filled out in the configuration "
               "file to import missing movies into Radarr")
         print("\n")
@@ -43,7 +44,7 @@ def add_to_radarr(config_path, missing):
             "tmdbid": str(tmdb_id),
             "titleslug": titleslug,
             "monitored": "true",
-            "rootFolderPath": "//mnt//user//PlexMedia//movies",
+            "rootFolderPath": rootfolder,
             "images": [{
                 "covertype": "poster",
                 "url": tmdb_poster

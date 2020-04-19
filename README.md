@@ -119,6 +119,7 @@ radarr:
   url: http://192.168.1.5:7878/radarr/
   token: ################ 
   quality_profile_id: 4
+  root_folder_path: /mnt/user/PlexMedia/movies
   search: true
 tmdb:
   apikey: ################ 
