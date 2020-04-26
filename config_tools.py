@@ -3,6 +3,8 @@ import os
 import yaml
 import requests
 import socket
+import sys
+
 from plexapi.server import PlexServer
 from plexapi.video import Movie
 from plexapi.video import Show
@@ -32,6 +34,25 @@ class Config:
         self.radarr = self.data['radarr']
         self.collections = self.data['collections']
         self.image_server = self.data['image-server']
+        self.debug = self.data['debug']
+
+class Log:
+    def __init__(self, config_path):
+        debug = Config(config_path).debug
+        if debug:
+            logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    stream=sys.stdout,
+                    level=logging.DEBUG,
+                    force=True)
+        else:
+            logging.basicConfig(format='%(message)s',
+                    stream=sys.stdout,
+                    level=logging.INFO,
+                    force=True)
+        # # # disable bloat loggers
+        logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger('urllib3').setLevel(logging.ERROR)
+        logging.getLogger('schedule').setLevel(logging.ERROR)
 
 
 class Plex:

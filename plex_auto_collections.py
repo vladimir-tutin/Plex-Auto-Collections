@@ -2,28 +2,21 @@ import argparse
 import sys
 import threading
 
-import logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    stream=sys.stdout,
-    level=logging.DEBUG)
-log = logging.getLogger(__name__)
-# disable bloat loggers
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger('urllib3').setLevel(logging.ERROR)
-logging.getLogger('schedule').setLevel(logging.ERROR)
-
-
 from plexapi.video import Movie
 from plexapi.video import Show
 
 import image_server
 import plex_tools
+
+from config_tools import Log
 from config_tools import Config
 from config_tools import Plex
 from config_tools import modify_config
 from config_tools import update_from_config
 from radarr_tools import add_to_radarr
 
+import logging
+log = logging.getLogger(__name__)
 
 def append_collection(config_path, config_update=None):
     while True:
@@ -210,6 +203,7 @@ print(" Plex Auto Collections by /u/iRawrz  ")
 print("==================================================================")
 
 config_path = args.config_path
+Log(config_path)
 plex = Plex(config_path)
 
 if not args.noserver:
@@ -232,8 +226,8 @@ mode = None
 while not mode == "q":
     try:
         print("Modes: Rescan(r), Actor(a), IMDb/TMDb/Trakt List(l), "
-              "Add to Existing Collection(+), Delete(-), "
-              "Search(s), Quit(q)\n")
+            "Add to Existing Collection(+), Delete(-), "
+            "Search(s), Quit(q)\n")
         mode = input("Select Mode: ")
 
         if mode == "r":
