@@ -3,8 +3,6 @@ import os
 import yaml
 import requests
 import socket
-import sys
-
 from plexapi.server import PlexServer
 from plexapi.video import Movie
 from plexapi.video import Show
@@ -19,9 +17,6 @@ from imdb_tools import tmdb_get_summary
 from trakt import Trakt
 import trakt_helpers
 
-import logging
-log = logging.getLogger(__name__)
-
 class Config:
     def __init__(self, config_path):
         #self.config_path = os.path.join(os.getcwd(), 'config.yml')
@@ -34,25 +29,6 @@ class Config:
         self.radarr = self.data['radarr']
         self.collections = self.data['collections']
         self.image_server = self.data['image-server']
-        self.debug = self.data['debug']
-
-class Log:
-    def __init__(self, config_path):
-        debug = Config(config_path).debug
-        if debug:
-            logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-                    stream=sys.stdout,
-                    level=logging.DEBUG,
-                    force=True)
-        else:
-            logging.basicConfig(format='%(message)s',
-                    stream=sys.stdout,
-                    level=logging.INFO,
-                    force=True)
-        # # # disable bloat loggers
-        logging.getLogger("requests").setLevel(logging.WARNING)
-        logging.getLogger('urllib3').setLevel(logging.ERROR)
-        logging.getLogger('schedule').setLevel(logging.ERROR)
 
 
 class Plex:
@@ -70,7 +46,7 @@ class Plex:
         elif self.library_type == "show":
             self.Library = next((s for s in self.Sections if (s.title == self.library) and (isinstance(s, ShowSection))), None)
         else:
-            log.error('Unsupported library type. Must be either \'movie\' or \'show\'.')
+            print("Unsupported library type!")
         self.Movie = Movie
         self.Show = Show
 
@@ -124,7 +100,7 @@ def update_from_config(config_path, plex, skip_radarr=False):
     elif isinstance(plex.Library, ShowSection):
         libtype = "show"
     for c in collections:
-        log.info("Updating collection: {}...".format(c))
+        print("Updating collection: {}...".format(c))
         methods = [m for m in collections[c] if m not in ("details", "subfilters")]
         subfilters = []
         if "subfilters" in collections[c]:
@@ -142,7 +118,7 @@ def update_from_config(config_path, plex, skip_radarr=False):
                     m_print = m[:-1]
                 else:
                     m_print = m
-                log.info("Processing {}: {}".format(m_print, v))
+                print("Processing {}: {}".format(m_print, v))
                 if m == "actors" or m == "actor":
                     v = get_actor_rkey(plex, v)
                 try:
@@ -150,7 +126,7 @@ def update_from_config(config_path, plex, skip_radarr=False):
                 except UnboundLocalError:  # No sub-filters
                     missing = add_to_collection(config_path, plex, m, v, c)
                 except (KeyError, ValueError) as e:
-                    log.error(e)
+                    print(e)
                     missing = False
                 if missing:
                     if libtype == "movie":
@@ -160,7 +136,7 @@ def update_from_config(config_path, plex, skip_radarr=False):
                             method_name = "Trakt"
                         else:
                             method_name = "TMDb"
-                        log.info("{} missing movies from {} List: {}".format(len(missing), method_name, v))
+                        print("{} missing movies from {} List: {}".format(len(missing), method_name, v))
                         if not skip_radarr:
                             if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
                                 add_to_radarr(config_path, missing)
@@ -169,7 +145,7 @@ def update_from_config(config_path, plex, skip_radarr=False):
                             method_name = "Trakt"
                         else:
                             method_name = "TMDb"
-                        log.info("{} missing shows from {} List: {}".format(len(missing), method_name, v))
+                        print("{} missing shows from {} List: {}".format(len(missing), method_name, v))
                         # if not skip_sonarr:
                         #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
                         #         add_to_radarr(missing_shows)
@@ -244,7 +220,7 @@ def update_from_config(config_path, plex, skip_radarr=False):
 def modify_config(config_path, c_name, m, value):
     config = Config(config_path)
     if m == "movie":
-        log.error("Movies in config not supported yet")
+        print("Movie's in config not supported yet")
     else:
         try:
             if value not in str(config.data['collections'][c_name][m]):
@@ -254,10 +230,10 @@ def modify_config(config_path, c_name, m, value):
                 except TypeError:
                     config.data['collections'][c_name][m] = value
             else:
-                log.info("Value already in collection config")
+                print("Value already in collection config")
                 return
         except KeyError:
             config.data['collections'][c_name][m] = value
-        log.info("Updated config file")
+        print("Updated config file")
         with open(config.config_path, "w") as f:
             yaml.dump(config.data, f)

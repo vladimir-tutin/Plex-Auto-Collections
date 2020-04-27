@@ -6,14 +6,11 @@ from plexapi.library import ShowSection
 import imdb_tools
 import trakt_tools
 
-import logging
-log = logging.getLogger(__name__)
 
 def get_movie(plex, data):
     # If an int is passed as data, assume it is a movie's rating key
     if isinstance(data, int):
         try:
-            # return plex.Server.fetchItem(data)
             return plex.Server.fetchItem(data)
         except PlexExceptions.BadRequest:
             return "Nothing found"
@@ -31,7 +28,6 @@ def get_item(plex, data):
     # If an int is passed as data, assume it is a movie's rating key
     if isinstance(data, int):
         try:
-            log.debug('Fetching {}'.format(data))
             return plex.Server.fetchItem(data)
         except PlexExceptions.BadRequest:
             return "Nothing found"
@@ -41,7 +37,6 @@ def get_item(plex, data):
         return data
     else:
         print(data)
-        log.debug('Searching for {}'.format(data))
         item_list = plex.Library.search(title=data)
         if item_list:
             return item_list
@@ -150,9 +145,9 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             fs = []
         for rk in movies:
             current_m = get_movie(plex, rk)
-            # current_m.reload()
+            current_m.reload()
             if current_m in fs:
-                log.info("{} is already in collection: {}".format(current_m.title, c))
+                print("{} is already in collection: {}".format(current_m.title, c))
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -182,10 +177,10 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                         match = False
                         break
                 if match:
-                    log.info("+++ Adding {} to collection {}".format(current_m.title, c))
+                    print("+++ Adding {} to collection {}".format(current_m.title, c))
                     current_m.addCollection(c)
             elif not subfilters:
-                log.info("+++ Adding {} to collection: {}".format(current_m.title, c))
+                print("+++ Adding {} to collection: {}".format(current_m.title, c))
                 current_m.addCollection(c)
     if shows:
         # Check if already in collection
@@ -198,7 +193,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             current_s = get_item(plex, rk)
             current_s.reload()
             if current_s in fs:
-                log.info("{} is already in collection: {}".format(current_s.title, c))
+                print("{} is already in collection: {}".format(current_s.title, c))
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -213,7 +208,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                         else:
                             show_attrs = [str(show_attrs)]
                     except AttributeError as e:
-                        log.error(e)
+                        print(e)
                         # for media in current_s.media:
                         #     if method == "video-resolution":
                         #         show_attrs = [media.videoResolution]
@@ -229,10 +224,10 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                         match = False
                         break
                 if match:
-                    log.info("+++ Adding {} to collection {}".format(current_s.title, c))
+                    print("+++ Adding {} to collection {}".format(current_s.title, c))
                     current_s.addCollection(c)
             elif not subfilters:
-                log.info("+++ Adding {} to collection: {}".format(current_s.title, c))
+                print("+++ Adding {} to collection: {}".format(current_s.title, c))
                 current_s.addCollection(c)
     try:
         missing
@@ -245,4 +240,4 @@ def delete_collection(data):
     confirm = input("{} selected. Confirm deletion (y/n):".format(data.title))
     if confirm == "y":
         data.delete()
-        log.info("Collection deleted")
+        print("Collection deleted")

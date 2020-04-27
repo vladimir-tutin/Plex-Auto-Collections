@@ -1,4 +1,3 @@
-debug: False
 collections:
   Jurassic Park:
     tmdb-list: https://www.themoviedb.org/collection/328
