@@ -24,10 +24,16 @@ def add_to_radarr(missing):
 
     movie = Movie()
     for m in missing:
-        tmdb_details = movie.external(external_id=str(m), external_source="imdb_id")['movie_results'][0]
+        try:
+            tmdb_details = movie.external(external_id=str(m), external_source="imdb_id")['movie_results'][0]
+        except:
+            continue
 
         tmdb_title = tmdb_details['title']
-        tmdb_year = tmdb_details['release_date'].split("-")[0]
+        try:
+            tmdb_year = tmdb_details['release_date'].split("-")[0]
+        except:
+            tmdb_year = ''
         tmdb_id = tmdb_details['id']
         tmdb_poster = "https://image.tmdb.org/t/p/original{}".format(tmdb_details['poster_path'])
 
