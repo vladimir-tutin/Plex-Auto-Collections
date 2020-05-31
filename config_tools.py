@@ -99,8 +99,15 @@ def update_from_config(plex, skip_radarr=False):
                             add_to_radarr(missing)
         if "details" in collections[c]:
             for dt_m in collections[c]["details"]:
-                rkey = get_collection(plex, c).ratingKey
-                dt_v = collections[c]["details"][dt_m]
+                rkey = ''
+                dt_v = ''
+                try:
+                    if hasattr(get_collection(plex, c), 'ratingKey'):
+                        rkey = get_collection(plex, c).ratingKey
+                    dt_v = collections[c]["details"][dt_m]
+                except:
+                    rkey = ''
+                    dt_v = ''
                 if "summary" in dt_m:
                     if "tmdb" in dt_m:
                         try:

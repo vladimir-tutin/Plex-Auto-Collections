@@ -4,6 +4,7 @@ from lxml import html
 from tmdbv3api import TMDb
 from tmdbv3api import Movie
 from tmdbv3api import Collection
+from tmdbv3api import List
 from tmdbv3api import Person
 import config_tools
 
@@ -63,15 +64,26 @@ def tmdb_get_movies(plex, data):
         return
 
     t_movie = Movie()
-    tmdb = Collection()
-    tmdb.api_key = config_tools.TMDB().apikey  # Set TMDb api key for Collection
-    if tmdb.api_key == "None":
-        raise KeyError("Invalid TMDb API Key")
-    t_movie.api_key = tmdb.api_key  # Copy same api key to Movie
-    t_col = tmdb.details(tmdb_id)
-    t_movs = []
-    for tmovie in t_col.parts:
-        t_movs.append(tmovie['id'])
+    if data.find("/collection/") > 0:
+        tmdb = Collection()
+        tmdb.api_key = config_tools.TMDB().apikey  # Set TMDb api key for Collection
+        if tmdb.api_key == "None":
+            raise KeyError("Invalid TMDb API Key")
+        t_movie.api_key = tmdb.api_key  # Copy same api key to Movie
+        t_col = tmdb.details(tmdb_id)
+        t_movs = []
+        for tmovie in t_col.parts:
+            t_movs.append(tmovie['id'])
+    else:
+        tmdb = List()
+        tmdb.api_key = config_tools.TMDB().apikey  # Set TMDb api key for Collection
+        if tmdb.api_key == "None":
+            raise KeyError("Invalid TMDb API Key")
+        t_movie.api_key = tmdb.api_key  # Copy same api key to Movie
+        t_col = tmdb.details(tmdb_id)
+        t_movs = []
+        for tmovie in t_col:
+            t_movs.append(tmovie.id)
 
     # Create dictionary of movies and their guid
     # GUIDs reference from which source Plex has pulled the metadata
