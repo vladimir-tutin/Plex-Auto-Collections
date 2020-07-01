@@ -16,6 +16,14 @@ collections:
       tmdb-summary: 4169
   Marvel:
     trakt-list: https://trakt.tv/users/movistapp/lists/marvel
+  Pixar:
+    studio: Pixar
+    details:
+      summary: A collection of Pixar movies
+  1990s:
+    year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
+    details:
+      summary: A collection of 1990s movies
 plex:
   library: Movies
   library_type: ### 'movie' or 'show' ###
@@ -26,7 +34,8 @@ radarr:
   token: ###########################
   quality_profile_id: 4
   root_folder_path: /mnt/user/PlexMedia/movies
-  search: false
+  add_movie: false
+  search_movie: false
 tmdb:
   apikey: ############################
   language: en
