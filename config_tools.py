@@ -56,8 +56,20 @@ class Radarr:
         config = Config(config_path).radarr
         self.url = config['url']
         self.token = config['token']
-        self.quality = config['quality_profile_id']
-
+        self.quality_profile_id = config['quality_profile_id']
+        self.root_folder_path = config['root_folder_path']
+        # Set 'add_movie' to None if not set
+        if 'add_movie' in config: 
+            self.add_movie = config['add_movie']
+        else:
+            self.add_movie = None
+        # Support synonyms 'search_movie' and 'search'; add logical default to False
+        if 'search_movie' in config:
+            self.search_movie = config['search_movie']
+        elif 'search' in config:
+            self.search_movie = config['search']
+        else:
+            self.search_movie = False
 
 class TMDB:
     def __init__(self, config_path):
@@ -92,7 +104,7 @@ class ImageServer:
         except:
             a = 1
 
-def update_from_config(config_path, plex, skip_radarr=False):
+def update_from_config(config_path, plex):
     config = Config(config_path)
     collections = config.collections
     if isinstance(plex.Library, MovieSection):
@@ -137,7 +149,11 @@ def update_from_config(config_path, plex, skip_radarr=False):
                         else:
                             method_name = "TMDb"
                         print("{} missing movies from {} List: {}".format(len(missing), method_name, v))
-                        if not skip_radarr:
+                        if 'add_movie' in config.radarr:
+                            if config.radarr['add_movie'] is True:
+                                print("Adding missing movies to Radarr")
+                                add_to_radarr(config_path, missing)
+                        else:
                             if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
                                 add_to_radarr(config_path, missing)
                     elif libtype == "show":
