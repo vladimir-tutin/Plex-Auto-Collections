@@ -3,6 +3,6 @@ tmdbv3api
 lxml
 requests>=2.4.2
 flask
-git+git://github.com/pkkid/python-plexapi.git#egg=plexapi
+PlexAPI
 trakt.py
 ruamel.yaml
