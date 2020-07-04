@@ -145,8 +145,9 @@ trakt:
     scope:
     created_at:
 image-server:
-  host: 192.168.1.41
+  host: 192.168.1.1
   port: 5000
+  poster-directory: /config/posters
 ```
 
 # Usage

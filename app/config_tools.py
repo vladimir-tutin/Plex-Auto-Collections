@@ -3,6 +3,7 @@ import os
 import yaml
 import requests
 import socket
+import urllib
 from plexapi.server import PlexServer
 from plexapi.video import Movie
 from plexapi.video import Show
@@ -23,12 +24,15 @@ class Config:
         self.config_path = config_path
         with open(self.config_path, 'rt', encoding='utf-8') as yml:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
+        self.collections = self.data['collections']
         self.plex = self.data['plex']
         self.tmdb = self.data['tmdb']
         self.trakt = self.data['trakt']
         self.radarr = self.data['radarr']
-        self.collections = self.data['collections']
-        self.image_server = self.data['image-server']
+        if 'image-server' in self.data:
+            self.image_server = self.data['image-server']
+        else:
+            self.image_server = {}
 
 
 class Plex:
@@ -93,16 +97,44 @@ class TraktClient:
 
 
 class ImageServer:
-    def __init__(self, config_path):
+    def __init__(self, config_path, mode="server"):
         config = Config(config_path).image_server
-        try:
+        # Best defaults for "host" are 0.0.0.0 for server and 127.0.0.1 for client
+        # Set respective defaults in server and client
+        if 'host' in config:
             self.host = config['host']
-        except:
-            a = 1
-        try:
+        else:
+            if mode == "server":
+                self.host = "0.0.0.0"
+            else:
+                self.host = "127.0.0.1"
+        # Set default port
+        if 'port' in config:
             self.port = config['port']
-        except:
-            a = 1
+        else:
+            self.port = 5000
+        # Test and set default folder path
+        if mode == "server":
+            if 'poster-directory' in config:
+                self.posterdirectory = config['poster-directory']
+            else:
+                app_dir = os.path.dirname(os.path.realpath(__file__))
+
+                # Test separate config folder with nested 'posters' folder
+                if os.path.exists(os.path.join(app_dir, "..", "config", "posters")):
+                    self.posterdirectory = os.path.join("..", "config", "posters")
+                # Test separate config folder with nested 'images' folder
+                elif os.path.exists(os.path.join(app_dir, "..", "config", "images")):
+                    self.posterdirectory = os.path.join("..", "config", "images")            
+                # Test nested posters folder
+                elif os.path.exists(os.path.join(app_dir, "posters")):
+                    self.posterdirectory = "posters"
+                # Test nested images folder
+                elif os.path.exists(os.path.join(app_dir, "images")):
+                    self.posterdirectory = "images"
+                else:
+                    raise RuntimeError("Invalid poster-directory setting")
+
 
 def update_from_config(config_path, plex):
     config = Config(config_path)
@@ -209,19 +241,12 @@ def update_from_config(config_path, plex):
                 if not poster:
                     # try to pull image from image_server. File is Collection name.png
                     # Setup connection to image_server
-                    try:
-                        host = config.image_server["host"]
-                    except AttributeError:
-                        host = "127.0.0.1"
-                    try:
-                        port = config.image_server["port"]
-                    except AttributeError:
-                        port = "5000"
+                    config_client = ImageServer(config_path, "client")
 
-                    # Replace spaces in collection name with %20
-                    c_name = c.replace(" ", "%20")
+                    # Url encode collection name
+                    c_name = urllib.parse.quote(c, safe='')
                     # Create url to where image would be if exists
-                    poster = "http://" + host + ":" + str(port) + "/images/" + c_name
+                    poster = "http://" + config_client.host + ":" + str(config_client.port) + "/images/" + c_name
                     try:
                         r = requests.request("GET", poster)
                         if not r.status_code == 404:

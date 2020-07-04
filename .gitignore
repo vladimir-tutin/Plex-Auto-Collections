@@ -1,6 +1,6 @@
-/config/config.yml
-/dist/plex_auto_collections
-/build
-/app/plex_auto_collections.spec
-/__pycache__/
+config.yml
+**/dist
+**/build
+*.spec
+**/__pycache__
 /.vscode
