@@ -1,0 +1,8 @@
+PyYAML==5.1.2
+tmdbv3api==1.5.1
+lxml
+requests>=2.4.2
+flask
+PlexAPI
+trakt.py
+ruamel.yaml

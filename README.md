@@ -1,12 +1,6 @@
 # Plex Auto Collections
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
-Plex Auto Collections is a Python 3 script/[standalone builds](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) that 
-works off a configuration file to create/update Plex collection. Collection management with this tool can be automated 
-in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex 
-filters such as actors, genres, year, studio and more. For more filters refer to the 
-[plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) 
-documentation. Not everything has been tested, so results may vary based off the filter. A TMDb api key is required to 
-scan TMDb URLs.
+Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collection. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the filter. A TMDb api key is required to scan TMDb URLs.
 
 When parsing IMDB or TMBd lists the script will create a list of movies that are missing from Plex. If an TMDb and 
 Radarr api-key are supplied then the option will be presented to pass the list of movies along to Radarr. Trakt lists will be matched against items in both a Movie and a TV library, each.
@@ -115,7 +109,17 @@ collections:
     details:
       summary: A collection of Pixar movies
   1990s:
-    year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
+    year:
+      - 1990
+      - 1991
+      - 1992
+      - 1993
+      - 1994
+      - 1995
+      - 1996
+      - 1997
+      - 1998
+      - 1999
     details:
       summary: A collection of 1990s movies
 plex:
@@ -145,38 +149,19 @@ trakt:
     scope:
     created_at:
 image-server:
-  host: 192.168.1.41
+  host: 192.168.1.1
   port: 5000
+  poster-directory: /config/posters
 ```
 
 # Usage
-[Standalone binaries](https://github.com/vladimir-tutin/Plex-Auto-Collections/tree/master/dist) have been created for both Windows and Linux.
-
-If you would like to run from Python I have only tested this fully on Python 3.7.4. Dependencies must be installed by running
+Limited testing has been done only on Python 3.7. Dependencies must be installed by running
 
     pip install -r requirements.txt
     
-If there are issues installing PyYAML 1.5.4 try
+If there are issues installing PyYAML 1.5.4 or tmdbv3api 1.5.1 try
 
     pip install -r requirements.txt --ignore-installed
-    
-Make sure that plexapi is installed from the github source in requirements.txt. The one provided by pip contains a bug 
-that will cause certain movies to crash the script when processing IMDB lists. To ensure that you are running the of 
-plexapi check utils.py contains the following around line 172:
-
-    def toDatetime(value, format=None):
-    """ Returns a datetime object from the specified value.
-
-        Parameters:
-            value (str): value to return as a datetime
-            format (str): Format to pass strftime (optional; if value is a str).
-    """
-    if value and value is not None:
-        if format:
-            value = datetime.strptime(value, format)
-        else:
-            value = datetime.fromtimestamp(int(value))
-    return value
 
 To run the script in a terminal run
 

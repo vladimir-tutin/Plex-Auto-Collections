@@ -1,0 +1,56 @@
+collections:
+  Jurassic Park:
+    tmdb-list: https://www.themoviedb.org/collection/328
+    details:
+      tmdb-summary: 328
+      poster: https://i.imgur.com/QMjbyCX.png
+  1080p Documentaries:
+    genres: Documentary
+    subfilters:
+      video-resolution: 1080
+    details:
+      summary: A collection of 1080p Documentaries
+  Dave Chappelle:
+    actors: Dave Chappelle
+    details:
+      tmdb-summary: 4169
+  Marvel:
+    trakt-list: https://trakt.tv/users/movistapp/lists/marvel
+  Pixar:
+    studio: Pixar
+    details:
+      summary: A collection of Pixar movies
+  1990s:
+    year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
+    details:
+      summary: A collection of 1990s movies
+plex:
+  library: Movies
+  library_type: ### 'movie' or 'show' ###
+  token: ###################
+  url: http://192.168.1.5:32400
+radarr:
+  url: http://192.168.1.5:7878/radarr/
+  token: ###########################
+  quality_profile_id: 4
+  root_folder_path: /mnt/user/PlexMedia/movies
+  add_movie: false
+  search_movie: false
+tmdb:
+  apikey: ############################
+  language: en
+trakt:
+  client_id: ############################
+  client_secret: ############################
+  # Below is filled in automatically when the script is run
+  authorization:
+    access_token:
+    token_type:
+    expires_in:
+    refresh_token:
+    scope:
+    created_at:
+image-server:
+  host: 192.168.1.1
+  port: 5000
+  poster-directory: /config/posters
