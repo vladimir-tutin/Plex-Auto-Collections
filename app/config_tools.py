@@ -224,6 +224,8 @@ def update_from_config(config_path, plex):
                     summary = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-summary"], "biography")
             if summary:
                 # Push summary to Plex
+                # Waiting on https://github.com/pkkid/python-plexapi/pull/509
+                # See https://github.com/pkkid/python-plexapi/issues/514
                 url = plex.url + "/library/sections/" + str(plex.Library.key) + "/all"
                 querystring = {"type": "18",
                                "id": str(rkey),
@@ -264,6 +266,8 @@ def update_from_config(config_path, plex):
 
             if poster:               
                 # Push poster to Plex
+                # Waiting on https://github.com/pkkid/python-plexapi/pull/509
+                # See https://github.com/pkkid/python-plexapi/issues/514
                 url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
                 querystring = {"url": poster,
                                "X-Plex-Token": config.plex['token']}
