@@ -50,7 +50,7 @@ class Plex:
         elif self.library_type == "show":
             self.Library = next((s for s in self.Sections if (s.title == self.library) and (isinstance(s, ShowSection))), None)
         else:
-            print("Unsupported library type!")
+            raise RuntimeError("Unsupported library type in Plex config")
         self.Movie = Movie
         self.Show = Show
 
@@ -225,11 +225,11 @@ def update_from_config(config_path, plex):
             if summary:
                 # Push summary to Plex
                 url = plex.url + "/library/sections/" + str(plex.Library.key) + "/all"
-                querystring = {"type":"18",
-                                "id": str(rkey),
-                                "summary.value": summary,
-                                "X-Plex-Token": config.plex['token']}
-                response = requests.request("PUT", url, params=querystring)
+                querystring = {"type": "18",
+                               "id": str(rkey),
+                               "summary.value": summary,
+                               "X-Plex-Token": config.plex['token']}
+                response = requests.put(url, params=querystring)
                 # To do: add logic to report errors
             
             # Handle collection posters
@@ -247,6 +247,7 @@ def update_from_config(config_path, plex):
             else:
                 # Try to pull image from image_server.
                 # To do: this should skip if it's run without the image server
+                # To do: this only runs if 'details' key is set - might make sense to run regardless
                 # Setup connection to image_server
                 config_client = ImageServer(config_path, "client")
 
