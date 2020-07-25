@@ -26,9 +26,22 @@ class Config:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
         self.collections = self.data['collections']
         self.plex = self.data['plex']
-        self.tmdb = self.data['tmdb']
-        self.trakt = self.data['trakt']
-        self.radarr = self.data['radarr']
+        # Make 'tmdb' key optional
+        if 'tmdb' in self.data:
+            self.tmdb = self.data['tmdb']
+        else:
+            self.tmdb = {}
+        # Make 'trakt' key optional
+        if 'trakt' in self.data:
+            self.trakt = self.data['trakt']
+        else:
+            self.trakt = {}
+        # Make 'radarr' key optional
+        if 'radarr' in self.data:
+            self.radarr = self.data['radarr']
+        else:
+            self.radarr = {}
+        # Make 'image-server' key optional
         if 'image-server' in self.data:
             self.image_server = self.data['image-server']
         else:
@@ -59,6 +72,11 @@ class Radarr:
     def __init__(self, config_path):
         config = Config(config_path).radarr
         self.url = config['url']
+        # Set 'version' to v2 if not set
+        if 'version' in config:
+            self.version = config['version']
+        else:
+            self.version = "v2"
         self.token = config['token']
         self.quality_profile_id = config['quality_profile_id']
         self.root_folder_path = config['root_folder_path']
