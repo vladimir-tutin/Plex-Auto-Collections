@@ -115,14 +115,18 @@ def tmdb_get_movies(config_path, plex, data):
 
 
 def tmdb_get_summary(config_path, data, type):
+    # Instantiate TMDB objects
     collection = Collection()
-    person = Person()
     collection.api_key = config_tools.TMDB(config_path).apikey
-    person.api_key = collection.api_key
     collection.language = config_tools.TMDB(config_path).language
+    
+    person = Person()
+    person.api_key = collection.api_key
     person.language = collection.language
 
-    if type == "overview":
-        return collection.details(data).overview
-    elif type == "biography":
-        return person.details(data).biography
+    # Return object based on type
+    if type == "overview":          return collection.details(data).overview
+    elif type == "biography":       return person.details(data).biography
+    elif type == "poster_path":     return collection.details(data).poster_path
+    elif type == "profile_path":    return person.details(data).profile_path
+    else: raise RuntimeError("type not yet supported in tmdb_get_summary")

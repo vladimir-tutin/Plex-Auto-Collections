@@ -50,7 +50,7 @@ class Plex:
         elif self.library_type == "show":
             self.Library = next((s for s in self.Sections if (s.title == self.library) and (isinstance(s, ShowSection))), None)
         else:
-            print("Unsupported library type!")
+            raise RuntimeError("Unsupported library type in Plex config")
         self.Movie = Movie
         self.Show = Show
 
@@ -209,54 +209,70 @@ def update_from_config(config_path, plex):
             if not isinstance(plex_collection, Collections):
                 # No collections created with requested criteria
                 continue
-            for dt_m in collections[c]["details"]:
-                rkey = plex_collection.ratingKey
-                # subtype = plex_collection.subtype
-                dt_v = collections[c]["details"][dt_m]
-                if "summary" in dt_m:
-                    if "tmdb" in dt_m:
-                        try:
-                            dt_v = tmdb_get_summary(config_path, dt_v, "overview")
-                        except AttributeError:
-                            dt_v = tmdb_get_summary(config_path, dt_v, "biography")
 
-                    library_name = plex.Library
+            rkey = plex_collection.ratingKey
 
-                    #section = plex.Server.library.section(library_name).key
-                    section = library_name.key
-                    url = plex.url + "/library/sections/" + str(section) + "/all"
+            # Handle collection summary
+            summary = None
+            if "summary" in collections[c]["details"]:
+                summary = collections[c]["details"]["summary"]
+            elif "tmdb-summary" in collections[c]["details"]:
+                # Seems clunky ...
+                try:
+                    summary = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-summary"], "overview")
+                except AttributeError:
+                    summary = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-summary"], "biography")
+            if summary:
+                # Push summary to Plex
+                # Waiting on https://github.com/pkkid/python-plexapi/pull/509
+                # See https://github.com/pkkid/python-plexapi/issues/514
+                url = plex.url + "/library/sections/" + str(plex.Library.key) + "/all"
+                querystring = {"type": "18",
+                               "id": str(rkey),
+                               "summary.value": summary,
+                               "X-Plex-Token": config.plex['token']}
+                response = requests.put(url, params=querystring)
+                # To do: add logic to report errors
+            
+            # Handle collection posters
+            poster = None
+            if "poster" in collections[c]["details"]:
+                poster = collections[c]["details"]["poster"]
+            elif "tmdb-poster" in collections[c]["details"]:
+                # Seems clunky ...
+                try:
+                    slug = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-poster"], "poster_path")
+                except AttributeError:
+                    slug = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-poster"], "profile_path")
+                
+                poster = "https://image.tmdb.org/t/p/original/" + slug
+            else:
+                # Try to pull image from image_server.
+                # To do: this should skip if it's run without the image server
+                # To do: this only runs if 'details' key is set - might make sense to run regardless
+                # Setup connection to image_server
+                config_client = ImageServer(config_path, "client")
 
-                    querystring = {"type":"18",
-                                   "id": str(rkey),
-                                   "summary.value": dt_v,
-                                   "X-Plex-Token": config.plex['token']}
-                    response = requests.request("PUT", url, params=querystring)
-                poster = None
-                if "poster" in dt_m:
-                    if "tmdb" in dt_m:
-                        poster = "https://image.tmdb.org/t/p/original/"
-                        poster = poster + tmdb_get_summary(dt_v).poster_path
-                    else:
-                        poster = dt_v
-                if not poster:
-                    # try to pull image from image_server. File is Collection name.png
-                    # Setup connection to image_server
-                    config_client = ImageServer(config_path, "client")
+                # Url encode collection name
+                c_name = urllib.parse.quote(c, safe='')
+                
+                # Create local url to where image would be if exists
+                local_poster_url = "http://" + config_client.host + ":" + str(config_client.port) + "/images/" + c_name
+                
+                # Test local url
+                response = requests.head(local_poster_url)
+                if response.status_code < 400:
+                    poster = local_poster_url
 
-                    # Url encode collection name
-                    c_name = urllib.parse.quote(c, safe='')
-                    # Create url to where image would be if exists
-                    poster = "http://" + config_client.host + ":" + str(config_client.port) + "/images/" + c_name
-                    try:
-                        r = requests.request("GET", poster)
-                        if not r.status_code == 404:
-                            # Create url for request to Plex
-                            url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
-                            querystring = {"url": poster,
-                                               "X-Plex-Token": config.plex['token']}
-                            response = requests.request("POST", url, params=querystring)
-                    except:
-                        False
+            if poster:               
+                # Push poster to Plex
+                # Waiting on https://github.com/pkkid/python-plexapi/pull/509
+                # See https://github.com/pkkid/python-plexapi/issues/514
+                url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
+                querystring = {"url": poster,
+                               "X-Plex-Token": config.plex['token']}
+                response = requests.post(url, params=querystring)
+                # To do: add logic to report errors
 
 def modify_config(config_path, c_name, m, value):
     config = Config(config_path)
