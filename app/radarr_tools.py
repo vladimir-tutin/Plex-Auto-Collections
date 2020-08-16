@@ -57,13 +57,16 @@ def add_to_radarr(config_path, missing):
             }
         }
 
-        url = config_radarr.url + "/api/movie"
+        if config_radarr.version == "v3":
+            slug = "/api/v3/movie"
+        else:
+            slug = "/api/movie"
+        url = config_radarr.url + slug
         querystring = {"apikey": "{}".format(config_radarr.token)}
 
         response = requests.post(url, json=payload, params=querystring)
 
-        try:
-            if response.json()[0]['errorMessage'] == "This movie has already been added":
-                print(tmdb_title + " already added to Radarr")
-        except KeyError:
-            print("+++ " + tmdb_title + " added to Radarr")
+        if response.status_code < 400:
+            print("+++ " + tmdb_title + ": Added to Radarr")
+        else:
+            print("--- " + tmdb_title + ": " + response.json()[0]['errorMessage'])
