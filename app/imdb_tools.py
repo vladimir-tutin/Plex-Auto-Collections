@@ -100,7 +100,7 @@ def tmdb_get_movies(config_path, plex, data):
                     match = True
                     break
         if not match:
-            imdb_id = t_movie.details(mid).entries['imdb_id']
+            imdb_id = t_movie.details(mid).imdb_id
             for m in p_m_map:
                 if "tt" in p_m_map[m]:
                     if p_m_map[m] == imdb_id:
@@ -109,7 +109,8 @@ def tmdb_get_movies(config_path, plex, data):
         if match:
             matched.append(m)
         else:
-            missing.append(t_movie.details(mid).entries['imdb_id'])
+            # Duplicate TMDb call?
+            missing.append(t_movie.details(mid).imdb_id)
 
     return matched, missing
 
