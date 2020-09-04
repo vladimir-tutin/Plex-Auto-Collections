@@ -1,22 +1,22 @@
-FROM python:3.7-slim
-MAINTAINER burkasaurusrex
+FROM python:3.8-slim
 VOLUME /config
 COPY /app/. /app
 COPY /config/. /config
+COPY /requirements.txt /requirements.txt
 RUN \
 	echo "**** install system packages ****" && \
 		apt-get update && \
-		apt-get upgrade -y && \
-		apt-get install -y tzdata && \
+		apt-get upgrade -y -no-install-recommends && \
+		apt-get install -y tzdata -no-install-recommends && \
 	echo "**** install python packages ****" && \
-		pip3 install --upgrade --requirement /app/requirements.txt && \
+		pip3 install --upgrade --requirement /requirements.txt && \
 	echo "**** install Plex-Auto-Collections ****" && \
 		chmod +x /app/plex_auto_collections.py && \
 	echo "**** cleanup ****" && \
 		apt-get autoremove -y && \
 		apt-get clean && \
 		rm -rf \
-			/app/requirements.txt \
+			/requirements.txt \
 			/tmp/* \
 			/var/tmp/* \
 			/var/lib/apt/lists/*
