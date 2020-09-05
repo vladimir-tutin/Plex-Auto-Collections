@@ -1,114 +1,125 @@
 # Plex Auto Collections
+Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
+
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
-Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collection. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the filter. A TMDb api key is required to scan TMDb URLs.
 
-When parsing IMDB or TMBd lists the script will create a list of movies that are missing from Plex. If an TMDb and 
-Radarr api-key are supplied then the option will be presented to pass the list of movies along to Radarr. Trakt lists will be matched against items in both a Movie and a TV library, each.
+# Usage
 
-As well as updating collections based off configuration files there is the ability to add new collections based off 
-filters, delete collections, search for collections and manage the collections in the configuration file. Collection 
-poster and summary can also be managed with this script.
+This script can be used as an interactive Python shell script as well as a headless, configuration-driven script.
 
-Thanks to [/u/deva5610](https://www.reddit.com/user/deva5610) for 
-[IMDBList2PlexCollection](https://github.com/deva5610/IMDBList2PlexCollection) which prompted the idea for a 
-configuration based collection manager.
+The interactive shell script has some limited abilities including the ability to add new collections based off filters, delete collections, search for collections and manage existing collections. The bulk of the feature-set is focused on configuration-driven updates.
 
-Subfilters also allows for a little more granular selection of movies to add to a collection. Unlike regular filters, a 
-movie must match at least one value from each subfilter to be added to a collection.
+## Local Installation
+Some limited testing has been done only on Python 3.7 and 3.8 on Linux and Windows. Dependencies must be installed by running:
+
+```shell
+pip install -r requirements.txt
+```
+    
+If there are issues installing dependencies try:
+
+```shell
+pip install -r requirements.txt --ignore-installed
+```
+
+To run the script in an interactive terminal run:
+
+```shell
+python plex_auto_collections.py
+```
+    
+If you would like to run the script without any user interaction (e.g. to schedule the script to run on a schedule) the script can be launched with:
+
+```shell
+python plex_auto_collections.py --update
+```
+
+If you would like to run without the image server try:
+
+```shell
+python plex_auto_collections.py --noserver
+```
+    
+A different configuration file can be specified with the `-c <path_to_config>` or `--config_path <path_to_config>`. This is useful for creating collections against different libraries, such as a Movie and TV library. In this case, be sure to update the `library_type` in the configuration file.
+
+```shell
+python plex_auto_collections.py -c <path_to_config>
+```
+
+## Docker
+
+A simple `Dockerfile` is available in this repo if you'd like to build it yourself. The official build is also available from dockerhub here: https://hub.docker.com/r/burkasaurusrex/plex-auto-collections
+
+The docker implementation today is limited but will improve over time. To use, try the following:
+
+```shell
+docker run -p '5000:5000/tcp' -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'burkasaurusrex/plex-auto-collections' 
+```
+
+The `-p '5000:5000/tcp'` option exposes the port for the image server. If you don't want to use the image server, feel free to remove this. If you change the image server port in your config, you'll need to update this setting to reflect it. It defaults to port `5000` today.
+
+The `-v '/mnt/user/plex-auto-collections/':'/config'` mounts a persistent volume to store your config file. Today, the docker image defaults to running the config named `config.yml` in your persistent volume (eventually, the docker will support an environment variable to change the config path).
+
+Lastly, you may need to run the docker with `-it` in order to interact with the script. For example, if you'd like to use Trakt lists, you need to go through the OAuth flow and interact with the script at first-run. After that, you should be able to run it without the `-it` flag.
 
 # Configuration
-Modify the supplied config.yml.template file.
 
-If using TMDb lists be sure to include your TMDb api-key. If you do not have an api-key please refer to this 
-[document](https://developers.themoviedb.org/3/getting-started/introduction).
+The script allows utilizes a YAML config file to create collections in Plex. This is great for a few reasons:
+- Setting metadata manually in Plex is cumbersome. Having a config file allows template to be reused, backed-up, transferred, etc.
+- Plex often loses manually set metadata. Having a config file fixes metadata creep.
+- Collections change often. Having a config file pointing to dynamic data keeps collections fresh.
 
-If you do not want it to have the option to submit movies that are missing from IMDB or TMBd lists do not include the 
-api-key for Radarr. Radarr support has not been tested with Trakt lists. Sonarr support has not yet been implemented.
+There are currently six YAML mappings that can be set:
+- `collections` (required)
+- `plex` (required)
+- `image-server` (optional)
+- `tmdb` (optional, but recommended)
+- `trakt` (optional)
+- `radarr` (optional)
 
-Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry. To
-use a TMDb entry a TMDb api-key as well as language is required, the default language is set to en. Match the following 
-in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMBd if you wish to 
-use their biography as the summary.
+You can find a template config file in [config/config.yml.template](config/config.yml.template)
 
-    Jurassic Park:
-        tmdb-list: https://www.themoviedb.org/collection/328
-        details:
-            tmdb-summary: 328
+## Collections
 
-If you would like to use a custom summary, enter as follows
+Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are three other attributes to set for each collection:
+- List Type (required)
+- Details (optional)
+- Subfilters (optional)
 
-    Jurassic Park:
-        tmdb-list: https://www.themoviedb.org/collection/328
-        details:
-            summary: A collection of Jurassic Park movies
-            
-Adding a poster can be done by adding the URL to the image.
+### List Type (Collection Attribute)
 
-    Jurassic Park:
-        tmdb-list: https://www.themoviedb.org/collection/328
-        details:
-            tmdb-summary: 328
-            poster: https://i.imgur.com/QMjbyCX.png
+The only required attribute for each collection is the list type. There are four different list types to choose from:
+- Plex Collection
+- TMDb Collection
+- IMDb List or Search
+- Trakt List
 
-Local assets are supported by running the script with the image server running. If there are no details filled out for 
-the poster in the configuration file and the image server is running the script will attempt to match a collection name 
-with an image file of the same name. Images should be placed in the ./images folder. Port forwarding is not required.
+Note that each list type supports multiple lists.
 
-If you want movies to add to Radarr but not automatically search, change search to "false".
+#### Plex Collection (List Type)
 
-In order to find your Plex token follow 
-[this guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
+There are a number of built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the filter.
 
-Trakt lists require a client id and client secret.
-1. [Create](https://trakt.tv/oauth/applications/new) a Trakt API application.
-2. Enter a `Name` for the application.
-3. Enter `urn:ietf:wg:oauth:2.0:oob` for `Redirect uri`.
-4. Click the `SAVE APP` button.
-5. Record the `Client ID` and `Client Secret`. 
+Here's some high-level ideas:
 
-Library should be the name of the Plex library that you are wanting to search and create collections in.
-
-Main filters allowed are actors, imdb-list as well as many attributes that can found in the [plexapi.video.Movie 
-documentation](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie). In addition 
-subfilters for audio language, subtitle language and video-resolution have been created. Take note that the values for 
-each must match what Plex has including special characters in order to match.
-
-    subfilters:
-        video-resolution: 1080 (further examples: sd, 720, 4k)
-        audio-language: Français
-        subtitle-language: English
-
-If you do not want to use subfilters simply remove the section.
-
-**Once complete it should look like**
-```
+```yaml
 collections:
-  Jurassic Park:
-    tmdb-list: https://www.themoviedb.org/collection/328
-       details:
-         tmdb-summary: 328
-         poster: https://i.imgur.com/QMjbyCX.png
-  1080p Documentaries:
+  Documentaries:
     genres: Documentary
-    subfilters:
-      video-resolution: 1080
-    details:
-       summary: A collection of 1080p Documentaries
-  Daniel Craig only James Bonds:
-    imdb-list: https://www.imdb.com/list/ls006405458/
-    subfilters:
-      actors: Daniel Craig
-  Christmas:
-    trakt-list:
-      - https://trakt.tv/users/movistapp/lists/christmas-movies
-      - https://trakt.tv/users/2borno2b/lists/christmas-movies-extravanganza
-  Marvel:
-    trakt-list: https://trakt.tv/users/movistapp/lists/marvel
+```
+```yaml
+collections:
+  Dave Chappelle:
+    actors: Dave Chappelle
+```
+```yaml
+collections:
   Pixar:
     studio: Pixar
-    details:
-      summary: A collection of Pixar movies
-  1990s:
+```
+```yaml
+collections:
+  90s Movies:
     year:
       - 1990
       - 1991
@@ -120,64 +131,301 @@ collections:
       - 1997
       - 1998
       - 1999
+```
+
+#### TMDb Collection (List Type)
+
+The Movie Database (TMDb) strives to group movies into logical collections. This script can easily leverage that data:
+
+```yaml
+collections:
+  Jurassic Park:
+    tmdb-list: https://www.themoviedb.org/collection/328
+```
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb-list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+```
+
+#### IMDb List or Search (List Type)
+
+This script can also scrape IMDb lists as well as searches (particularly useful for dynamic data):
+
+```yaml
+collections:
+  James Bonds:
+    imdb-list: https://www.imdb.com/list/ls006405458
+```
+```yaml
+collections:
+  IMDb Top 250:
+    imdb-list: https://www.imdb.com/search/title/?groups=top_250&count=250
+```
+Note that searches can be useful to show / sort / filter IMDb large IMDb lists:
+```yaml
+collections:
+  Marvel Cinematic Universe:
+    imdb-list: https://www.imdb.com/search/title/?title_type=movie&lists=ls031310794&count=250
+```
+
+#### Trakt List (List Type)
+
+Similarly, this script can also pull public or private Trakt lists via the Trakt API:
+
+```yaml
+collections:
+  Christmas:
+    trakt-list:
+      - https://trakt.tv/users/movistapp/lists/christmas-movies
+      - https://trakt.tv/users/2borno2b/lists/christmas-movies-extravanganza
+```
+```yaml
+collections:
+  Reddit Top 250:
+    trakt-list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
+```
+
+### Details (Collection Attribute)
+
+The next optional attribute for any collection is the `details` key. There are two different subattributes for `details` to choose from:
+- Summary (optional)
+- Image (optional)
+
+Note that the `details` attribute needs to be set in order for the script to search the local image server for any images (this will be fixed in future releases).
+
+#### Summary (Details Subattribute)
+
+Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry.
+
+To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMBd if you wish to use their biography as the summary (experimental).
+
+```yaml
+collections:
+  Jurassic Park:
+    tmdb-list: https://www.themoviedb.org/collection/328
     details:
-      summary: A collection of 1990s movies
-plex:
-  library: Movies
-  library_type: movie # or 'show'
-  token: ################ 
-  url: http://192.168.1.5:32400
-radarr:
-  url: http://192.168.1.5:7878/radarr/
-  token: ################ 
-  quality_profile_id: 4
-  root_folder_path: /mnt/user/PlexMedia/movies
-  add_movie: false
-  search_movie: false
-tmdb:
-  apikey: ################ 
-  language: en
-trakt:
-  client_id: ################ 
-  client_secret: ################ 
-  # Below is filled in automatically when the script is run
-  authorization:
-    access_token:
-    token_type:
-    expires_in:
-    refresh_token:
-    scope:
-    created_at:
-image-server:
-  host: 192.168.1.1
-  port: 5000
-  poster-directory: /config/posters
+      tmdb-summary: 328
+```
+```yaml
+collections:
+  Dave Chappelle:
+    actors: Dave Chappelle
+    details:
+      tmdb-summary: 4169
+```
+If you want to use a custom summary:
+```yaml
+collections:
+  Pixar:
+    studio: Pixar
+    details:
+      summary: A collection of Pixar movies
+```
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb-list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+    details:
+      summary: >-
+        The Alien franchise is a science fiction horror franchise, consisting
+        primarily of a series of films focusing on the species Xenomorph XX121,
+        commonly referred to simply as "the Alien", a voracious endoparasitoid
+        extraterrestrial species. Unlike the Predator franchise, which mostly
+        consists of stand-alone movies, the Alien films generally form continuing
+        story arcs, the principal of which follows Lieutenant Ellen Ripley
+        as she battles the Aliens in a future time setting. Newer films preceding
+        Ripley's exploits center around the android David, exploring the possible
+        origins of the Aliens and their connection to an ancient, advanced
+        civilization known as the Engineers.
 ```
 
-# Usage
-Limited testing has been done only on Python 3.7. Dependencies must be installed by running
+#### Image (Details Subattribute)
 
-    pip install -r requirements.txt
-    
-If there are issues installing PyYAML 1.5.4 or tmdbv3api 1.5.1 try
+There are four ways to set a poster image for a collection: local image server, public URL, TMDb collection, or TMDb actor. 
 
-    pip install -r requirements.txt --ignore-installed
+Local assets are supported by running the script with the image server running. If a) the `details` attribute is set, b) there are no details filled out for the poster, and c) and the image server is running, the script will attempt to match a collection name 
+with an image file of the same name. Images should be placed in the configured folder (typically `./images `). 
 
-To run the script in a terminal run
-
-    python plex_auto_collections.py
-    
-If you would like to schedule the script to run on a schedule the script can be launched to automatically and only 
-based off the collection and then quit by running. This applies to the standalones as well.
-
-    python plex_auto_collections.py --update
-
-If you would like to not run the image server add the --noserver flag to the command
-
-    python plex_auto_collections.py --noserver
-    
-A different configuration file can be specified with the -c <path_to_config> or --config_path <path_to_config>. This is useful for creating collections against different libraries, such as a Movie and TV library. In this case, be sure to update the `library_type` in the configuration file.
-
+If you want to use an image publicly available on the internet:
+```yaml
+collections:
+  Jurassic Park:
+    tmdb-list: https://www.themoviedb.org/collection/328
+    details:
+      tmdb-summary: 328
+      poster: https://i.imgur.com/QMjbyCX.png
 ```
-python plex_auto_collections.py -c <path_to_config>
+If you want to use the default collection image on TMDb:
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb-list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+    details:
+      tmdb-poster: 8091
 ```
+If you want to use the default actor image on TMDb:
+```yaml
+collections:
+  Dave Chappelle:
+    actors: Dave Chappelle
+    details:
+      tmdb-summary: 4169
+      tmdb-poster: 4169
+```
+### Subfilters (Collection Attribute)
+
+The next optional attribute for any collection is the `subfilters` key. Subfilters allows for a little more granular selection from a list of movies to add to a collection. 
+
+Many `subfilters` are supported such as actors, genres, year, studio and more. For more subfilters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the subfilter. Additionally, subfilters for `audio-language`, `subtitle-language`, and `video-resolution` have been created.
+
+Note that muliple subfilters are supported but a movie must match at least one value from **each** subfilter to be added to a collection. The values for each must match what Plex has including special characters in order to match.
+
+```yaml
+collections:
+  1080p Documentaries:
+    genres: Documentary
+    details:
+      summary: A collection of 1080p Documentaries
+    subfilters:
+      video-resolution: 1080
+```
+```yaml
+collections:
+  Daniel Craig only James Bonds:
+    imdb-list: https://www.imdb.com/list/ls006405458/
+    subfilters:
+      actors: Daniel Craig
+```
+```yaml
+collections:
+  French Romance:
+    genre: Romance
+    subfilters:
+      audio-language: Français
+```
+
+## Plex
+
+A `plex` mapping in the config is required. Here's the full set of configurations:
+
+```yaml
+plex:                                   # Req
+  library: Movies                       # Req - Name of Plex library
+  library_type: movie                   # Req - Type of Plex library (movie or show)
+  token: #####                          # Req - User's Plex authentication token
+  url: http://192.168.1.1:32400         # Req - URL to access Plex
+```
+
+Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
+
+This script can be run on a remote Plex server, but be sure that the `url` provided is publicly addressable and it's recommended to use `HTTPS`.
+
+Lastly, if you need help finding your Plex authentication token, please see Plex's [support article](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
+
+## Image Server
+
+An `image-server` mapping in the config is optional. If the script is run without the `--noserver` config, the image server will be started with logical defaults.
+
+By placing images in the `poster-directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the image `/config/posters/Jurassic Park.png`, the script will upload that image to Plex.
+
+Here's the full set of configurations:
+
+```yaml
+image-server:                           # Opt
+  host: 127.0.0.1                       # Opt - Host of machine running the script
+  port: 5000                            # Opt - Desired port for image server
+  poster-directory: /config/posters     # Opt - Desired dir of images
+```
+
+If Plex is running on a different machine on the same network, then change the host to an addressable local IP address. Port forwarding is generally not required unless Plex is running on a remote machine.
+
+## TMDb
+
+If using TMDb lists, be sure to include your TMDb API key. If you do not have an API key please refer to this [guide](https://developers.themoviedb.org/3/getting-started/introduction). Here's the full set of configurations:
+
+```yaml
+tmdb:                                   # Opt
+  apikey: #####                         # Req - User's TMDb API key
+  language: en                          # Opt - User's language
+```
+
+## Trakt
+
+If using Trakt lists, be sure to include your Trakt application credentials. To create a Trakt application and get your `client id` and `client secret`, please do the following:
+1. [Create](https://trakt.tv/oauth/applications/new) a Trakt API application.
+2. Enter a `Name` for the application.
+3. Enter `urn:ietf:wg:oauth:2.0:oob` for `Redirect uri`.
+4. Click the `SAVE APP` button.
+5. Record the `Client ID` and `Client Secret`. 
+
+Here's the full set of configurations:
+```yaml
+trakt:                                  # Opt
+  client_id: #####                      # Req - Trakt application client ID
+  client_secret: #####                  # Req - Trakt application client secret
+  authorization:                        # Req
+    access_token:                       # LEAVE BLANK
+    token_type:                         # LEAVE BLANK
+    expires_in:                         # LEAVE BLANK
+    refresh_token:                      # LEAVE BLANK
+    scope:                              # LEAVE BLANK
+    created_at:                         # LEAVE BLANK
+```
+
+On the first run, the script will walk the user through the OAuth flow by producing a Trakt URL for the user to follow. Once authenticated at the Trakt URL, the user needs to return the code to the script. If the code is correct, the script will populate the `authorization` subattributes to use in subsequent runs.
+
+
+## Radarr
+
+When parsing TMBd, IMDb, or Trakt lists, the script will finds movies that are on the list but missing from Plex. If a TMDb and Radarr config are supplied, then you can add those missing movies to Radarr.
+
+Here's the full set of configurations:
+```yaml
+radarr:                                 # Opt
+  url: http://192.168.1.1:7878          # Req - URL to access Radarr
+  version: v2                           # Opt - 'v2' for <0.2, 'v3' for >3.0
+  token: #####                          # Req - User's Radarr API key
+  quality_profile_id: 4                 # Req - See below
+  root_folder_path: /mnt/movies         # Req - See below
+  add_movie: false                      # Opt - Add missing movies to Radarr
+  search_movie: false                   # Opt - Search while adding missing movies
+```
+
+The `token` can be found by going to `Radarr > Settings > General > Security > API Key`
+
+The `quality_profile_id` is the number of the desired profile. It can be found by going to `Radarr > Settings > Profiles`. Unfortunately, there's not an explicit place to find the `id`, but you can infer it from the `Profiles` page. Each profile is numbered, starting at `1` and incrementing by one, left-to-right, top-to-bottom. For example, the default Radarr installation comes with four profiles:
+```
+     1          2          3          4
+    Any         SD      HD-720p    HD-1080p
+```
+
+If you were to add two more profiles, the `id` would be as follows:
+```
+     1          2          3          4
+    Any         SD      HD-720p    HD-1080p
+
+     5          6
+ Ultra-HD HD-720p/1080p
+```
+
+In this example, to set any added movies to the `Ultra-HD` profile, set `quality_profile_id` to `5`. To set any added movies to `HD-1080p`, set `quality_profile_id` to `4`.
+
+The `add_movie` key allows missing to movies to be added to Radarr. If this key is missing, the script will prompt the user to add missing movies or not. If you'd like to add movies but not had Radarr search, then set `search_movie` to `false`.
+
+Note that Radarr support has not been tested with extensively Trakt lists and Sonarr support has not yet been implemented.
+
+# Acknowledgements
+- [vladimir-tutin](https://github.com/vladimir-tutin) for writing substantially all of the code in this fork
+- [deva5610](https://github.com/deva5610) for writing [IMDBList2PlexCollection](https://github.com/deva5610/IMDBList2PlexCollection) which prompted the idea for a 
+configuration based collection manager
+- [JonnyWong16](https://github.com/JonnyWong16) for writing the a [IMDb Top 250](https://gist.github.com/JonnyWong16/f5b9af386ea58e19bf18c09f2681df23) collection script which served as inspiration (and for [Tautulli](https://github.com/Tautulli/Tautulli)!)
+- [pkkid](https://github.com/pkkid) and all other contributors for [python-plexapi](https://github.com/pkkid/python-plexapi)
+- [AnthonyBloomer](https://github.com/AnthonyBloomer) and all other contributors for [tmdbv3api](https://github.com/AnthonyBloomer/tmdbv3api)
+- [fuzeman](https://github.com/fuzeman) and all other contributors for [trakt.py](https://github.com/fuzeman/trakt.py) (and for [Plex-Trakt-Scrobbler](https://github.com/trakt/Plex-Trakt-Scrobbler)!)
