@@ -154,7 +154,7 @@ class ImageServer:
                     raise RuntimeError("Invalid poster-directory setting")
 
 
-def update_from_config(config_path, plex):
+def update_from_config(config_path, plex, headless=False):
     config = Config(config_path)
     collections = config.collections
     if isinstance(plex.Library, MovieSection):
@@ -223,7 +223,10 @@ def update_from_config(config_path, plex):
             # if len(movie_collections + show_collections) > 1:
             #     print("Multiple collections named {}.\nUpdate of \"details\" is currently unsupported.".format(c))
             #     continue
-            plex_collection = get_collection(plex, c)
+            if headless is True: 
+                plex_collection = get_collection(plex, c, True)
+            elif headless is False:
+                plex_collection = get_collection(plex, c, False)
             if not isinstance(plex_collection, Collections):
                 # No collections created with requested criteria
                 continue
