@@ -323,6 +323,8 @@ plex:                                   # Req
   url: http://192.168.1.1:32400         # Req - URL to access Plex
 ```
 
+**This script does not currently support Plex's [new metadata agent / matching](https://forums.plex.tv/t/introducing-the-new-plex-movie-agent/615989)**. Do not "update matching" until the script's dependencies support the new agent (feel free to follow issue #33).
+
 Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
 
 This script can be run on a remote Plex server, but be sure that the `url` provided is publicly addressable and it's recommended to use `HTTPS`.
