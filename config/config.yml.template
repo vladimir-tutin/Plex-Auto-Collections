@@ -31,7 +31,6 @@ plex:
   url: http://192.168.1.5:32400
 radarr:
   url: http://192.168.1.5:7878/radarr/
-  version: v2
   token: ###########################
   quality_profile_id: 4
   root_folder_path: /mnt/user/PlexMedia/movies
