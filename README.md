@@ -156,6 +156,76 @@ image-server:
 
 # Usage
 Limited testing has been done only on Python 3.7. Dependencies must be installed by running
+=======
+## Plex
+
+A `plex` mapping in the config is required. Here's the full set of configurations:
+
+```yaml
+plex:                                   # Req
+  library: Movies                       # Req - Name of Plex library
+  library_type: movie                   # Req - Type of Plex library (movie or show)
+  token: #####                          # Req - User's Plex authentication token
+  url: http://192.168.1.1:32400         # Req - URL to access Plex
+```
+
+**This script does not currently support Plex's [new metadata agent / matching](https://forums.plex.tv/t/introducing-the-new-plex-movie-agent/615989)**. Do not "update matching" until the script's dependencies support the new agent (feel free to follow issue #33).
+
+Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
+
+This script can be run on a remote Plex server, but be sure that the `url` provided is publicly addressable and it's recommended to use `HTTPS`.
+
+Lastly, if you need help finding your Plex authentication token, please see Plex's [support article](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
+
+## Image Server
+
+An `image-server` mapping in the config is optional. If the script is run without the `--noserver` config, the image server will be started with logical defaults.
+
+By placing images in the `poster-directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the image `/config/posters/Jurassic Park.png`, the script will upload that image to Plex.
+
+Here's the full set of configurations:
+
+```yaml
+image-server:                           # Opt
+  host: 127.0.0.1                       # Opt - Host of machine running the script
+  port: 5000                            # Opt - Desired port for image server
+  poster-directory: /config/posters     # Opt - Desired dir of images
+```
+
+If Plex is running on a different machine on the same network, then change the host to an addressable local IP address. Port forwarding is generally not required unless Plex is running on a remote machine.
+
+## TMDb
+
+If using TMDb lists, be sure to include your TMDb API key. If you do not have an API key please refer to this [guide](https://developers.themoviedb.org/3/getting-started/introduction). Here's the full set of configurations:
+
+```yaml
+tmdb:                                   # Opt
+  apikey: #####                         # Req - User's TMDb API key
+  language: en                          # Opt - User's language
+```
+
+## Trakt
+
+If using Trakt lists, be sure to include your Trakt application credentials. To create a Trakt application and get your `client id` and `client secret`, please do the following:
+1. [Create](https://trakt.tv/oauth/applications/new) a Trakt API application.
+2. Enter a `Name` for the application.
+3. Enter `urn:ietf:wg:oauth:2.0:oob` for `Redirect uri`.
+4. Click the `SAVE APP` button.
+5. Record the `Client ID` and `Client Secret`. 
+
+Here's the full set of configurations:
+```yaml
+trakt:                                  # Opt
+  client_id: #####                      # Req - Trakt application client ID
+  client_secret: #####                  # Req - Trakt application client secret
+  authorization:                        # Req
+    access_token:                       # LEAVE BLANK
+    token_type:                         # LEAVE BLANK
+    expires_in:                         # LEAVE BLANK
+    refresh_token:                      # LEAVE BLANK
+    scope:                              # LEAVE BLANK
+    created_at:                         # LEAVE BLANK
+```
 
     pip install -r requirements.txt
     
