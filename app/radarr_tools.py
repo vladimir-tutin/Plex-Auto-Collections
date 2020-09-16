@@ -13,9 +13,15 @@ def add_to_radarr(config_path, missing):
 
     movie = Movie()
     for m in missing:
+        # Get TMDb ID data from IMDb ID
+        search = movie.external(external_id=str(m), external_source="imdb_id")['movie_results']
+        if len(search) == 1:
+            tmdb_details = search[0]
+        else:
+            print("Unable to match IMDb ID to TMDb, skipping")
+        
         # Validate TMDb information (very few TMDb entries don't yet have basic information)
         try:
-            tmdb_details = movie.external(external_id=str(m), external_source="imdb_id")['movie_results'][0]
             tmdb_title = tmdb_details['title']
             tmdb_id = tmdb_details['id']
         except IndexError:
