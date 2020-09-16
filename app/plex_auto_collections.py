@@ -210,11 +210,11 @@ if not args.noserver:
 
 if args.update:
     # sys.stdout = open("pac.log", "w")
-    update_from_config(config_path, plex)
+    update_from_config(config_path, plex, True)
     sys.exit(0)
 
 if input("Update Collections from Config? (y/n): ").upper() == "Y":
-    update_from_config(config_path, plex)
+    update_from_config(config_path, plex, False)
 
 print("\n")
 mode = None
