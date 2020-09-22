@@ -6,10 +6,10 @@ COPY /requirements.txt /requirements.txt
 RUN \
 	echo "**** install system packages ****" && \
 		apt-get update && \
-		apt-get upgrade -y -no-install-recommends && \
-		apt-get install -y tzdata -no-install-recommends && \
+		apt-get upgrade -y --no-install-recommends && \
+		apt-get install -y tzdata --no-install-recommends && \
 	echo "**** install python packages ****" && \
-		pip3 install --upgrade --requirement /requirements.txt && \
+		pip3 install --no-cache-dir --upgrade --requirement /requirements.txt && \
 	echo "**** install Plex-Auto-Collections ****" && \
 		chmod +x /app/plex_auto_collections.py && \
 	echo "**** cleanup ****" && \
