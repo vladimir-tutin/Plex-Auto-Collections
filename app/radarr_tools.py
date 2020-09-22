@@ -19,6 +19,7 @@ def add_to_radarr(config_path, missing):
             tmdb_details = search[0]
         else:
             print("Unable to match IMDb ID to TMDb, skipping")
+            continue
         
         # Validate TMDb information (very few TMDb entries don't yet have basic information)
         try:
