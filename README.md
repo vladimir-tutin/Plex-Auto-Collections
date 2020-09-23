@@ -28,22 +28,22 @@ To run the script in an interactive terminal run:
 python plex_auto_collections.py
 ```
     
-If you would like to run the script without any user interaction (e.g. to schedule the script to run on a schedule) the script can be launched with:
+If you would like to run the script without any user interaction (e.g. to schedule the script to run on a schedule) the script can be launched with `-u` or `--update`:
 
 ```shell
 python plex_auto_collections.py --update
 ```
 
-If you would like to run without the image server try:
+If you would like to run without the image server try using `-ns` or `--no-server`:
 
 ```shell
-python plex_auto_collections.py --noserver
+python plex_auto_collections.py --no-server
 ```
     
-A different configuration file can be specified with the `-c <path_to_config>` or `--config_path <path_to_config>`. This is useful for creating collections against different libraries, such as a Movie and TV library. In this case, be sure to update the `library_type` in the configuration file.
+A `config.yml` file is required to run the script. The script checks for a `config.yml` file alongside `plex_auto_collections.py` as well as in `config/config.yml`. If desired, a different configuration file can be specified with `-c <path_to_config>` or `--config-path <path_to_config>`. This could be useful for creating collections against different libraries, such as a Movie and TV library (in this case, be sure to update the `library_type` in the configuration file).
 
 ```shell
-python plex_auto_collections.py -c <path_to_config>
+python plex_auto_collections.py --config-path <path_to_config>
 ```
 
 ## Docker
