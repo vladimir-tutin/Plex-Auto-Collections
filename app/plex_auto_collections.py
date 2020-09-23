@@ -1,3 +1,4 @@
+import os
 import argparse
 import sys
 import threading
@@ -178,30 +179,48 @@ if hasattr(__builtins__, 'raw_input'):
     input = raw_input
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--config_path",
-                    help="Configuration file",
+parser.add_argument("-c", "--config-path", "--config_path",
+                    dest="config_path",
+                    help="Run with desired config.yml file",
                     nargs='?',
                     const=1,
-                    type=str,
-                    default="config.yml")
+                    type=str)
 parser.add_argument("-u", "--update",
-                    help="Automatically update collections off config and quits",
+                    help="Update collections using config without user interaction",
                     action="store_true")
-parser.add_argument("-ns", "--noserver",
-                    help="Don't start the image server",
+parser.add_argument("-ns", "--no-server", "--noserver",
+                    dest="no_server",
+                    help="Run without the image server",
                     action="store_true")
 
 args = parser.parse_args()
 
-
 print("==================================================================")
-print(" Plex Auto Collections by /u/iRawrz  ")
+print(" Plex Auto Collections                                            ")
 print("==================================================================")
 
-config_path = args.config_path
+print("Attempting to find config")
+config_path = None
+app_dir = os.path.dirname(os.path.realpath(__file__))
+
+# Set config_path from command line switch
+if args.config_path and os.path.exists(args.config_path):
+    config_path = args.config_path
+# Set config_path from app_dir
+elif os.path.exists(os.path.join(app_dir, "config.yml")):
+    config_path = os.path.join(app_dir, "config.yml")
+# Set config_path from config_dir
+elif os.path.exists(os.path.join(app_dir, "..", "config", "config.yml")):
+    config_path = os.path.join(app_dir, "..", "config", "config.yml")
+else:
+    print("No config found, exiting")
+    sys.exit(1)
+
+print("Using {} as config".format(config_path))
+
 plex = Plex(config_path)
 
-if not args.noserver:
+if not args.no_server:
     print("Attempting to start image server")
     pid = threading.Thread(target=image_server.start_srv, args=(config_path,))
     pid.daemon = True
