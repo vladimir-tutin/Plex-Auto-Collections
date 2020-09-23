@@ -1,8 +1,6 @@
 FROM python:3.8-slim
 VOLUME /config
-COPY /app/. /app
-COPY /config/. /config
-COPY /requirements.txt /requirements.txt
+COPY . /
 RUN \
 	echo "**** install system packages ****" && \
 		apt-get update && \
@@ -21,4 +19,4 @@ RUN \
 			/var/tmp/* \
 			/var/lib/apt/lists/*
 WORKDIR /app
-ENTRYPOINT ["python3", "plex_auto_collections.py", "--config_path", "/config/config.yml", "--update"]
+ENTRYPOINT ["python3", "plex_auto_collections.py", "--update"]
