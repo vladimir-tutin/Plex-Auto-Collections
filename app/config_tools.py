@@ -133,25 +133,29 @@ class ImageServer:
             self.port = 5000
         # Test and set default folder path
         if mode == "server":
+            print("Attempting to find posters directory")
+            
             if 'poster-directory' in config:
                 self.posterdirectory = config['poster-directory']
             else:
                 app_dir = os.path.dirname(os.path.realpath(__file__))
 
-                # Test separate config folder with nested 'posters' folder
+                # Test separate config directory with nested 'posters' directory
                 if os.path.exists(os.path.join(app_dir, "..", "config", "posters")):
                     self.posterdirectory = os.path.join("..", "config", "posters")
-                # Test separate config folder with nested 'images' folder
+                # Test separate config folder with nested 'images' directory
                 elif os.path.exists(os.path.join(app_dir, "..", "config", "images")):
                     self.posterdirectory = os.path.join("..", "config", "images")            
-                # Test nested posters folder
+                # Test nested posters directory
                 elif os.path.exists(os.path.join(app_dir, "posters")):
                     self.posterdirectory = "posters"
-                # Test nested images folder
+                # Test nested images directory
                 elif os.path.exists(os.path.join(app_dir, "images")):
                     self.posterdirectory = "images"
                 else:
                     raise RuntimeError("Invalid poster-directory setting")
+            
+            print("Using {} as poster directory".format(self.posterdirectory))
 
 
 def update_from_config(config_path, plex, headless=False):
