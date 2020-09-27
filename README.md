@@ -191,10 +191,43 @@ collections:
 ### Details (Collection Attribute)
 
 The next optional attribute for any collection is the `details` key. There are two different subattributes for `details` to choose from:
+- Sort Title (optional)
+- Content Rating (optional)
 - Summary (optional)
-- Image (optional)
+- Poster (optional)
+- Background (optional)
+- Collection Mode (optional)
+- Collection Order (optional)
 
 Note that the `details` attribute needs to be set in order for the script to search the local image server for any images (this will be fixed in future releases).
+
+#### Sort Title (Details Subattribute)
+
+Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk. 
+
+```yaml
+collections:
+  IMDb Top 250:
+    imdb-list: https://www.imdb.com/search/title/?groups=top_250&count=250
+    details:
+      sort_title: *100
+  Reddit Top 250:
+    trakt-list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
+    details:
+      sort_title: *101
+```
+
+#### Content Rating (Details Subattribute)
+
+Adding a content rating to each collection is possible:
+
+```yaml
+collections:
+  Pixar:
+    studio: Pixar
+    details:
+      content_rating: PG
+```
 
 #### Summary (Details Subattribute)
 
@@ -244,12 +277,11 @@ collections:
         civilization known as the Engineers.
 ```
 
-#### Image (Details Subattribute)
+#### Poster (Details Subattribute)
 
 There are four ways to set a poster image for a collection: local image server, public URL, TMDb collection, or TMDb actor. 
 
-Local assets are supported by running the script with the image server running. If a) the `details` attribute is set, b) there are no details filled out for the poster, and c) and the image server is running, the script will attempt to match a collection name 
-with an image file of the same name. Images should be placed in the configured folder (typically `./images `). 
+Local assets are supported by running the script with the image server running. If a) the `details` attribute is set, b) there are no details filled out for the poster, and c) and the image server is running, the script will attempt to match a collection name with an image file of the same name. Images should be placed in the configured folder (typically `./images `). 
 
 If you want to use an image publicly available on the internet:
 ```yaml
@@ -279,6 +311,51 @@ collections:
       tmdb-summary: 4169
       tmdb-poster: 4169
 ```
+#### Background (Details Subattribute)
+
+There are two ways to set a background image for a collection: local image server or public URL.
+
+Local assets are supported by running the script with the image server running. If a) the `details` attribute is set, b) there are no details filled out for the poster, and c) and the image server is running, the script will attempt to match a collection name with an image file of the same name with `-background` appended. Images should be placed in the configured folder (typically `../config/images` or `../config/posters/`). For example, create an image `Jurassic Park-background.png` and placed it in the `images` directory.
+
+```yaml
+collections:
+  Jurassic Park:
+    tmdb-list: https://www.themoviedb.org/collection/328
+    details:
+      tmdb-summary: 328
+      poster: https://i.imgur.com/QMjbyCX.png
+      background: https://i.imgur.com/2xE0R9I.png
+```
+
+#### Collection Mode (Details Subattribute)
+
+Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hide_items`, `show_items`, and `hide`.
+
+```yaml
+collections:
+  Jurassic Park:
+    tmdb-list: https://www.themoviedb.org/collection/328
+    details:
+      tmdb-summary: 328
+      poster: https://i.imgur.com/QMjbyCX.png
+      background: https://i.imgur.com/2xE0R9I.png
+      collection_mode: hide_items
+```
+
+#### Collection Order (Details Subattribute)
+
+Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release_date` or `alphabetical`. Plex defaults all collections to `release_date`, but `alphabetical` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
+
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb-list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+    details:
+      collection_order: alphabetical
+```
+
 ### Subfilters (Collection Attribute)
 
 The next optional attribute for any collection is the `subfilters` key. Subfilters allows for a little more granular selection from a list of movies to add to a collection. 

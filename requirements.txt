@@ -1,7 +1,7 @@
 # Remove
 PyYAML==5.1.2
 # Less common, pinned
-PlexAPI==4.0.0
+PlexAPI==4.1.1
 tmdbv3api==1.6.2
 trakt.py==4.2.0
 # More common, flexible

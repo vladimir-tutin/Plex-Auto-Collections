@@ -235,7 +235,19 @@ def update_from_config(config_path, plex, headless=False):
                 # No collections created with requested criteria
                 continue
 
-            rkey = plex_collection.ratingKey
+            item = plex.Server.fetchItem(plex_collection.ratingKey)
+
+            # Handle collection titleSort
+            if "sort_title" in collections[c]["details"]:
+                edits = {'titleSort.value': collections[c]["details"]["sort_title"], 'titleSort.locked': 1}
+                item.edit(**edits)
+                item.reload()
+
+            # Handle collection contentRating
+            if "content_rating" in collections[c]["details"]:
+                edits = {'contentRating.value': collections[c]["details"]["content_rating"], 'contentRating.locked': 1}
+                item.edit(**edits)
+                item.reload()
 
             # Handle collection summary
             summary = None
@@ -248,17 +260,10 @@ def update_from_config(config_path, plex, headless=False):
                 except AttributeError:
                     summary = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-summary"], "biography")
             if summary:
-                # Push summary to Plex
-                # Waiting on https://github.com/pkkid/python-plexapi/pull/509
-                # See https://github.com/pkkid/python-plexapi/issues/514
-                url = plex.url + "/library/sections/" + str(plex.Library.key) + "/all"
-                querystring = {"type": "18",
-                               "id": str(rkey),
-                               "summary.value": summary,
-                               "X-Plex-Token": config.plex['token']}
-                response = requests.put(url, params=querystring)
-                # To do: add logic to report errors
-            
+                edits = {'summary.value': summary, 'summary.locked': 1}
+                item.edit(**edits)
+                item.reload()
+
             # Handle collection posters
             poster = None
             if "poster" in collections[c]["details"]:
@@ -290,14 +295,49 @@ def update_from_config(config_path, plex, headless=False):
                     poster = local_poster_url
 
             if poster:               
-                # Push poster to Plex
-                # Waiting on https://github.com/pkkid/python-plexapi/pull/509
-                # See https://github.com/pkkid/python-plexapi/issues/514
-                url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
-                querystring = {"url": poster,
-                               "X-Plex-Token": config.plex['token']}
-                response = requests.post(url, params=querystring)
-                # To do: add logic to report errors
+                item.uploadPoster(url=poster)
+
+            # Handle collection backgrounds
+            background = None
+            if "background" in collections[c]["details"]:
+                background = collections[c]["details"]["background"]
+            else:
+                # Try to pull image from image_server.
+                # To do: this should skip if it's run without the image server
+                # To do: this only runs if 'details' key is set - might make sense to run regardless
+                # Setup connection to image_server
+                config_client = ImageServer(config_path, "client")
+
+                # Url encode collection name
+                c_name = urllib.parse.quote(c, safe='')
+
+                # Create local url to where image would be if exists
+                local_background_url = "http://" + config_client.host + ":" + str(config_client.port) + "/images/" + c_name + "-background"
+
+                # Test local url
+                response = requests.head(local_background_url)
+                if response.status_code < 400:
+                    background = local_background_url
+
+            if background:
+                item.uploadArt(url=background)
+
+            # Handle collection collectionMode
+            if "collection_mode" in collections[c]["details"]:
+                collectionMode = collections[c]["details"]["collection_mode"]
+                if collectionMode in ('default', 'hide', 'hide_items', 'show_items'):
+                    item.modeUpdate(mode=collectionMode)
+                else:
+                    print("collectionMode Invalid\ndefault (Library default)\nhide (Hide Collection)\nhideItems (Hide Items in this Collection)\nshowItems (Show this Collection and its Items)\n")
+
+            # Handle collection collectionSort
+            if "collection_sort" in collections[c]["details"]:
+                collectionSort = collections[c]["details"]["collection_sort"]
+                if collectionSort in ('release_date', 'alphabetical'):
+                    item.sortUpdate(sort=collectionSort)
+                else:
+                    print("collectionSort Invalid\nrelease (Order Collection by release dates)\nalpha (Order Collection Alphabetically)\n")
+
 
 def modify_config(config_path, c_name, m, value):
     config = Config(config_path)
