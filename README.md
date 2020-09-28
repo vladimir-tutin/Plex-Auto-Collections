@@ -27,23 +27,17 @@ To run the script in an interactive terminal run:
 ```shell
 python plex_auto_collections.py
 ```
-    
-If you would like to run the script without any user interaction (e.g. to schedule the script to run on a schedule) the script can be launched with `-u` or `--update`:
 
-```shell
-python plex_auto_collections.py --update
-```
-
-If you would like to run without the image server try using `-ns` or `--no-server`:
-
-```shell
-python plex_auto_collections.py --no-server
-```
-    
 A `config.yml` file is required to run the script. The script checks for a `config.yml` file alongside `plex_auto_collections.py` as well as in `config/config.yml`. If desired, a different configuration file can be specified with `-c <path_to_config>` or `--config-path <path_to_config>`. This could be useful for creating collections against different libraries, such as a Movie and TV library (in this case, be sure to update the `library_type` in the configuration file).
 
 ```shell
 python plex_auto_collections.py --config-path <path_to_config>
+```
+
+If you would like to run the script without any user interaction (e.g. to schedule the script to run on a schedule) the script can be launched with `-u` or `--update`:
+
+```shell
+python plex_auto_collections.py --update
 ```
 
 ## Docker
@@ -53,10 +47,8 @@ A simple `Dockerfile` is available in this repo if you'd like to build it yourse
 The docker implementation today is limited but will improve over time. To use, try the following:
 
 ```shell
-docker run -p '5000:5000/tcp' -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'burkasaurusrex/plex-auto-collections' 
+docker run -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'burkasaurusrex/plex-auto-collections' 
 ```
-
-The `-p '5000:5000/tcp'` option exposes the port for the image server. If you don't want to use the image server, feel free to remove this. If you change the image server port in your config, you'll need to update this setting to reflect it. It defaults to port `5000` today.
 
 The `-v '/mnt/user/plex-auto-collections/':'/config'` mounts a persistent volume to store your config file. Today, the docker image defaults to running the config named `config.yml` in your persistent volume (eventually, the docker will support an environment variable to change the config path).
 
@@ -279,9 +271,9 @@ collections:
 
 #### Poster (Details Subattribute)
 
-There are four ways to set a poster image for a collection: local image server, public URL, TMDb collection, or TMDb actor. 
+There are four ways to set a poster image for a collection: local image, public URL, TMDb collection, or TMDb actor. 
 
-Local assets are supported by running the script with the image server running. If a) the `details` attribute is set, b) there are no details filled out for the poster, and c) and the image server is running, the script will attempt to match a collection name with an image file of the same name. Images should be placed in the configured folder (typically `./images `). 
+Local assets are supported by running the script with posters in the `poster-directory`. If a) the `details` attribute is set and b) there are no details filled out for the poster, the script will attempt to match a collection name with an image file of the same name. Images should be placed in the configured folder (typically `../config/posters` or `./posters`). For example, create an image `Jurassic Park.png` and placed it in the `posters` directory.
 
 If you want to use an image publicly available on the internet:
 ```yaml
@@ -313,9 +305,9 @@ collections:
 ```
 #### Background (Details Subattribute)
 
-There are two ways to set a background image for a collection: local image server or public URL.
+There are two ways to set a background image for a collection: local image or public URL.
 
-Local assets are supported by running the script with the image server running. If a) the `details` attribute is set, b) there are no details filled out for the poster, and c) and the image server is running, the script will attempt to match a collection name with an image file of the same name with `-background` appended. Images should be placed in the configured folder (typically `../config/images` or `../config/posters/`). For example, create an image `Jurassic Park-background.png` and placed it in the `images` directory.
+Local assets are supported by running the script with background images in the `background-directory`. If a) the `details` attribute is set and b) there are no details filled out for the background, the script will attempt to match a collection name with an image file of the same name. Images should be placed in the configured folder (typically `../config/backgrounds` or `./backgrounds`). For example, create an image `Jurassic Park.png` and placed it in the `backgrounds` directory.
 
 ```yaml
 collections:
@@ -393,11 +385,11 @@ collections:
 A `plex` mapping in the config is required. Here's the full set of configurations:
 
 ```yaml
-plex:                                   # Req
-  library: Movies                       # Req - Name of Plex library
-  library_type: movie                   # Req - Type of Plex library (movie or show)
-  token: #####                          # Req - User's Plex authentication token
-  url: http://192.168.1.1:32400         # Req - URL to access Plex
+plex:                                         # Req
+  library: Movies                             # Req - Name of Plex library
+  library_type: movie                         # Req - Type of Plex library (movie or show)
+  token: #####                                # Req - User's Plex authentication token
+  url: http://192.168.1.1:32400               # Req - URL to access Plex
 ```
 
 **This script does not currently support Plex's [new metadata agent / matching](https://forums.plex.tv/t/introducing-the-new-plex-movie-agent/615989)**. Do not "update matching" until the script's dependencies support the new agent (feel free to follow issue #33).
@@ -410,17 +402,14 @@ Lastly, if you need help finding your Plex authentication token, please see Plex
 
 ## Image Server
 
-An `image-server` mapping in the config is optional. If the script is run without the `--noserver` config, the image server will be started with logical defaults.
-
-By placing images in the `poster-directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the image `/config/posters/Jurassic Park.png`, the script will upload that image to Plex.
+An `image-server` mapping in the config is optional. By placing images in the `poster-directory` or `background-directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the image `/config/posters/Jurassic Park.png`, the script will upload that image to Plex.
 
 Here's the full set of configurations:
 
 ```yaml
-image-server:                           # Opt
-  host: 127.0.0.1                       # Opt - Host of machine running the script
-  port: 5000                            # Opt - Desired port for image server
-  poster-directory: /config/posters     # Opt - Desired dir of images
+image-server:                                 # Opt
+  poster-directory: /config/posters           # Opt - Desired dir of posters
+  background-directory: /config/backgrounds   # Opt - Desired dir of backgrounds
 ```
 
 If Plex is running on a different machine on the same network, then change the host to an addressable local IP address. Port forwarding is generally not required unless Plex is running on a remote machine.
@@ -430,9 +419,9 @@ If Plex is running on a different machine on the same network, then change the h
 If using TMDb lists, be sure to include your TMDb API key. If you do not have an API key please refer to this [guide](https://developers.themoviedb.org/3/getting-started/introduction). Here's the full set of configurations:
 
 ```yaml
-tmdb:                                   # Opt
-  apikey: #####                         # Req - User's TMDb API key
-  language: en                          # Opt - User's language
+tmdb:                                         # Opt
+  apikey: #####                               # Req - User's TMDb API key
+  language: en                                # Opt - User's language
 ```
 
 ## Trakt
@@ -446,16 +435,16 @@ If using Trakt lists, be sure to include your Trakt application credentials. To 
 
 Here's the full set of configurations:
 ```yaml
-trakt:                                  # Opt
-  client_id: #####                      # Req - Trakt application client ID
-  client_secret: #####                  # Req - Trakt application client secret
-  authorization:                        # Req
-    access_token:                       # LEAVE BLANK
-    token_type:                         # LEAVE BLANK
-    expires_in:                         # LEAVE BLANK
-    refresh_token:                      # LEAVE BLANK
-    scope:                              # LEAVE BLANK
-    created_at:                         # LEAVE BLANK
+trakt:                                        # Opt
+  client_id: #####                            # Req - Trakt application client ID
+  client_secret: #####                        # Req - Trakt application client secret
+  authorization:                              # Req
+    access_token:                             # LEAVE BLANK
+    token_type:                               # LEAVE BLANK
+    expires_in:                               # LEAVE BLANK
+    refresh_token:                            # LEAVE BLANK
+    scope:                                    # LEAVE BLANK
+    created_at:                               # LEAVE BLANK
 ```
 
 On the first run, the script will walk the user through the OAuth flow by producing a Trakt URL for the user to follow. Once authenticated at the Trakt URL, the user needs to return the code to the script. If the code is correct, the script will populate the `authorization` subattributes to use in subsequent runs.
@@ -467,14 +456,14 @@ When parsing TMBd, IMDb, or Trakt lists, the script will finds movies that are o
 
 Here's the full set of configurations:
 ```yaml
-radarr:                                 # Opt
-  url: http://192.168.1.1:7878          # Req - URL to access Radarr
-  version: v2                           # Opt - 'v2' for <0.2, 'v3' for >3.0
-  token: #####                          # Req - User's Radarr API key
-  quality_profile_id: 4                 # Req - See below
-  root_folder_path: /mnt/movies         # Req - See below
-  add_movie: false                      # Opt - Add missing movies to Radarr
-  search_movie: false                   # Opt - Search while adding missing movies
+radarr:                                       # Opt
+  url: http://192.168.1.1:7878                # Req - URL to access Radarr
+  version: v2                                 # Opt - 'v2' for <0.2, 'v3' for >3.0
+  token: #####                                # Req - User's Radarr API key
+  quality_profile_id: 4                       # Req - See below
+  root_folder_path: /mnt/movies               # Req - See below
+  add_movie: false                            # Opt - Add missing movies to Radarr
+  search_movie: false                         # Opt - Search while adding missing movies
 ```
 
 The `token` can be found by going to `Radarr > Settings > General > Security > API Key`
