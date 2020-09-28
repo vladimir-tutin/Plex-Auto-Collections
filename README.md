@@ -309,6 +309,7 @@ There are two ways to set a background image for a collection: local image or pu
 
 Local assets are supported by running the script with background images in the `background-directory`. If a) the `details` attribute is set and b) there are no details filled out for the background, the script will attempt to match a collection name with an image file of the same name. Images should be placed in the configured folder (typically `../config/backgrounds` or `./backgrounds`). For example, create an image `Jurassic Park.png` and placed it in the `backgrounds` directory.
 
+If you want to use an image publicly available on the internet:
 ```yaml
 collections:
   Jurassic Park:
