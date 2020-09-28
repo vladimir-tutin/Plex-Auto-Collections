@@ -158,7 +158,7 @@ def update_from_config(config_path, plex, headless=False):
             # Handle collection collectionMode
             if "collection_mode" in collections[c]["details"]:
                 collectionMode = collections[c]["details"]["collection_mode"]
-                if collectionMode in ('default', 'hide', 'hide_items', 'show_items'):
+                if collectionMode in ('default', 'hide', 'hideItems', 'showItems'):
                     item.modeUpdate(mode=collectionMode)
                 else:
                     print("collectionMode Invalid\ndefault (Library default)\nhide (Hide Collection)\nhideItems (Hide Items in this Collection)\nshowItems (Show this Collection and its Items)\n")
@@ -166,7 +166,7 @@ def update_from_config(config_path, plex, headless=False):
             # Handle collection collectionSort
             if "collection_sort" in collections[c]["details"]:
                 collectionSort = collections[c]["details"]["collection_sort"]
-                if collectionSort in ('release_date', 'alphabetical'):
+                if collectionSort in ('release', 'alpha'):
                     item.sortUpdate(sort=collectionSort)
                 else:
                     print("collectionSort Invalid\nrelease (Order Collection by release dates)\nalpha (Order Collection Alphabetically)\n")

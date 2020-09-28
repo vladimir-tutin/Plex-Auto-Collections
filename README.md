@@ -321,7 +321,7 @@ collections:
 
 #### Collection Mode (Details Subattribute)
 
-Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hide_items`, `show_items`, and `hide`.
+Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hideItems`, `showItems`, and `hide`.
 
 ```yaml
 collections:
@@ -331,12 +331,12 @@ collections:
       tmdb-summary: 328
       poster: https://i.imgur.com/QMjbyCX.png
       background: https://i.imgur.com/2xE0R9I.png
-      collection_mode: hide_items
+      collection_mode: hideItems
 ```
 
 #### Collection Order (Details Subattribute)
 
-Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release_date` or `alphabetical`. Plex defaults all collections to `release_date`, but `alphabetical` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
+Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
 
 ```yaml
 collections:
@@ -345,7 +345,7 @@ collections:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     details:
-      collection_order: alphabetical
+      collection_order: alpha
 ```
 
 ### Subfilters (Collection Attribute)
@@ -402,7 +402,7 @@ Lastly, if you need help finding your Plex authentication token, please see Plex
 
 ## Image Server
 
-An `image-server` mapping in the config is optional. By placing images in the `poster-directory` or `background-directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the image `/config/posters/Jurassic Park.png`, the script will upload that image to Plex.
+An `image-server` mapping in the config is optional. By placing images in the `poster-directory` or `background-directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the image `../config/posters/Jurassic Park.png`, the script will upload that image to Plex.
 
 Here's the full set of configurations:
 
@@ -411,8 +411,6 @@ image-server:                                 # Opt
   poster-directory: /config/posters           # Opt - Desired dir of posters
   background-directory: /config/backgrounds   # Opt - Desired dir of backgrounds
 ```
-
-If Plex is running on a different machine on the same network, then change the host to an addressable local IP address. Port forwarding is generally not required unless Plex is running on a remote machine.
 
 ## TMDb
 
@@ -448,7 +446,6 @@ trakt:                                        # Opt
 ```
 
 On the first run, the script will walk the user through the OAuth flow by producing a Trakt URL for the user to follow. Once authenticated at the Trakt URL, the user needs to return the code to the script. If the code is correct, the script will populate the `authorization` subattributes to use in subsequent runs.
-
 
 ## Radarr
 
