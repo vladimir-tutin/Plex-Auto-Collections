@@ -5,7 +5,6 @@ PlexAPI==4.1.1
 tmdbv3api==1.6.2
 trakt.py==4.2.0
 # More common, flexible
-flask
 lxml
 requests>=2.4.2
 ruamel.yaml
