@@ -1,20 +1,11 @@
 # -*- coding: UTF-8 -*-
 import os
 import yaml
-import requests
-import socket
-import urllib
 from plexapi.server import PlexServer
 from plexapi.video import Movie
 from plexapi.video import Show
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
-from plexapi.library import Collections
-from plex_tools import get_actor_rkey
-from plex_tools import add_to_collection
-from plex_tools import get_collection
-from radarr_tools import add_to_radarr
-from imdb_tools import tmdb_get_summary
 from trakt import Trakt
 import trakt_helpers
 
@@ -115,189 +106,53 @@ class TraktClient:
 
 
 class ImageServer:
-    def __init__(self, config_path, mode="server"):
+    def __init__(self, config_path):
         config = Config(config_path).image_server
-        # Best defaults for "host" are 0.0.0.0 for server and 127.0.0.1 for client
-        # Set respective defaults in server and client
-        if 'host' in config:
-            self.host = config['host']
+        
+        print("Attempting to find posters directory")
+        
+        if 'poster-directory' in config:
+            self.posterdirectory = config['poster-directory']
         else:
-            if mode == "server":
-                self.host = "0.0.0.0"
-            else:
-                self.host = "127.0.0.1"
-        # Set default port
-        if 'port' in config:
-            self.port = config['port']
-        else:
-            self.port = 5000
-        # Test and set default folder path
-        if mode == "server":
-            print("Attempting to find posters directory")
-            
-            if 'poster-directory' in config:
-                self.posterdirectory = config['poster-directory']
-            else:
-                app_dir = os.path.dirname(os.path.realpath(__file__))
+            app_dir = os.path.dirname(os.path.realpath(__file__))
 
-                # Test separate config directory with nested 'posters' directory
-                if os.path.exists(os.path.join(app_dir, "..", "config", "posters")):
-                    self.posterdirectory = os.path.join("..", "config", "posters")
-                # Test separate config folder with nested 'images' directory
-                elif os.path.exists(os.path.join(app_dir, "..", "config", "images")):
-                    self.posterdirectory = os.path.join("..", "config", "images")            
-                # Test nested posters directory
-                elif os.path.exists(os.path.join(app_dir, "posters")):
-                    self.posterdirectory = "posters"
-                # Test nested images directory
-                elif os.path.exists(os.path.join(app_dir, "images")):
-                    self.posterdirectory = "images"
-                else:
-                    raise RuntimeError("Invalid poster-directory setting")
+            # Test separate config directory with nested 'posters' directory
+            if os.path.exists(os.path.join(app_dir, "..", "config", "posters")):
+                self.posterdirectory = os.path.abspath(os.path.join(app_dir, "..", "config", "posters"))
+            # Test separate config folder with nested 'images' directory
+            elif os.path.exists(os.path.join(app_dir, "..", "config", "images")):
+                self.posterdirectory = os.path.abspath(os.path.join(app_dir, "..", "config", "images"))
+            # Test nested posters directory
+            elif os.path.exists(os.path.join(app_dir, "posters")):
+                self.posterdirectory = os.path.abspath(os.path.join(app_dir, "posters"))
+            # Test nested images directory
+            elif os.path.exists(os.path.join(app_dir, "images")):
+                self.posterdirectory = os.path.abspath(os.path.join(app_dir, "images"))
+            else:
+                print("Invalid poster-directory setting")
             
+        if self.posterdirectory: 
             print("Using {} as poster directory".format(self.posterdirectory))
+        
+        print("Attempting to find backgrounds directory")
+        
+        if 'background-directory' in config:
+            self.backgrounddirectory = config['background-directory']
+        else:
+            app_dir = os.path.dirname(os.path.realpath(__file__))
 
-
-def update_from_config(config_path, plex, headless=False):
-    config = Config(config_path)
-    collections = config.collections
-    if isinstance(plex.Library, MovieSection):
-        libtype = "movie"
-    elif isinstance(plex.Library, ShowSection):
-        libtype = "show"
-    for c in collections:
-        print("Updating collection: {}...".format(c))
-        methods = [m for m in collections[c] if m not in ("details", "subfilters")]
-        subfilters = []
-        if "subfilters" in collections[c]:
-            for sf in collections[c]["subfilters"]:
-                sf_string = sf, collections[c]["subfilters"][sf]
-                subfilters.append(sf_string)
-        for m in methods:
-            if isinstance(collections[c][m], list):
-                # Support multiple imdb/tmdb/trakt lists
-                values = collections[c][m]
+            # Test separate config directory with nested 'posters' directory
+            if os.path.exists(os.path.join(app_dir, "..", "config", "backgrounds")):
+                self.backgrounddirectory = os.path.abspath(os.path.join(app_dir, "..", "config", "backgrounds"))
+            # Test nested posters directory
+            elif os.path.exists(os.path.join(app_dir, "backgrounds")):
+                self.backgrounddirectory = os.path.abspath(os.path.join(app_dir, "backgrounds"))
             else:
-                values = collections[c][m].split(", ")
-            for v in values:
-                if m[-1:] == "s":
-                    m_print = m[:-1]
-                else:
-                    m_print = m
-                print("Processing {}: {}".format(m_print, v))
-                if m == "actors" or m == "actor":
-                    v = get_actor_rkey(plex, v)
-                try:
-                    missing = add_to_collection(config_path, plex, m, v, c, subfilters)
-                except UnboundLocalError:  # No sub-filters
-                    missing = add_to_collection(config_path, plex, m, v, c)
-                except (KeyError, ValueError) as e:
-                    print(e)
-                    missing = False
-                if missing:
-                    if libtype == "movie":
-                        if "imdb" in m:
-                            method_name = "IMDb"
-                        elif "trakt" in m:
-                            method_name = "Trakt"
-                        else:
-                            method_name = "TMDb"
-                        print("{} missing movies from {} List: {}".format(len(missing), method_name, v))
-                        if 'add_movie' in config.radarr:
-                            if config.radarr['add_movie'] is True:
-                                print("Adding missing movies to Radarr")
-                                add_to_radarr(config_path, missing)
-                        else:
-                            if input("Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                                add_to_radarr(config_path, missing)
-                    elif libtype == "show":
-                        if "trakt" in m:
-                            method_name = "Trakt"
-                        else:
-                            method_name = "TMDb"
-                        print("{} missing shows from {} List: {}".format(len(missing), method_name, v))
-                        # if not skip_sonarr:
-                        #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
-                        #         add_to_radarr(missing_shows)
-        # Multiple collections of the same name
-        if "details" in collections[c]:
-            # # Check if there are multiple collections with the same name
-            # movie_collections = plex.MovieLibrary.search(title=c, libtype="collection")
-            # show_collections = plex.ShowLibrary.search(title=c, libtype="collection")
-            # if len(movie_collections + show_collections) > 1:
-            #     print("Multiple collections named {}.\nUpdate of \"details\" is currently unsupported.".format(c))
-            #     continue
-            if headless is True: 
-                plex_collection = get_collection(plex, c, True)
-            elif headless is False:
-                plex_collection = get_collection(plex, c, False)
-            if not isinstance(plex_collection, Collections):
-                # No collections created with requested criteria
-                continue
-
-            rkey = plex_collection.ratingKey
-
-            # Handle collection summary
-            summary = None
-            if "summary" in collections[c]["details"]:
-                summary = collections[c]["details"]["summary"]
-            elif "tmdb-summary" in collections[c]["details"]:
-                # Seems clunky ...
-                try:
-                    summary = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-summary"], "overview")
-                except AttributeError:
-                    summary = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-summary"], "biography")
-            if summary:
-                # Push summary to Plex
-                # Waiting on https://github.com/pkkid/python-plexapi/pull/509
-                # See https://github.com/pkkid/python-plexapi/issues/514
-                url = plex.url + "/library/sections/" + str(plex.Library.key) + "/all"
-                querystring = {"type": "18",
-                               "id": str(rkey),
-                               "summary.value": summary,
-                               "X-Plex-Token": config.plex['token']}
-                response = requests.put(url, params=querystring)
-                # To do: add logic to report errors
+                print("Invalid background-directory setting")
             
-            # Handle collection posters
-            poster = None
-            if "poster" in collections[c]["details"]:
-                poster = collections[c]["details"]["poster"]
-            elif "tmdb-poster" in collections[c]["details"]:
-                # Seems clunky ...
-                try:
-                    slug = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-poster"], "poster_path")
-                except AttributeError:
-                    slug = tmdb_get_summary(config_path, collections[c]["details"]["tmdb-poster"], "profile_path")
-                
-                poster = "https://image.tmdb.org/t/p/original/" + slug
-            else:
-                # Try to pull image from image_server.
-                # To do: this should skip if it's run without the image server
-                # To do: this only runs if 'details' key is set - might make sense to run regardless
-                # Setup connection to image_server
-                config_client = ImageServer(config_path, "client")
+        if self.backgrounddirectory: 
+            print("Using {} as background directory".format(self.backgrounddirectory))
 
-                # Url encode collection name
-                c_name = urllib.parse.quote(c, safe='')
-                
-                # Create local url to where image would be if exists
-                local_poster_url = "http://" + config_client.host + ":" + str(config_client.port) + "/images/" + c_name
-                
-                # Test local url
-                response = requests.head(local_poster_url)
-                if response.status_code < 400:
-                    poster = local_poster_url
-
-            if poster:               
-                # Push poster to Plex
-                # Waiting on https://github.com/pkkid/python-plexapi/pull/509
-                # See https://github.com/pkkid/python-plexapi/issues/514
-                url = plex.url + "/library/metadata/" + str(rkey) + "/posters"
-                querystring = {"url": poster,
-                               "X-Plex-Token": config.plex['token']}
-                response = requests.post(url, params=querystring)
-                # To do: add logic to report errors
 
 def modify_config(config_path, c_name, m, value):
     config = Config(config_path)
