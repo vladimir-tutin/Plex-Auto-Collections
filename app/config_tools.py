@@ -173,26 +173,20 @@ class TraktClient:
                 self.client_secret = checkForAttribute(config, "client_secret", text="trakt sub-attribute {}")
                 self.authorization = config['authorization']
 
-                def checkTrakt ():
+                def checkTrakt (auth):
                     try:
-                        trakt_url = "https://trakt.tv/users/movistapp/lists/christmas-movies"
-                        if trakt_url[-1:] == " ":
-                            trakt_url = trakt_url[:-1]
-                        imdb_map = {}
-                        trakt_list_path = urlparse(trakt_url).path
-                        trakt_list_items = trakt.Trakt[trakt_list_path].items()
-                        title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
+                        #TODO: Validate Trakt Connection
                         return True
                     except:
                         return False
 
-                if not checkTrakt():
+                if not checkTrakt(self.authorization):
                     self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
                     print("| Stored Authorization Failed")
                 Trakt.configuration.defaults.client(self.client_id, self.client_secret)
                 self.updated_authorization = trakt_helpers.authenticate(self.authorization)
 
-                if checkTrakt():
+                if checkTrakt(self.updated_authorization):
                     Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
                     if self.updated_authorization != self.authorization:
                         trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)

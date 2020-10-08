@@ -41,7 +41,7 @@ def save_authorization(config_file, authorization):
     config['trakt']['authorization']['refresh_token'] = authorization['refresh_token']
     config['trakt']['authorization']['scope'] = authorization['scope']
     config['trakt']['authorization']['created_at'] = authorization['created_at']
-    print('Saving authorization information to {}'.format(config_file))
+    print('| Saving authorization information to {}'.format(config_file))
     ruamel.yaml.round_trip_dump(
         config,
         open(config_file, 'w'),

@@ -93,13 +93,13 @@ def update_from_config(config_path, plex, headless=False):
             for m in meta:
                 try:                        return prefix + tmdb_get_summary(config_path, data, m)
                 except AttributeError:      pass
-        def editValue (item, check, name, value, sur=""):
-            if check:
-                if value:
-                    edits = {"{}.value".format(name): value, "{}.locked".format(name): 1}
+        def editValue (item, name, details):
+            if name in details:
+                if details[name]:
+                    edits = {"{}.value".format(name): details[name], "{}.locked".format(name): 1}
                     item.edit(**edits)
                     item.reload()
-                    print("| Detail: {} updated to {}{}{}".format(name, sur, value, sur))
+                    print("| Detail: {} updated to {}".format(name, details[name]))
                 else:
                     print("| Config Error: {} attribute is blank".format(name))
         summary = None
@@ -108,10 +108,10 @@ def update_from_config(config_path, plex, headless=False):
         if "details" in collections[c]:
 
             # Handle collection titleSort
-            editValue(item, "titleSort" in collections[c]["details"], "titleSort", collections[c]["details"]["titleSort"])
+            editValue(item, "titleSort", collections[c]["details"])
 
             # Handle collection contentRating
-            editValue(item, "contentRating" in collections[c]["details"], "contentRating", collections[c]["details"]["contentRating"])
+            editValue(item, "contentRating", collections[c]["details"])
 
             # Handle collection summary
             if "summary" in collections[c]["details"]:
@@ -165,7 +165,11 @@ def update_from_config(config_path, plex, headless=False):
         if not summary and "tmdbID" in collections[c] and TMDB.valid:       summary = getSummary(config_path, tmdbID, ["overview", "biography"], "")
 
         # Handle collection summary
-        editValue(item, summary, "summary", summary, sur='"')
+        if summary:
+            edits = {"summary.value": summary, "summary.locked": 1}
+            item.edit(**edits)
+            item.reload()
+            print('| Detail: summary updated to "{}"'.format(summary))
 
         # Handle Image Server
         image_server = ImageServer(config_path)
@@ -180,27 +184,27 @@ def update_from_config(config_path, plex, headless=False):
                 if len(matches) > 0 or len(posters_found) > 0:
                     for match in matches:       posters_found.append(["file", os.path.abspath(match)])
                 else:
-                    print("| poster not found at: {}".format(path))
+                    print("| poster not found at: {}".format(os.path.abspath(path)))
             if image_server.background:
                 path = os.path.join(image_server.background, "{}.*".format(file))
                 matches = glob.glob(path)
                 if len(matches) > 0 or len(backgrounds_found) > 0:
                     for match in matches:       backgrounds_found.append(["file", os.path.abspath(match)])
                 else:
-                    print("| background not found at: {}".format(path))
+                    print("| background not found at: {}".format(os.path.abspath(path)))
             if image_server.image:
                 path = os.path.join(image_server.image, "{}".format(file), "poster.*")
                 matches = glob.glob(path)
                 if len(matches) > 0 or len(posters_found) > 0:
                     for match in matches:       posters_found.append(["file", os.path.abspath(match)])
                 else:
-                    print("| poster not found at: {}".format(path))
+                    print("| poster not found at: {}".format(os.path.abspath(path)))
                 path = os.path.join(image_server.image, "{}".format(file), "background.*")
                 matches = glob.glob(path)
                 if len(matches) > 0 or len(backgrounds_found) > 0:
                     for match in matches:       backgrounds_found.append(["file", os.path.abspath(match)])
                 else:
-                    print("| background not found at: {}".format(path))
+                    print("| background not found at: {}".format(os.path.abspath(path)))
 
         # Pick Images
         def chooseFromList (listType, itemList, headless):
@@ -437,9 +441,11 @@ plex = Plex(config_path)
 if args.update:
     update_from_config(config_path, plex, True)
     sys.exit(0)
-
-if input("| \n| Update Collections from Config? (y/n): ").upper() == "Y":
-    update_from_config(config_path, plex, False)
+try:
+    if input("| \n| Update Collections from Config? (y/n): ").upper() == "Y":
+        update_from_config(config_path, plex, False)
+except KeyboardInterrupt:
+    pass
 
 mode = None
 while not mode == "q":
@@ -452,7 +458,10 @@ while not mode == "q":
         mode = input("| Select Mode: ")
 
         if mode == "r":
-            update_from_config(config_path, plex)
+            try:
+                update_from_config(config_path, plex)
+            except KeyboardInterrupt:
+                pass
 
         elif mode == "a":
             print("|\n|===================================================================================================|")
