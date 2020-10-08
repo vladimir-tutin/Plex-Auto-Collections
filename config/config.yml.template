@@ -20,10 +20,19 @@ collections:
     studio: Pixar
     details:
       summary: A collection of Pixar movies
+      titleSort: *Pixar
+      contentRating: G
+      collectionMode: showItems
+      collectionSort: alpha
   1990s:
     year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
     details:
       summary: A collection of 1990s movies
+  28 Days/Weeks Later:
+    tmdbID: 1565
+    file: 28 Days-Weeks Later
+  Anaconda:
+    tmdbID: 105995, 336560
 plex:
   library: Movies
   library_type: ### 'movie' or 'show' ###
@@ -51,6 +60,6 @@ trakt:
     scope:
     created_at:
 image-server:
-  host: 192.168.1.1
-  port: 5000
-  poster-directory: /config/posters
+  poster-directory: ../config/posters
+  background-directory: ../config/backgrounds
+  image-directory: ../config/images

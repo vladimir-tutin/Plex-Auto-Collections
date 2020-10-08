@@ -4,3 +4,5 @@ config.yml
 *.spec
 **/__pycache__
 /.vscode
+app/images
+app/config.yml

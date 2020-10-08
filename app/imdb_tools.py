@@ -70,8 +70,13 @@ def tmdb_get_movies(config_path, plex, data):
     t_movie.api_key = tmdb.api_key  # Copy same api key to Movie
     t_col = tmdb.details(tmdb_id)
     t_movs = []
-    for tmovie in t_col.parts:
-        t_movs.append(tmovie['id'])
+    try:
+        for tmovie in t_col.parts:
+            t_movs.append(tmovie['id'])
+    except AttributeError:
+        t_movs.append(tmdb_id)
+
+
 
     # Create dictionary of movies and their guid
     # GUIDs reference from which source Plex has pulled the metadata
