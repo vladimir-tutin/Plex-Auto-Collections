@@ -153,7 +153,7 @@ collections:
 ```yaml
 collections:
   Alien (Past & Present):
-	tmdbID: 8091, 135416
+    tmdbID: 8091, 135416
 ```
 
 Note: you can specify more then one tmdbID but it will pull the poster and summary from only the first one.
@@ -378,7 +378,7 @@ collections:
 
 Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hideItems`, `showItems`, and `hide`.
 
-###### Options
+##### Options
 - `default` (Library default)
 - `hide` (Hide Collection)
 - `hideItems` (Hide Items in this Collection)
@@ -399,9 +399,9 @@ collections:
 
 Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
 
-###### Options
-`release` (Order Collection by release dates)
-`alpha` (Order Collection Alphabetically)
+##### Options
+- `release` (Order Collection by release dates)
+- `alpha` (Order Collection Alphabetically)
 
 ```yaml
 collections:

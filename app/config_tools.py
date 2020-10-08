@@ -202,7 +202,7 @@ class TraktClient:
             except SystemExit as e:
                 print(e)
                 TraktClient.valid = False
-            print("| trakt connection {}".format("scuccessful" if TMDB.valid else "failed"))
+            print("| trakt connection {}".format("scuccessful" if TraktClient.valid else "failed"))
 
 class ImageServer:
     valid = None
