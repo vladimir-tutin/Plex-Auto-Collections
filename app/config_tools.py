@@ -14,7 +14,7 @@ import trakt_helpers
 import trakt
 
 
-def checkForAttribute(config, attribute, text="{} attribute", testList=None, options="", default=None, doPrint=True, type="str"):
+def checkForAttribute(config, attribute, text="{} attribute", testList=None, options="", default=None, doPrint=True, default_is_none=False, type="str"):
     message = ""
     if attribute not in config:                                 message = "| Config Error: " + text.format(attribute) + " not found"
     elif not config[attribute] and config[attribute] != False:  message = "| Config Error: " + text.format(attribute) + " is blank"
@@ -28,7 +28,7 @@ def checkForAttribute(config, attribute, text="{} attribute", testList=None, opt
     elif config[attribute] in testList:                         return config[attribute]
     else:                                                       message = "| Config Error: " + text.format(attribute) + ": {} is an invalid input".format(config[attribute])
 
-    if default == None:                                         sys.exit(message + ("\n" if len(options) > 0 else "") + options)
+    if default == None and not default_is_none:                 sys.exit(message + ("\n" if len(options) > 0 else "") + options)
     if doPrint:
         print(message + " using {} as default".format(default))
         if attribute in config and config[attribute] and testList != None and config[attribute] not in testList:
@@ -100,7 +100,7 @@ class Radarr:
             self.token = checkForAttribute(config, "token", text="radarr sub-attribute {}")
             self.quality_profile_id = checkForAttribute(config, "quality_profile_id", text="radarr sub-attribute {}")
             self.root_folder_path = checkForAttribute(config, "root_folder_path", text="radarr sub-attribute {}")
-            self.add_movie = checkForAttribute(config, "add_movie", text="radarr sub-attribute {}", type="bool", default=False, doPrint=False)
+            self.add_movie = checkForAttribute(config, "add_movie", text="radarr sub-attribute {}", type="bool", default_is_none=True, doPrint=False)
             self.search_movie = checkForAttribute(config, "search_movie", text="radarr sub-attribute {}", type="bool", default=False, doPrint=False)
         elif Radarr.valid == None:
             if TMDB.valid:
@@ -111,7 +111,7 @@ class Radarr:
                     self.token = checkForAttribute(config, "token", text="radarr sub-attribute {}")
                     self.quality_profile_id = checkForAttribute(config, "quality_profile_id", text="radarr sub-attribute {}")
                     self.root_folder_path = checkForAttribute(config, "root_folder_path", text="radarr sub-attribute {}")
-                    self.add_movie = checkForAttribute(config, "add_movie", text="radarr sub-attribute {}", options="| true (Add missing movies to Radarr)\n| false (Do not add missing movies to Radarr)", type="bool", default=False)
+                    self.add_movie = checkForAttribute(config, "add_movie", text="radarr sub-attribute {}", options="| true (Add missing movies to Radarr)\n| false (Do not add missing movies to Radarr)", type="bool", default_is_none=True)
                     self.search_movie = checkForAttribute(config, "search_movie", text="radarr sub-attribute {}", options="| true (Have Radarr seach the added movies)\n| false (Do not have Radarr seach the added movies)", type="bool", default=False)
                     try:
                         payload = {"qualityProfileId": self.quality_profile_id}

@@ -72,7 +72,7 @@ def update_from_config(config_path, plex, headless=False):
                                     if radarr.add_movie:
                                         print("| Adding missing movies to Radarr")
                                         add_to_radarr(config_path, missing)
-                                    elif not headless and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                                    elif not headless and radarr.add_movie == None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
                                         add_to_radarr(config_path, missing)
                             elif libtype == "show":
                                 method_name = "Trakt" if "trakt" in m else "TMDb"
