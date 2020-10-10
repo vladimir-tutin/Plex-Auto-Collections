@@ -29,7 +29,8 @@ def update_from_config(config_path, plex, headless=False):
     collections = config.collections
     if isinstance(plex.Library, MovieSection):      libtype = "movie"
     elif isinstance(plex.Library, ShowSection):     libtype = "show"
-    print("|\n|===================================================================================================|")
+    if not headless:
+        print("|\n|===================================================================================================|")
     print("|\n| Running collection update press Ctrl+C to abort at anytime")
     for c in collections:
         print("| \n|===================================================================================================|\n|")
@@ -439,12 +440,17 @@ else:                                                                       sys.
 
 print("| Using {} as config".format(config_path))
 
+
+if args.update:
+    config = Config(config_path, headless=True)
+    plex = Plex(config_path)
+    update_from_config(config_path, plex, True)
+    sys.exit(0)
+
+
 config = Config(config_path)
 plex = Plex(config_path)
 
-if args.update:
-    update_from_config(config_path, plex, True)
-    sys.exit(0)
 try:
     if input("| \n| Update Collections from Config? (y/n): ").upper() == "Y":
         update_from_config(config_path, plex, False)

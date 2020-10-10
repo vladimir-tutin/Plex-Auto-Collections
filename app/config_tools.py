@@ -38,7 +38,11 @@ def check_for_attribute(config, attribute, text="{} attribute", test_list=None, 
 
 class Config:
     valid = None
-    def __init__(self, config_path):
+    headless = None
+    def __init__(self, config_path, headless=False):
+        if Config.headless == None:
+            print("head="+str(headless))
+            Config.headless = headless
         self.config_path = config_path
         with open(self.config_path, 'rt', encoding='utf-8') as yml:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
@@ -184,13 +188,16 @@ class TraktClient:
                     self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
                     print("| Stored Authorization Failed")
                 Trakt.configuration.defaults.client(self.client_id, self.client_secret)
-                self.updated_authorization = trakt_helpers.authenticate(self.authorization)
+                self.updated_authorization = trakt_helpers.authenticate(self.authorization, headless=Config.headless)
 
                 if check_trakt(self.updated_authorization):
-                    Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
-                    if self.updated_authorization != self.authorization:
-                        trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
-                    TraktClient.valid = True
+                    try:
+                        Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
+                        if self.updated_authorization != self.authorization:
+                            trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
+                        TraktClient.valid = True
+                    except:
+                        TraktClient.valid = False
                 else:
                     TraktClient.valid = False
             except SystemExit as e:
