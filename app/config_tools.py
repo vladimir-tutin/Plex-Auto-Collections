@@ -60,17 +60,29 @@ class Config:
             Plex(config_path)
             print("| plex connection scuccessful")
             print("|===================================================================================================|")
-            if "tmdb" not in self.data:             print("| tmdb attribute not found")
-            else:                                   TMDB(config_path)
+            if "tmdb" not in self.data:
+                TMDB.valid = False
+                print("| tmdb attribute not found")
+            else:
+                TMDB(config_path)
             print("|===================================================================================================|")
-            if "trakt" not in self.data:            print("| trakt attribute not found")
-            else:                                   TraktClient(config_path)
+            if "trakt" not in self.data:
+                TraktClient.valid = False
+                print("| trakt attribute not found")
+            else:
+                TraktClient(config_path)
             print("|===================================================================================================|")
-            if "radarr" not in self.data:           print("| radarr attribute not found")
-            else:                                   Radarr(config_path)
+            if "radarr" not in self.data:
+                Radarr.valid = False
+                print("| radarr attribute not found")
+            else:
+                Radarr(config_path)
             print("|===================================================================================================|")
-            if "image_server" not in self.data:     print("| image_server attribute not found")
-            else:                                   ImageServer(config_path)
+            if "image_server" not in self.data:
+                ImageServer.valid = False
+                print("| image_server attribute not found")
+            else:
+                ImageServer(config_path)
             print("|===================================================================================================|")
 
 class Plex:
