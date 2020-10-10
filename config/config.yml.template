@@ -1,33 +1,28 @@
 collections:
   Jurassic Park:
     tmdb_list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb_summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
   1080p Documentaries:
     genres: Documentary
     subfilters:
       video_resolution: 1080
-    details:
-      summary: A collection of 1080p Documentaries
+    summary: A collection of 1080p Documentaries
   Dave Chappelle:
     actors: Dave Chappelle
-    details:
-      tmdb_summary: 4169
+    tmdb_summary: 4169
   Marvel:
     trakt_list: https://trakt.tv/users/movistapp/lists/marvel
   Pixar:
     studio: Pixar
-    details:
-      summary: A collection of Pixar movies
-      sort_title: *Pixar
-      content_rating: G
-      collection_mode: show_items
-      collection_sort: alpha
+    summary: A collection of Pixar movies
+    sort_title: *Pixar
+    content_rating: G
+    collection_mode: show_items
+    collection_sort: alpha
   1990s:
     year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
-    details:
-      summary: A collection of 1990s movies
+    summary: A collection of 1990s movies
   28 Days/Weeks Later:
     tmdbID: 1565
     system_name: 28 Days-Weeks Later

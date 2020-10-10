@@ -35,7 +35,7 @@ def update_from_config(config_path, plex, headless=False):
         print("| \n|===================================================================================================|\n|")
         print("| Updating collection: {}...".format(c))
         tmdbID = None
-        methods = [m for m in collections[c] if m not in ("details", "subfilters", "system_name")]
+        methods = [m for m in collections[c] if m not in ("subfilters", "sort_title", "content_rating", "summary", "tmdb_summary", "collection_mode", "collection_sort", "poster", "tmdb_poster", "file_poster", "background", "file_background", "system_name")]
         subfilters = []
         if "subfilters" in collections[c]:
             for sf in collections[c]["subfilters"]:
@@ -95,85 +95,85 @@ def update_from_config(config_path, plex, headless=False):
             for m in meta:
                 try:                        return prefix + tmdb_get_summary(config_path, data, m)
                 except AttributeError:      pass
-        def edit_value (item, name, details):
-            if name in details:
-                if details[name]:
-                    edits = {"{}.value".format(name): details[name], "{}.locked".format(name): 1}
+        def edit_value (item, name, collection):
+            if name in collection:
+                if collection[name]:
+                    edits = {"{}.value".format(name): collection[name], "{}.locked".format(name): 1}
                     item.edit(**edits)
                     item.reload()
-                    print("| Detail: {} updated to {}".format(name, details[name]))
+                    print("| Detail: {} updated to {}".format(name, collection[name]))
                 else:
                     print("| Config Error: {} attribute is blank".format(name))
-        summary = None
-        posters_found = []
-        backgrounds_found = []
-        if "details" in collections[c]:
 
-            # Handle collection sort_title
-            edit_value(item, "sort_title", collections[c]["details"])
+        # Handle collection sort_title
+        edit_value(item, "sort_title", collections[c])
 
-            # Handle collection content_rating
-            edit_value(item, "content_rating", collections[c]["details"])
-
-            # Handle collection summary
-            if "summary" in collections[c]["details"]:
-                if collections[c]["details"]["summary"]:                    summary = collections[c]["details"]["summary"]
-                else:                                                       print("| Config Error: summary attribute is blank")
-            elif "tmdb_summary" in collections[c]["details"]:
-                if TMDB.valid:
-                    if collections[c]["details"]["tmdb_summary"]:               summary = get_summary(config_path, collections[c]["details"]["tmdb_summary"], ["overview", "biography"], "")
-                    else:                                                       print("| Config Error: tmdb_summary attribute is blank")
-                else:                                                       print("| Config Error: tmdb_summary skipped. tmdb incorrectly configured")
-
-            # Handle collection posters
-            if "poster" in collections[c]["details"]:
-                if collections[c]["details"]["poster"]:                     posters_found.append(["url", collections[c]["details"]["poster"]])
-                else:                                                       print("| Config Error: poster attribute is blank")
-            if "tmdb_poster" in collections[c]["details"]:
-                if TMDB.valid:
-                    if collections[c]["details"]["tmdb_poster"]:                posters_found.append(["url", get_summary(config_path, collections[c]["details"]["tmdb_poster"], ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original")])
-                    else:                                                       print("| Config Error: tmdb_poster attribute is blank")
-                else:                                                       print("| Config Error: tmdb_poster skipped. tmdb incorrectly configured")
-            if "file_poster" in collections[c]["details"]:
-                if collections[c]["details"]["file_poster"]:                posters_found.append(["file", collections[c]["details"]["file_poster"]])
-                else:                                                       print("| Config Error: file_poster attribute is blank")
-
-            # Handle collection backgrounds
-            if "background" in collections[c]["details"]:                   backgrounds_found.append(["url", collections[c]["details"]["background"]])
-            if "file_background" in collections[c]["details"]:
-                if collections[c]["details"]["file_background"]:            backgrounds_found.append(["file", collections[c]["details"]["file_background"]])
-                else:                                                       print("| Config Error: file_background attribute is blank")
-
-            # Handle collection collection_mode
-            if "collection_mode" in collections[c]["details"]:
-                if collections[c]["details"]["collection_mode"]:
-                    collection_mode = collections[c]["details"]["collection_mode"]
-                    if collection_mode in ('default', 'hide', 'hide_items', 'show_items'):
-                        if collection_mode == 'hide_items':              collection_mode = 'hideItems'
-                        if collection_mode == 'show_items':              collection_mode = 'showItems'
-                        item.modeUpdate(mode=collection_mode)
-                        print("| Detail: collection_mode updated to {}".format(collection_mode))
-                    else:                                                   print("| Config Error: {} collection_mode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thide_items (Hide Items in this Collection)\n| \tshow_items (Show this Collection and its Items)".format(collection_mode))
-                else:                                                       print("| Config Error: collection_mode attribute is blank")
-
-            # Handle collection collection_sort
-            if "collection_sort" in collections[c]["details"]:
-                if collections[c]["details"]["collection_sort"]:
-                    collection_sort = collections[c]["details"]["collection_sort"]
-                    if collection_sort in ('release', 'alpha'):
-                        item.sortUpdate(sort=collection_sort)
-                        print("| Detail: collection_sort updated to {}".format(collection_sort))
-                    else:                                                   print("| Config Error: {} collection_sort Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collection_sort))
-                else:                                                       print("| Config Error: collection_sort attribute is blank")
-
-        if not summary and "tmdbID" in collections[c] and TMDB.valid:       summary = get_summary(config_path, tmdbID, ["overview", "biography"], "")
+        # Handle collection content_rating
+        edit_value(item, "content_rating", collections[c])
 
         # Handle collection summary
+        summary = None
+        if "summary" in collections[c]:
+            if collections[c]["summary"]:                       summary = collections[c]["summary"]
+            else:                                               print("| Config Error: summary attribute is blank")
+        elif "tmdb_summary" in collections[c]:
+            if TMDB.valid:
+                if collections[c]["tmdb_summary"]:                  summary = get_summary(config_path, collections[c]["tmdb_summary"], ["overview", "biography"], "")
+                else:                                               print("| Config Error: tmdb_summary attribute is blank")
+            else:                                               print("| Config Error: tmdb_summary skipped. tmdb incorrectly configured")
+
+        if not summary and "tmdbID" in collections[c] and TMDB.valid:
+            summary = get_summary(config_path, tmdbID, ["overview", "biography"], "")
+
         if summary:
             edits = {"summary.value": summary, "summary.locked": 1}
             item.edit(**edits)
             item.reload()
             print('| Detail: summary updated to "{}"'.format(summary))
+
+        # Handle collection collection_mode
+        if "collection_mode" in collections[c]:
+            if collections[c]["collection_mode"]:
+                collection_mode = collections[c]["collection_mode"]
+                if collection_mode in ('default', 'hide', 'hide_items', 'show_items'):
+                    if collection_mode == 'hide_items':              collection_mode = 'hideItems'
+                    if collection_mode == 'show_items':              collection_mode = 'showItems'
+                    item.modeUpdate(mode=collection_mode)
+                    print("| Detail: collection_mode updated to {}".format(collection_mode))
+                else:                                                   print("| Config Error: {} collection_mode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thide_items (Hide Items in this Collection)\n| \tshow_items (Show this Collection and its Items)".format(collection_mode))
+            else:                                                       print("| Config Error: collection_mode attribute is blank")
+
+        # Handle collection collection_sort
+        if "collection_sort" in collections[c]:
+            if collections[c]["collection_sort"]:
+                collection_sort = collections[c]["collection_sort"]
+                if collection_sort in ('release', 'alpha'):
+                    item.sortUpdate(sort=collection_sort)
+                    print("| Detail: collection_sort updated to {}".format(collection_sort))
+                else:                                                   print("| Config Error: {} collection_sort Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collection_sort))
+            else:                                                       print("| Config Error: collection_sort attribute is blank")
+
+        posters_found = []
+        backgrounds_found = []
+        # Handle collection posters
+        if "poster" in collections[c]:
+            if collections[c]["poster"]:                        posters_found.append(["url", collections[c]["poster"]])
+            else:                                               print("| Config Error: poster attribute is blank")
+        if "tmdb_poster" in collections[c]:
+            if TMDB.valid:
+                if collections[c]["tmdb_poster"]:                   posters_found.append(["url", get_summary(config_path, collections[c]["tmdb_poster"], ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original")])
+                else:                                               print("| Config Error: tmdb_poster attribute is blank")
+            else:                                               print("| Config Error: tmdb_poster skipped. tmdb incorrectly configured")
+        if "file_poster" in collections[c]:
+            if collections[c]["file_poster"]:                   posters_found.append(["file", collections[c]["file_poster"]])
+            else:                                               print("| Config Error: file_poster attribute is blank")
+
+        # Handle collection backgrounds
+        if "background" in collections[c]:                  backgrounds_found.append(["url", collections[c]["background"]])
+        if "file_background" in collections[c]:
+            if collections[c]["file_background"]:               backgrounds_found.append(["file", collections[c]["file_background"]])
+            else:                                               print("| Config Error: file_background attribute is blank")
+
 
         # Handle Image Server
         image_server = ImageServer(config_path)

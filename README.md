@@ -75,8 +75,14 @@ You can find a template config file in [config/config.yml.template](config/confi
 
 Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are three other attributes to set for each collection:
 - List Type (required)
-- Details (optional)
 - Subfilters (optional)
+- Sort Title (optional)
+- Content Rating (optional)
+- Summary (optional)
+- Collection Mode (optional)
+- Collection Order (optional)
+- Poster (optional)
+- Background (optional)
 - System Name (optional)
 
 ### List Type (Collection Attribute)
@@ -159,7 +165,7 @@ collections:
 Notes:
 - The tmbdID can be either from a collection or an individual movie
 - You can specify more then one tmdbID but it will pull the poster and summary from only the first one.
-- Local posters are loaded over tmdb_poster if they exist unless tmdb_poster is also specified in details
+- Local posters are loaded over tmdb_poster if they exist unless tmdb_poster is also specified
 
 #### IMDb List or Search (List Type)
 
@@ -199,221 +205,6 @@ collections:
     trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
 ```
 
-#### System Name Attribute
-
-With the `system_name` attribute you can specify the name you use for this collection in the local file system. Useful when collections have characters that can't be in filepaths i.e. "/"
-
-```yaml
-collections:
-  28 Days/Weeks Later:
-    tmdbID: 1565
-    system_name: 28 Days-Weeks Later
-```
-
-### Details (Collection Attribute)
-
-The next optional attribute for any collection is the `details` key. There are two different subattributes for `details` to choose from:
-- Sort Title (optional)
-- Content Rating (optional)
-- Summary (optional)
-- Poster (optional)
-- Background (optional)
-- Collection Mode (optional)
-- Collection Order (optional)
-
-Note that the `details` attribute needs to be set in order for the script to search the local image server for any images (this will be fixed in future releases).
-
-#### Sort Title (Details Subattribute)
-
-Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk.
-
-```yaml
-collections:
-  IMDb Top 250:
-    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=250
-    details:
-      sort_title: *100
-  Reddit Top 250:
-    trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
-    details:
-      sort_title: *101
-```
-
-#### Content Rating (Details Subattribute)
-
-Adding a content rating to each collection is possible:
-
-```yaml
-collections:
-  Pixar:
-    studio: Pixar
-    details:
-      content_rating: PG
-```
-
-#### Summary (Details Subattribute)
-
-Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry.
-
-To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMBd if you wish to use their biography as the summary (experimental).
-
-```yaml
-collections:
-  Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb_summary: 328
-```
-```yaml
-collections:
-  Dave Chappelle:
-    actors: Dave Chappelle
-    details:
-      tmdb_summary: 4169
-```
-If you want to use a custom summary:
-```yaml
-collections:
-  Pixar:
-    studio: Pixar
-    details:
-      summary: A collection of Pixar movies
-```
-```yaml
-collections:
-  Alien (Past & Present):
-    tmdb_list:
-      - https://www.themoviedb.org/collection/8091
-      - https://www.themoviedb.org/collection/135416
-    details:
-      summary: >-
-        The Alien franchise is a science fiction horror franchise, consisting
-        primarily of a series of films focusing on the species Xenomorph XX121,
-        commonly referred to simply as "the Alien", a voracious endoparasitoid
-        extraterrestrial species. Unlike the Predator franchise, which mostly
-        consists of stand-alone movies, the Alien films generally form continuing
-        story arcs, the principal of which follows Lieutenant Ellen Ripley
-        as she battles the Aliens in a future time setting. Newer films preceding
-        Ripley's exploits center around the android David, exploring the possible
-        origins of the Aliens and their connection to an ancient, advanced
-        civilization known as the Engineers.
-```
-
-#### Poster (Details Subattribute)
-
-There are four ways to set a poster image for a collection: local image, public URL, TMDb collection, or TMDb actor.
-
-Local assets are supported by running the script with posters in the `poster_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a poster use `file_poster`.
-
-If multiple posters are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
-
-If you want to use an image publicly available on the internet:
-```yaml
-collections:
-  Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb_summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
-```
-If you want to use the default collection image on TMDb:
-```yaml
-collections:
-  Alien (Past & Present):
-    tmdb_list:
-      - https://www.themoviedb.org/collection/8091
-      - https://www.themoviedb.org/collection/135416
-    details:
-      tmdb_poster: 8091
-```
-If you want to use the default actor image on TMDb:
-```yaml
-collections:
-  Dave Chappelle:
-    actors: Dave Chappelle
-    details:
-      tmdb_summary: 4169
-      tmdb_poster: 4169
-```
-If you want to use an image in your file system:
-```yaml
-collections:
-  Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb_summary: 328
-      file_poster: C:/Users/username/Desktop/2xE0R9I.png
-      file_background: /config/backgrounds/Jurassic Park.png
-```
-#### Background (Details Subattribute)
-
-There are two ways to set a background image for a collection: local image or public URL.
-
-Local assets are supported by running the script with backgrounds in the `background_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a background use `file_background`.
-
-If multiple backgrounds are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
-
-If you want to use an image publicly available on the internet:
-```yaml
-collections:
-  Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb_summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
-      background: https://i.imgur.com/2xE0R9I.png
-```
-
-If you want to use an image in your file system:
-```yaml
-collections:
-  Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb_summary: 328
-      file_poster: C:/Users/username/Desktop/2xE0R9I.png
-      file_background: /config/backgrounds/Jurassic Park.png
-```
-
-#### Collection Mode (Details Subattribute)
-
-Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hide_items`, `show_items`, and `hide`.
-
-##### Options
-- `default` (Library default)
-- `hide` (Hide Collection)
-- `hide_items` (Hide Items in this Collection)
-- `show_items` (Show this Collection and its Items)
-
-```yaml
-collections:
-  Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb_summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
-      background: https://i.imgur.com/2xE0R9I.png
-      collection_mode: hide_items
-```
-
-#### Collection Order (Details Subattribute)
-
-Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
-
-##### Options
-- `release` (Order Collection by release dates)
-- `alpha` (Order Collection Alphabetically)
-
-```yaml
-collections:
-  Alien (Past & Present):
-    tmdb_list:
-      - https://www.themoviedb.org/collection/8091
-      - https://www.themoviedb.org/collection/135416
-    details:
-      collection_order: alpha
-```
-
 ### Subfilters (Collection Attribute)
 
 The next optional attribute for any collection is the `subfilters` key. Subfilters allows for a little more granular selection from a list of movies to add to a collection.
@@ -426,8 +217,7 @@ Note that muliple subfilters are supported but a movie must match at least one v
 collections:
   1080p Documentaries:
     genres: Documentary
-    details:
-      summary: A collection of 1080p Documentaries
+    summary: A collection of 1080p Documentaries
     subfilters:
       video_resolution: 1080
 ```
@@ -444,6 +234,182 @@ collections:
     genre: Romance
     subfilters:
       audio_language: Français
+```
+
+### Sort Title
+
+Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk.
+
+```yaml
+collections:
+  IMDb Top 250:
+    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
+    sort_title: *100
+  Reddit Top 250:
+    trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
+    sort_title: *101
+```
+
+### Content Rating
+
+Adding a content rating to each collection is possible:
+
+```yaml
+collections:
+  Pixar:
+    studio: Pixar
+    content_rating: PG
+```
+
+### Summary
+
+Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry.
+
+To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMBd if you wish to use their biography as the summary (experimental).
+
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+```
+```yaml
+collections:
+  Dave Chappelle:
+    actors: Dave Chappelle
+    tmdb_summary: 4169
+```
+If you want to use a custom summary:
+```yaml
+collections:
+  Pixar:
+    studio: Pixar
+    summary: A collection of Pixar movies
+```
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb_list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+    summary: >-
+        The Alien franchise is a science fiction horror franchise, consisting
+        primarily of a series of films focusing on the species Xenomorph XX121,
+        commonly referred to simply as "the Alien", a voracious endoparasitoid
+        extraterrestrial species. Unlike the Predator franchise, which mostly
+        consists of stand-alone movies, the Alien films generally form continuing
+        story arcs, the principal of which follows Lieutenant Ellen Ripley
+        as she battles the Aliens in a future time setting. Newer films preceding
+        Ripley's exploits center around the android David, exploring the possible
+        origins of the Aliens and their connection to an ancient, advanced
+        civilization known as the Engineers.
+```
+
+#### Collection Mode
+
+Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hide_items`, `show_items`, and `hide`.
+
+#### Options
+- `default` (Library default)
+- `hide` (Hide Collection)
+- `hide_items` (Hide Items in this Collection)
+- `show_items` (Show this Collection and its Items)
+
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
+    background: https://i.imgur.com/2xE0R9I.png
+    collection_mode: hide_items
+```
+
+### Collection Order
+
+Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
+
+#### Options
+- `release` (Order Collection by release dates)
+- `alpha` (Order Collection Alphabetically)
+
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb_list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+    collection_order: alpha
+```
+
+### Poster
+
+There are four ways to set a poster image for a collection: local image, public URL, TMDb collection, or TMDb actor.
+
+Local assets are supported by running the script with posters in the `poster_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a poster use `file_poster`.
+
+If multiple posters are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
+
+If you want to use an image publicly available on the internet:
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
+```
+If you want to use the default collection image on TMDb:
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb_list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+    tmdb_poster: 8091
+```
+If you want to use the default actor image on TMDb:
+```yaml
+collections:
+  Dave Chappelle:
+    actors: Dave Chappelle
+    tmdb_summary: 4169
+    tmdb_poster: 4169
+```
+If you want to use an image in your file system:
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    file_poster: C:/Users/username/Desktop/2xE0R9I.png
+    file_background: /config/backgrounds/Jurassic Park.png
+```
+### Background
+
+There are two ways to set a background image for a collection: local image or public URL.
+
+Local assets are supported by running the script with backgrounds in the `background_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a background use `file_background`.
+
+If multiple backgrounds are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
+
+If you want to use an image publicly available on the internet:
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
+    background: https://i.imgur.com/2xE0R9I.png
+```
+
+If you want to use an image in your file system:
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    file_poster: C:/Users/username/Desktop/2xE0R9I.png
+    file_background: /config/backgrounds/Jurassic Park.png
 ```
 
 ## Plex
