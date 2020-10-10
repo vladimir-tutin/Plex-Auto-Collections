@@ -221,15 +221,16 @@ class ImageServer:
     valid = None
     def __init__(self, config_path):
         config = Config(config_path).image_server
+        app_dir = os.path.dirname(os.path.abspath(__file__))
 
         if config:
             self.poster = config['poster_directory'] if 'poster_directory' in config and config['poster_directory'] and os.path.exists(os.path.abspath(config['poster_directory'])) else None
             self.background = config['background_directory'] if 'background_directory' in config and config['background_directory'] and os.path.exists(os.path.abspath(config['background_directory'])) else None
             self.image = config['image_directory'] if 'image_directory' in config and config['image_directory'] and os.path.exists(os.path.abspath(config['image_directory'])) else None
         else:
-            self.poster = "posters" if os.path.exists(os.path.abspath("posters")) else "..\\config\\posters" if os.path.exists(os.path.abspath("..\\config\\posters")) else None
-            self.background = "backgrounds" if os.path.exists(os.path.abspath("backgrounds")) else "..\\config\\backgrounds" if os.path.exists(os.path.abspath("..\\config\\backgrounds")) else None
-            self.image = "images" if os.path.exists(os.path.abspath("images")) else "..\\config\\images" if os.path.exists(os.path.abspath("..\\config\\images")) else None
+            self.poster = "posters" if os.path.exists(os.path.join(app_dir, "posters")) else "..\\config\\posters" if os.path.exists(os.path.join(app_dir, "..", "config", "posters")) else None
+            self.background = "backgrounds" if os.path.exists(os.path.join(app_dir, "backgrounds")) else "..\\config\\backgrounds" if os.path.exists(os.path.join(app_dir, "..", "config", "backgrounds")) else None
+            self.image = "images" if os.path.exists(os.path.join(app_dir, "images")) else "..\\config\\images" if os.path.exists(os.path.join(app_dir, "..", "config", "images")) else None
 
         if ImageServer.valid == None:
             print("| Locating image_server...")
@@ -246,9 +247,9 @@ class ImageServer:
                 if self.background:        print("| Using {} for backgrounds directory".format(os.path.abspath(self.background)))
                 if self.image:             print("| Using {} for images directory".format(os.path.abspath(self.image)))
                 if not self.poster and not self.background and not self.image:
-                    print("| posters directory not found: {} or {}".format(os.path.abspath("posters"), os.path.abspath("..\\config\\posters")))
-                    print("| backgrounds directory not found: {} or {}".format(os.path.abspath("backgrounds"), os.path.abspath("..\\config\\backgrounds")))
-                    print("| images directory not found: {} or {}".format(os.path.abspath("images"), os.path.abspath("..\\config\\images")))
+                    print("| posters directory not found: {} or {}".format(os.path.join(app_dir, "posters"), os.path.join(app_dir, "..", "config", "posters")))
+                    print("| backgrounds directory not found: {} or {}".format(os.path.join(app_dir, "backgrounds"), os.path.join(app_dir, "..", "config", "backgrounds")))
+                    print("| images directory not found: {} or {}".format(os.path.join(app_dir, "images"), os.path.join(app_dir, "..", "config", "images")))
             ImageServer.valid = True if self.poster or self.background or self.image else False
 
 
