@@ -29,6 +29,8 @@ def update_from_config(config_path, plex, headless=False):
     collections = config.collections
     if isinstance(plex.Library, MovieSection):      libtype = "movie"
     elif isinstance(plex.Library, ShowSection):     libtype = "show"
+    print("|\n|===================================================================================================|")
+    print("|\n| Running collection update press Ctrl+C to abort at anytime")
     for c in collections:
         print("| \n|===================================================================================================|\n|")
         print("| Updating collection: {}...".format(c))
@@ -147,8 +149,8 @@ def update_from_config(config_path, plex, headless=False):
                 if collections[c]["details"]["collection_mode"]:
                     collection_mode = collections[c]["details"]["collection_mode"]
                     if collection_mode in ('default', 'hide', 'hide_items', 'show_items'):
-                        if collection_mode = 'hide_items':              collection_mode = 'hideItems'
-                        if collection_mode = 'show_items':              collection_mode = 'showItems'
+                        if collection_mode == 'hide_items':              collection_mode = 'hideItems'
+                        if collection_mode == 'show_items':              collection_mode = 'showItems'
                         item.modeUpdate(mode=collection_mode)
                         print("| Detail: collection_mode updated to {}".format(collection_mode))
                     else:                                                   print("| Config Error: {} collection_mode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thide_items (Hide Items in this Collection)\n| \tshow_items (Show this Collection and its Items)".format(collection_mode))
