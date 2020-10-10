@@ -160,6 +160,8 @@ collections:
 collections:
   Alien (Past & Present):
     tmdbID: 8091, 135416
+  Anaconda:
+    tmdbID: 105995, 336560
 ```
 
 Notes:
@@ -236,7 +238,7 @@ collections:
       audio_language: Français
 ```
 
-### Sort Title
+### Sort Title (Collection Attribute)
 
 Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk.
 
@@ -250,7 +252,7 @@ collections:
     sort_title: *101
 ```
 
-### Content Rating
+### Content Rating (Collection Attribute)
 
 Adding a content rating to each collection is possible:
 
@@ -261,7 +263,7 @@ collections:
     content_rating: PG
 ```
 
-### Summary
+### Summary (Collection Attribute)
 
 Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry.
 
@@ -305,7 +307,7 @@ collections:
         civilization known as the Engineers.
 ```
 
-#### Collection Mode
+### Collection Mode (Collection Attribute)
 
 Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hide_items`, `show_items`, and `hide`.
 
@@ -325,7 +327,7 @@ collections:
     collection_mode: hide_items
 ```
 
-### Collection Order
+### Collection Order (Collection Attribute)
 
 Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
 
@@ -342,7 +344,7 @@ collections:
     collection_order: alpha
 ```
 
-### Poster
+### Poster (Collection Attribute)
 
 There are four ways to set a poster image for a collection: local image, public URL, TMDb collection, or TMDb actor.
 
@@ -384,7 +386,7 @@ collections:
     file_poster: C:/Users/username/Desktop/2xE0R9I.png
     file_background: /config/backgrounds/Jurassic Park.png
 ```
-### Background
+### Background (Collection Attribute)
 
 There are two ways to set a background image for a collection: local image or public URL.
 
@@ -453,7 +455,7 @@ image_server:                                 # Opt
   image_directory: /config/images             # Opt - Desired dir of images
 ```
 
-Note: these can be used together if you want the script will just ask you which one you want if there are multiple matching images.
+Note: these can be used together if you want, the script will just ask you which one you want if there are multiple matching images.
 
 ## TMDb
 
