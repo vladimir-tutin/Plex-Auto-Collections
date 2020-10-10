@@ -41,11 +41,11 @@ class Config:
     headless = None
     def __init__(self, config_path, headless=False):
         if Config.headless == None:
-            print("head="+str(headless))
             Config.headless = headless
         self.config_path = config_path
         with open(self.config_path, 'rt', encoding='utf-8') as yml:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
+        if "collections" not in self.data: sys.exit("| Config Error: collections attribute not found")
         self.collections = self.data['collections']
         if "plex" not in self.data: sys.exit("| Config Error: plex attribute not found")
         self.plex = self.data['plex']
