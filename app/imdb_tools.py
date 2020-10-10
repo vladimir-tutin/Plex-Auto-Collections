@@ -135,4 +135,5 @@ def tmdb_get_summary(config_path, data, type):
     elif type == "biography":       return person.details(data).biography
     elif type == "poster_path":     return collection.details(data).poster_path
     elif type == "profile_path":    return person.details(data).profile_path
+    elif type == "backdrop_path":    return collection.details(data).backdrop_path
     else: raise RuntimeError("type not yet supported in tmdb_get_summary")

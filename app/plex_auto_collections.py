@@ -170,7 +170,14 @@ def update_from_config(config_path, plex, headless=False):
             else:                                               print("| Config Error: file_poster attribute is blank")
 
         # Handle collection backgrounds
-        if "background" in collections[c]:                  backgrounds_found.append(["url", collections[c]["background"]])
+        if "background" in collections[c]:
+            if collections[c]["background"]:                    backgrounds_found.append(["url", collections[c]["background"]])
+            else:                                               print("| Config Error: background attribute is blank")
+        if "tmdb_background" in collections[c]:
+            if TMDB.valid:
+                if collections[c]["tmdb_background"]:           posters_found.append(["url", get_summary(config_path, collections[c]["tmdb_background"], ["backdrop_path"], "https://image.tmdb.org/t/p/original")])
+                else:                                               print("| Config Error: tmdb_background attribute is blank")
+            else:                                               print("| Config Error: tmdb_background skipped. tmdb incorrectly configured")
         if "file_background" in collections[c]:
             if collections[c]["file_background"]:               backgrounds_found.append(["file", collections[c]["file_background"]])
             else:                                               print("| Config Error: file_background attribute is blank")
@@ -229,9 +236,11 @@ def update_from_config(config_path, plex, headless=False):
         poster = choose_from_list("poster", posters_found, headless)
         background = choose_from_list("background", backgrounds_found, headless)
 
-        # Special case fall back for tmdbID tag if no other poster is found
+        # Special case fall back for tmdbID tag if no other poster or background is found
         if not poster and "tmdbID" in collections[c] and TMDB.valid:
             poster = ["url", str(get_summary(config_path, tmdbID, ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original/"))]
+        if not background and "tmdbID" in collections[c] and TMDB.valid:
+            background = ["url", str(get_summary(config_path, tmdbID, ["backdrop_path"], "https://image.tmdb.org/t/p/original/"))]
 
         # Update poster
         if poster:

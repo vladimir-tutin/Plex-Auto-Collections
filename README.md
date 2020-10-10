@@ -149,7 +149,7 @@ collections:
       - https://www.themoviedb.org/collection/135416
 ```
 
-Alternatively you can specify which tmdb_list, tmdb_summary, tmdb_poster all at once by:
+Alternatively you can specify which tmdb_list, tmdb_summary, tmdb_poster, and tmdb_background all at once by:
 
 ```yaml
 collections:
@@ -166,8 +166,8 @@ collections:
 
 Notes:
 - The tmbdID can be either from a collection or an individual movie
-- You can specify more then one tmdbID but it will pull the poster and summary from only the first one.
-- Local posters are loaded over tmdb_poster if they exist unless tmdb_poster is also specified
+- You can specify more then one tmdbID but it will pull the summary, poster, and background from only the first one.
+- Local posters/backgrounds are loaded over tmdb_poster/tmdb_background if they exist unless tmdb_poster/tmdb_background is also specified
 
 #### IMDb List or Search (List Type)
 
@@ -388,7 +388,7 @@ collections:
 ```
 ### Background (Collection Attribute)
 
-There are two ways to set a background image for a collection: local image or public URL.
+There are three ways to set a background image for a collection: local image, public URL, or TMDb collection.
 
 Local assets are supported by running the script with backgrounds in the `background_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a background use `file_background`.
 
@@ -403,7 +403,15 @@ collections:
     poster: https://i.imgur.com/QMjbyCX.png
     background: https://i.imgur.com/2xE0R9I.png
 ```
-
+If you want to use the default collection image on TMDb:
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb_list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+    tmdb_background: 8091
+```
 If you want to use an image in your file system:
 ```yaml
 collections:
