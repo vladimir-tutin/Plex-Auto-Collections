@@ -40,6 +40,24 @@ If you would like to run the script without any user interaction (e.g. to schedu
 python plex_auto_collections.py --update
 ```
 
+If you would like the `-u` or `--update` option to update without updating metadata you can add `-nm` or `--no_meta` along with `-u` or `--update`:
+
+```shell
+python plex_auto_collections.py --update --no_meta
+```
+
+If you would like the `-u` or `--update` option to update without updating images you can add `-ni` or `--no_images` along with `-u` or `--update`:
+
+```shell
+python plex_auto_collections.py --update --no_images
+```
+
+Example command if you only want the collection to update without constantly updating metadata and images that don't change much
+
+```shell
+python plex_auto_collections.py --update --no_meta --no_images
+```
+
 ## Docker
 
 A simple `Dockerfile` is available in this repo if you'd like to build it yourself. The official build is also available from dockerhub here: https://hub.docker.com/r/burkasaurusrex/plex-auto-collections
