@@ -33,7 +33,7 @@ def update_from_config(config_path, plex, headless=False):
         print("| \n|===================================================================================================|\n|")
         print("| Updating collection: {}...".format(c))
         tmdbID = None
-        methods = [m for m in collections[c] if m not in ("details", "subfilters", "file")]
+        methods = [m for m in collections[c] if m not in ("details", "subfilters", "system_name")]
         subfilters = []
         if "subfilters" in collections[c]:
             for sf in collections[c]["subfilters"]:
@@ -48,12 +48,12 @@ def update_from_config(config_path, plex, headless=False):
                     if m == "actors" or m == "actor":       v = get_actor_rkey(plex, v)
                     met = m
                     if m == "tmdbID":
-                        met = "tmdb-list"
+                        met = "tmdb_list"
                         if not tmdbID:      tmdbID = v
                         v = "https://www.themoviedb.org/collection/" + v
 
                     check = True
-                    if (m == "tmdbID" or m == "tmdb-list") and not TMDB.valid:
+                    if (m == "tmdbID" or m == "tmdb_list") and not TMDB.valid:
                             print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
                             check = False
 
@@ -89,11 +89,11 @@ def update_from_config(config_path, plex, headless=False):
 
         item = plex.Server.fetchItem(plex_collection.ratingKey)
 
-        def getSummary (config_path, data, meta, prefix):
+        def get_summary (config_path, data, meta, prefix):
             for m in meta:
                 try:                        return prefix + tmdb_get_summary(config_path, data, m)
                 except AttributeError:      pass
-        def editValue (item, name, details):
+        def edit_value (item, name, details):
             if name in details:
                 if details[name]:
                     edits = {"{}.value".format(name): details[name], "{}.locked".format(name): 1}
@@ -107,62 +107,64 @@ def update_from_config(config_path, plex, headless=False):
         backgrounds_found = []
         if "details" in collections[c]:
 
-            # Handle collection titleSort
-            editValue(item, "titleSort", collections[c]["details"])
+            # Handle collection sort_title
+            edit_value(item, "sort_title", collections[c]["details"])
 
-            # Handle collection contentRating
-            editValue(item, "contentRating", collections[c]["details"])
+            # Handle collection content_rating
+            edit_value(item, "content_rating", collections[c]["details"])
 
             # Handle collection summary
             if "summary" in collections[c]["details"]:
                 if collections[c]["details"]["summary"]:                    summary = collections[c]["details"]["summary"]
                 else:                                                       print("| Config Error: summary attribute is blank")
-            elif "tmdb-summary" in collections[c]["details"]:
+            elif "tmdb_summary" in collections[c]["details"]:
                 if TMDB.valid:
-                    if collections[c]["details"]["tmdb-summary"]:               summary = getSummary(config_path, collections[c]["details"]["tmdb-summary"], ["overview", "biography"], "")
-                    else:                                                       print("| Config Error: tmdb-summary attribute is blank")
-                else:                                                       print("| Config Error: tmdb-summary skipped. tmdb incorrectly configured")
+                    if collections[c]["details"]["tmdb_summary"]:               summary = get_summary(config_path, collections[c]["details"]["tmdb_summary"], ["overview", "biography"], "")
+                    else:                                                       print("| Config Error: tmdb_summary attribute is blank")
+                else:                                                       print("| Config Error: tmdb_summary skipped. tmdb incorrectly configured")
 
             # Handle collection posters
             if "poster" in collections[c]["details"]:
                 if collections[c]["details"]["poster"]:                     posters_found.append(["url", collections[c]["details"]["poster"]])
                 else:                                                       print("| Config Error: poster attribute is blank")
-            if "tmdb-poster" in collections[c]["details"]:
+            if "tmdb_poster" in collections[c]["details"]:
                 if TMDB.valid:
-                    if collections[c]["details"]["tmdb-poster"]:                posters_found.append(["url", getSummary(config_path, collections[c]["details"]["tmdb-poster"], ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original")])
-                    else:                                                       print("| Config Error: tmdb-poster attribute is blank")
-                else:                                                       print("| Config Error: tmdb-poster skipped. tmdb incorrectly configured")
-            if "file-poster" in collections[c]["details"]:
-                if collections[c]["details"]["file-poster"]:                posters_found.append(["file", collections[c]["details"]["file-poster"]])
-                else:                                                       print("| Config Error: file-poster attribute is blank")
+                    if collections[c]["details"]["tmdb_poster"]:                posters_found.append(["url", get_summary(config_path, collections[c]["details"]["tmdb_poster"], ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original")])
+                    else:                                                       print("| Config Error: tmdb_poster attribute is blank")
+                else:                                                       print("| Config Error: tmdb_poster skipped. tmdb incorrectly configured")
+            if "file_poster" in collections[c]["details"]:
+                if collections[c]["details"]["file_poster"]:                posters_found.append(["file", collections[c]["details"]["file_poster"]])
+                else:                                                       print("| Config Error: file_poster attribute is blank")
 
             # Handle collection backgrounds
             if "background" in collections[c]["details"]:                   backgrounds_found.append(["url", collections[c]["details"]["background"]])
-            if "file-background" in collections[c]["details"]:
-                if collections[c]["details"]["file-background"]:            backgrounds_found.append(["file", collections[c]["details"]["file-background"]])
-                else:                                                       print("| Config Error: file-background attribute is blank")
+            if "file_background" in collections[c]["details"]:
+                if collections[c]["details"]["file_background"]:            backgrounds_found.append(["file", collections[c]["details"]["file_background"]])
+                else:                                                       print("| Config Error: file_background attribute is blank")
 
-            # Handle collection collectionMode
-            if "collectionMode" in collections[c]["details"]:
-                if collections[c]["details"]["collectionMode"]:
-                    collectionMode = collections[c]["details"]["collectionMode"]
-                    if collectionMode in ('default', 'hide', 'hideItems', 'showItems'):
-                        item.modeUpdate(mode=collectionMode)
-                        print("| Detail: collectionMode updated to {}".format(collectionMode))
-                    else:                                                   print("| Config Error: {} collectionMode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thideItems (Hide Items in this Collection)\n| \tshowItems (Show this Collection and its Items)".format(collectionMode))
-                else:                                                       print("| Config Error: collectionMode attribute is blank")
+            # Handle collection collection_mode
+            if "collection_mode" in collections[c]["details"]:
+                if collections[c]["details"]["collection_mode"]:
+                    collection_mode = collections[c]["details"]["collection_mode"]
+                    if collection_mode in ('default', 'hide', 'hide_items', 'show_items'):
+                        if collection_mode = 'hide_items':              collection_mode = 'hideItems'
+                        if collection_mode = 'show_items':              collection_mode = 'showItems'
+                        item.modeUpdate(mode=collection_mode)
+                        print("| Detail: collection_mode updated to {}".format(collection_mode))
+                    else:                                                   print("| Config Error: {} collection_mode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thide_items (Hide Items in this Collection)\n| \tshow_items (Show this Collection and its Items)".format(collection_mode))
+                else:                                                       print("| Config Error: collection_mode attribute is blank")
 
-            # Handle collection collectionSort
-            if "collectionSort" in collections[c]["details"]:
-                if collections[c]["details"]["collectionSort"]:
-                    collectionSort = collections[c]["details"]["collectionSort"]
-                    if collectionSort in ('release', 'alpha'):
-                        item.sortUpdate(sort=collectionSort)
-                        print("| Detail: collectionSort updated to {}".format(collectionSort))
-                    else:                                                   print("| Config Error: {} collectionSort Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collectionSort))
-                else:                                                       print("| Config Error: collectionSort attribute is blank")
+            # Handle collection collection_sort
+            if "collection_sort" in collections[c]["details"]:
+                if collections[c]["details"]["collection_sort"]:
+                    collection_sort = collections[c]["details"]["collection_sort"]
+                    if collection_sort in ('release', 'alpha'):
+                        item.sortUpdate(sort=collection_sort)
+                        print("| Detail: collection_sort updated to {}".format(collection_sort))
+                    else:                                                   print("| Config Error: {} collection_sort Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collection_sort))
+                else:                                                       print("| Config Error: collection_sort attribute is blank")
 
-        if not summary and "tmdbID" in collections[c] and TMDB.valid:       summary = getSummary(config_path, tmdbID, ["overview", "biography"], "")
+        if not summary and "tmdbID" in collections[c] and TMDB.valid:       summary = get_summary(config_path, tmdbID, ["overview", "biography"], "")
 
         # Handle collection summary
         if summary:
@@ -174,32 +176,32 @@ def update_from_config(config_path, plex, headless=False):
         # Handle Image Server
         image_server = ImageServer(config_path)
         if image_server.valid:
-            file = c
-            if "file" in collections[c]:
-                if collections[c]["file"]:      file = collections[c]["file"]
-                else:                           print("| Config Error: file attribute is blank")
+            system_name = c
+            if "system_name" in collections[c]:
+                if collections[c]["system_name"]:       system_name = collections[c]["system_name"]
+                else:                                   print("| Config Error: system_name attribute is blank")
             if image_server.poster:
-                path = os.path.join(image_server.poster, "{}.*".format(file))
+                path = os.path.join(image_server.poster, "{}.*".format(system_name))
                 matches = glob.glob(path)
                 if len(matches) > 0 or len(posters_found) > 0:
                     for match in matches:       posters_found.append(["file", os.path.abspath(match)])
                 else:
                     print("| poster not found at: {}".format(os.path.abspath(path)))
             if image_server.background:
-                path = os.path.join(image_server.background, "{}.*".format(file))
+                path = os.path.join(image_server.background, "{}.*".format(system_name))
                 matches = glob.glob(path)
                 if len(matches) > 0 or len(backgrounds_found) > 0:
                     for match in matches:       backgrounds_found.append(["file", os.path.abspath(match)])
                 else:
                     print("| background not found at: {}".format(os.path.abspath(path)))
             if image_server.image:
-                path = os.path.join(image_server.image, "{}".format(file), "poster.*")
+                path = os.path.join(image_server.image, "{}".format(system_name), "poster.*")
                 matches = glob.glob(path)
                 if len(matches) > 0 or len(posters_found) > 0:
                     for match in matches:       posters_found.append(["file", os.path.abspath(match)])
                 else:
                     print("| poster not found at: {}".format(os.path.abspath(path)))
-                path = os.path.join(image_server.image, "{}".format(file), "background.*")
+                path = os.path.join(image_server.image, "{}".format(system_name), "background.*")
                 matches = glob.glob(path)
                 if len(matches) > 0 or len(backgrounds_found) > 0:
                     for match in matches:       backgrounds_found.append(["file", os.path.abspath(match)])
@@ -207,26 +209,26 @@ def update_from_config(config_path, plex, headless=False):
                     print("| background not found at: {}".format(os.path.abspath(path)))
 
         # Pick Images
-        def chooseFromList (listType, itemList, headless):
-            if itemList:
-                if len(itemList) == 1 or (len(itemList) > 0 and headless):  return itemList[0]
-                names = ["| {}) [{}] {}".format(i, item[0], item[1]) for i, item in enumerate(itemList, start=1)]
+        def choose_from_list (list_type, item_list, headless):
+            if item_list:
+                if len(item_list) == 1 or (len(item_list) > 0 and headless):  return item_list[0]
+                names = ["| {}) [{}] {}".format(i, item[0], item[1]) for i, item in enumerate(item_list, start=1)]
                 print("| 0) Do Nothing")
                 print("\n".join(names))
                 while True:
                     try:
-                        selection = int(input("| Choose {} number: ".format(listType))) - 1
-                        if selection >= 0:                                  return itemList[selection]
+                        selection = int(input("| Choose {} number: ".format(list_type))) - 1
+                        if selection >= 0:                                  return item_list[selection]
                         elif selection == -1:                               return None
                         else:                                               print("| Invalid entry")
                     except (IndexError, ValueError) as E:               print("| Invalid entry")
             else:                                                   return None
-        poster = chooseFromList("poster", posters_found, headless)
-        background = chooseFromList("background", backgrounds_found, headless)
+        poster = choose_from_list("poster", posters_found, headless)
+        background = choose_from_list("background", backgrounds_found, headless)
 
         # Special case fall back for tmdbID tag if no other poster is found
         if not poster and "tmdbID" in collections[c] and TMDB.valid:
-            poster = ["url", str(getSummary(config_path, tmdbID, ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original/"))]
+            poster = ["url", str(get_summary(config_path, tmdbID, ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original/"))]
 
         # Update poster
         if poster:
@@ -336,13 +338,13 @@ def append_collection(config_path, config_update=None):
                             l_type = input("| Enter list type IMDb(i) TMDb(t) Trakt(k): ")
                             if l_type == "i":
                                 l_type = "IMDb"
-                                method = "imdb-list"
+                                method = "imdb_list"
                             elif l_type == "t":
                                 l_type = "TMDb"
-                                method = "tmdb-list"
+                                method = "tmdb_list"
                             elif l_type == "k":
                                 l_type = "Trakt"
-                                method = "trakt-list"
+                                method = "trakt_list"
                             else:
                                 return
                             url = input("| Enter {} List URL: ".format(l_type)).strip()
@@ -476,7 +478,7 @@ while not mode == "q":
         elif mode == "l":
             print("|\n|===================================================================================================|")
             l_type = input("| \n| Enter list type IMDb(i) TMDb(t) Trakt(k): ")
-            method_map = {"i": ("IMDb", "imdb-list"), "t": ("TMDb", "tmdb-list"), "k": ("Trakt", "trakt-list")}
+            method_map = {"i": ("IMDb", "imdb_list"), "t": ("TMDb", "tmdb_list"), "k": ("Trakt", "trakt_list")}
             if (l_type in ("i", "t") and TMDB.valid) or (l_type == "k" and TraktClient.valid):
                 l_type, method = method_map[l_type]
                 url = input("| Enter {} List URL: ".format(l_type)).strip()

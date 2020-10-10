@@ -131,17 +131,17 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
     else:
         if isinstance(plex.Library, MovieSection):
             config = Config(config_path)
-            if method == "imdb-list":
+            if method == "imdb_list":
                 if TMDB.valid:                  movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
                 else:                           print("| tmdb connection required")
-            elif method == "tmdb-list":
+            elif method == "tmdb_list":
                 if TMDB.valid:                  movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
                 else:                           print("| tmdb connection required")
-            elif method == "trakt-list":
+            elif method == "trakt_list":
                 if TraktClient.valid:           movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
                 else:                           print("| trakt connection required")
         elif isinstance(plex.Library, ShowSection):
-            if method == "trakt-list":
+            if method == "trakt_list":
                 if TraktClient.valid:           shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
                 else:                           print("| trakt connection required")
 
@@ -172,12 +172,12 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                             mv_attrs = [str(mv_attrs)]
                     except AttributeError:
                         for media in current_m.media:
-                            if method == "video-resolution":
+                            if method == "video_resolution":
                                 mv_attrs = [media.videoResolution]
                             for part in media.parts:
-                                if method == "audio-language":
+                                if method == "audio_language":
                                     mv_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
-                                if method == "subtitle-language":
+                                if method == "subtitle_language":
                                     mv_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
 
                     # Get the intersection of the user's terms and movie's terms
@@ -219,12 +219,12 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                     except AttributeError as e:
                         print(e)
                         # for media in current_s.media:
-                        #     if method == "video-resolution":
+                        #     if method == "video_resolution":
                         #         show_attrs = [media.videoResolution]
                         #     for part in media.parts:
-                        #         if method == "audio-language":
+                        #         if method == "audio_language":
                         #             show_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
-                        #         if method == "subtitle-language":
+                        #         if method == "subtitle_language":
                         #             show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
 
                     # Get the intersection of the user's terms and movie's terms
