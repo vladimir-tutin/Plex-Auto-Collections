@@ -98,21 +98,23 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 except AttributeError:      pass
 
         if not no_meta:
-            def edit_value (item, name, collection):
-                if name in collection:
-                    if collection[name]:
-                        edits = {"{}.value".format(name): collection[name], "{}.locked".format(name): 1}
+            def edit_value (item, name, group, key=None):
+                if key == None:
+                    key = name
+                if name in group:
+                    if group[name]:
+                        edits = {"{}.value".format(key): group[name], "{}.locked".format(key): 1}
                         item.edit(**edits)
                         item.reload()
-                        print("| Detail: {} updated to {}".format(name, collection[name]))
+                        print("| Detail: {} updated to {}".format(name, group[name]))
                     else:
                         print("| Config Error: {} attribute is blank".format(name))
 
             # Handle collection sort_title
-            edit_value(item, "sort_title", collections[c])
+            edit_value(item, "sort_title", collections[c], key="titleSort")
 
             # Handle collection content_rating
-            edit_value(item, "content_rating", collections[c])
+            edit_value(item, "content_rating", collections[c], key="contentRating")
 
             # Handle collection summary
             summary = None
