@@ -18,27 +18,27 @@ def add_to_radarr(config_path, missing):
         if len(search) == 1:
             tmdb_details = search[0]
         else:
-            print("--- Unable to match TMDb ID for IMDb ID {}, skipping".format(m))
+            print("| --- Unable to match TMDb ID for IMDb ID {}, skipping".format(m))
             continue
-        
+
         # Validate TMDb information (very few TMDb entries don't yet have basic information)
         try:
             tmdb_title = tmdb_details['title']
             tmdb_id = tmdb_details['id']
         except IndexError:
-            print("--- Unable to fetch necessary TMDb information for IMDb ID {}, skipping".format(m))
+            print("| --- Unable to fetch necessary TMDb information for IMDb ID {}, skipping".format(m))
             continue
 
-        # Validate TMDb year (several TMDb entries don't yet have release dates)        
-        try: 
+        # Validate TMDb year (several TMDb entries don't yet have release dates)
+        try:
             # This might be overly punitive
             tmdb_year = tmdb_details['release_date'].split("-")[0]
         except KeyError:
-            print("--- {} does not have a release date on TMDb yet, skipping".format(tmdb_title))
+            print("| --- {} does not have a release date on TMDb yet, skipping".format(tmdb_title))
             continue
 
         if tmdb_year.isdigit() == False:
-            print("--- {} does not have a release date on TMDb yet, skipping".format(tmdb_title))
+            print("| --- {} does not have a release date on TMDb yet, skipping".format(tmdb_title))
             continue
 
         tmdb_poster = "https://image.tmdb.org/t/p/original{}".format(tmdb_details['poster_path'])
@@ -75,6 +75,6 @@ def add_to_radarr(config_path, missing):
         response = requests.post(url, json=payload, params=querystring)
 
         if response.status_code < 400:
-            print("+++ {}: Added to Radarr".format(tmdb_title))
+            print("| +++ {}: Added to Radarr".format(tmdb_title))
         else:
-            print("--- {}: {}".format(tmdb_title, response.json()[0]['errorMessage']))
+            print("| --- {}: {} {}".format(tmdb_title, response.json()[0]['errorMessage'], response.status_code))

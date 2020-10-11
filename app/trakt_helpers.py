@@ -5,8 +5,9 @@ import os
 import six
 import copy
 import ruamel.yaml
+import webbrowser
 
-def authenticate(authorization=None):
+def authenticate(authorization=None, headless=False):
 
     if authorization['access_token']:
         # Test authorization
@@ -14,19 +15,22 @@ def authenticate(authorization=None):
             if Trakt['users/settings']:
                 # Successful authorization
                 return authorization
+    if not headless:
+        url = Trakt['oauth'].authorize_url('urn:ietf:wg:oauth:2.0:oob')
+        print('| Navigate to: %s' % url)
+        print("| If you get an OAuth error your client_id or client_secret is invalid")
+        webbrowser.open(url, new=2)
 
-    print('Navigate to: %s' % Trakt['oauth'].authorize_url('urn:ietf:wg:oauth:2.0:oob'))
+        code = six.moves.input('| trakt pin: ')
+        if not code:
+            exit("| No Input")
 
-    code = six.moves.input('Authorization code: ')
-    if not code:
-        exit(1)
+        authorization = Trakt['oauth'].token(code, 'urn:ietf:wg:oauth:2.0:oob')
+        if not authorization:
+            exit("| Invalid trakt pin")
 
-    authorization = Trakt['oauth'].token(code, 'urn:ietf:wg:oauth:2.0:oob')
-    if not authorization:
-        exit(1)
-
-    # print('Authorization: %r' % authorization)
-    return authorization
+        # print('Authorization: %r' % authorization)
+        return authorization
 
 def save_authorization(config_file, authorization):
     ruamel.yaml.YAML().allow_duplicate_keys = True
@@ -38,7 +42,7 @@ def save_authorization(config_file, authorization):
     config['trakt']['authorization']['refresh_token'] = authorization['refresh_token']
     config['trakt']['authorization']['scope'] = authorization['scope']
     config['trakt']['authorization']['created_at'] = authorization['created_at']
-    print('Saving authorization information to {}'.format(config_file))
+    print('| Saving authorization information to {}'.format(config_file))
     ruamel.yaml.round_trip_dump(
         config,
         open(config_file, 'w'),

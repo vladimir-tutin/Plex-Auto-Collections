@@ -1,29 +1,33 @@
 collections:
   Jurassic Park:
-    tmdb-list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb-summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
   1080p Documentaries:
     genres: Documentary
     subfilters:
-      video-resolution: 1080
-    details:
-      summary: A collection of 1080p Documentaries
+      video_resolution: 1080
+    summary: A collection of 1080p Documentaries
   Dave Chappelle:
     actors: Dave Chappelle
-    details:
-      tmdb-summary: 4169
+    tmdb_summary: 4169
   Marvel:
-    trakt-list: https://trakt.tv/users/movistapp/lists/marvel
+    trakt_list: https://trakt.tv/users/movistapp/lists/marvel
   Pixar:
     studio: Pixar
-    details:
-      summary: A collection of Pixar movies
+    summary: A collection of Pixar movies
+    sort_title: *Pixar
+    content_rating: G
+    collection_mode: show_items
+    collection_sort: alpha
   1990s:
     year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
-    details:
-      summary: A collection of 1990s movies
+    summary: A collection of 1990s movies
+  28 Days/Weeks Later:
+    tmdbID: 1565
+    system_name: 28 Days-Weeks Later
+  Anaconda:
+    tmdbID: 105995, 336560
 plex:
   library: Movies
   library_type: ### 'movie' or 'show' ###
@@ -50,7 +54,7 @@ trakt:
     refresh_token:
     scope:
     created_at:
-image-server:
-  host: 192.168.1.1
-  port: 5000
-  poster-directory: /config/posters
+image_server:
+  poster_directory: ../config/posters
+  background_directory: ../config/backgrounds
+  image_directory: ../config/images

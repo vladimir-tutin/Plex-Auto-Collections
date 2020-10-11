@@ -15,7 +15,7 @@ Some limited testing has been done only on Python 3.7 and 3.8 on Linux and Windo
 ```shell
 pip install -r requirements.txt
 ```
-    
+
 If there are issues installing dependencies try:
 
 ```shell
@@ -40,6 +40,24 @@ If you would like to run the script without any user interaction (e.g. to schedu
 python plex_auto_collections.py --update
 ```
 
+If you would like the `-u` or `--update` option to update without updating metadata you can add `-nm` or `--no_meta` along with `-u` or `--update`:
+
+```shell
+python plex_auto_collections.py --update --no_meta
+```
+
+If you would like the `-u` or `--update` option to update without updating images you can add `-ni` or `--no_images` along with `-u` or `--update`:
+
+```shell
+python plex_auto_collections.py --update --no_images
+```
+
+Example command if you only want the collection to update without constantly updating metadata and images that don't change much
+
+```shell
+python plex_auto_collections.py --update --no_meta --no_images
+```
+
 ## Docker
 
 A simple `Dockerfile` is available in this repo if you'd like to build it yourself. The official build is also available from dockerhub here: https://hub.docker.com/r/burkasaurusrex/plex-auto-collections
@@ -47,7 +65,7 @@ A simple `Dockerfile` is available in this repo if you'd like to build it yourse
 The docker implementation today is limited but will improve over time. To use, try the following:
 
 ```shell
-docker run -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'burkasaurusrex/plex-auto-collections' 
+docker run -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'burkasaurusrex/plex-auto-collections'
 ```
 
 The `-v '/mnt/user/plex-auto-collections/':'/config'` mounts a persistent volume to store your config file. Today, the docker image defaults to running the config named `config.yml` in your persistent volume (eventually, the docker will support an environment variable to change the config path).
@@ -64,7 +82,7 @@ The script allows utilizes a YAML config file to create collections in Plex. Thi
 There are currently six YAML mappings that can be set:
 - `collections` (required)
 - `plex` (required)
-- `image-server` (optional)
+- `image_server` (optional)
 - `tmdb` (optional, but recommended)
 - `trakt` (optional)
 - `radarr` (optional)
@@ -75,8 +93,15 @@ You can find a template config file in [config/config.yml.template](config/confi
 
 Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are three other attributes to set for each collection:
 - List Type (required)
-- Details (optional)
 - Subfilters (optional)
+- Sort Title (optional)
+- Content Rating (optional)
+- Summary (optional)
+- Collection Mode (optional)
+- Collection Order (optional)
+- Poster (optional)
+- Background (optional)
+- System Name (optional)
 
 ### List Type (Collection Attribute)
 
@@ -132,15 +157,35 @@ The Movie Database (TMDb) strives to group movies into logical collections. This
 ```yaml
 collections:
   Jurassic Park:
-    tmdb-list: https://www.themoviedb.org/collection/328
+    tmdb_list: https://www.themoviedb.org/collection/328
 ```
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb-list:
+    tmdb_list:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
 ```
+
+Alternatively you can specify which tmdb_list, tmdb_summary, tmdb_poster, and tmdb_background all at once by:
+
+```yaml
+collections:
+  Jurassic Park:
+    tmdbID: 328
+```
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdbID: 8091, 135416
+  Anaconda:
+    tmdbID: 105995, 336560
+```
+
+Notes:
+- The tmbdID can be either from a collection or an individual movie
+- You can specify more then one tmdbID but it will pull the summary, poster, and background from only the first one.
+- Local posters/backgrounds are loaded over tmdb_poster/tmdb_background if they exist unless tmdb_poster/tmdb_background is also specified
 
 #### IMDb List or Search (List Type)
 
@@ -149,18 +194,18 @@ This script can also scrape IMDb lists as well as searches (particularly useful 
 ```yaml
 collections:
   James Bonds:
-    imdb-list: https://www.imdb.com/list/ls006405458
+    imdb_list: https://www.imdb.com/list/ls006405458
 ```
 ```yaml
 collections:
   IMDb Top 250:
-    imdb-list: https://www.imdb.com/search/title/?groups=top_250&count=250
+    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=250
 ```
 Note that searches can be useful to show / sort / filter IMDb large IMDb lists:
 ```yaml
 collections:
   Marvel Cinematic Universe:
-    imdb-list: https://www.imdb.com/search/title/?title_type=movie&lists=ls031310794&count=250
+    imdb_list: https://www.imdb.com/search/title/?title_type=movie&lists=ls031310794&count=250
 ```
 
 #### Trakt List (List Type)
@@ -170,46 +215,62 @@ Similarly, this script can also pull public or private Trakt lists via the Trakt
 ```yaml
 collections:
   Christmas:
-    trakt-list:
+    trakt_list:
       - https://trakt.tv/users/movistapp/lists/christmas-movies
       - https://trakt.tv/users/2borno2b/lists/christmas-movies-extravanganza
 ```
 ```yaml
 collections:
   Reddit Top 250:
-    trakt-list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
+    trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
 ```
 
-### Details (Collection Attribute)
+### Subfilters (Collection Attribute)
 
-The next optional attribute for any collection is the `details` key. There are two different subattributes for `details` to choose from:
-- Sort Title (optional)
-- Content Rating (optional)
-- Summary (optional)
-- Poster (optional)
-- Background (optional)
-- Collection Mode (optional)
-- Collection Order (optional)
+The next optional attribute for any collection is the `subfilters` key. Subfilters allows for a little more granular selection from a list of movies to add to a collection.
 
-Note that the `details` attribute needs to be set in order for the script to search the local image server for any images (this will be fixed in future releases).
+Many `subfilters` are supported such as actors, genres, year, studio and more. For more subfilters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the subfilter. Additionally, subfilters for `audio_language`, `subtitle_language`, and `video_resolution` have been created.
 
-#### Sort Title (Details Subattribute)
+Note that muliple subfilters are supported but a movie must match at least one value from **each** subfilter to be added to a collection. The values for each must match what Plex has including special characters in order to match.
 
-Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk. 
+```yaml
+collections:
+  1080p Documentaries:
+    genres: Documentary
+    summary: A collection of 1080p Documentaries
+    subfilters:
+      video_resolution: 1080
+```
+```yaml
+collections:
+  Daniel Craig only James Bonds:
+    imdb_list: https://www.imdb.com/list/ls006405458/
+    subfilters:
+      actors: Daniel Craig
+```
+```yaml
+collections:
+  French Romance:
+    genre: Romance
+    subfilters:
+      audio_language: Français
+```
+
+### Sort Title (Collection Attribute)
+
+Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk.
 
 ```yaml
 collections:
   IMDb Top 250:
-    imdb-list: https://www.imdb.com/search/title/?groups=top_250&count=250
-    details:
-      sort_title: *100
+    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
+    sort_title: *100
   Reddit Top 250:
-    trakt-list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
-    details:
-      sort_title: *101
+    trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
+    sort_title: *101
 ```
 
-#### Content Rating (Details Subattribute)
+### Content Rating (Collection Attribute)
 
 Adding a content rating to each collection is possible:
 
@@ -217,11 +278,10 @@ Adding a content rating to each collection is possible:
 collections:
   Pixar:
     studio: Pixar
-    details:
-      content_rating: PG
+    content_rating: PG
 ```
 
-#### Summary (Details Subattribute)
+### Summary (Collection Attribute)
 
 Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry.
 
@@ -230,33 +290,29 @@ To use a TMDb entry a TMDb api-key as well as language is required, the default 
 ```yaml
 collections:
   Jurassic Park:
-    tmdb-list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb-summary: 328
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
 ```
 ```yaml
 collections:
   Dave Chappelle:
     actors: Dave Chappelle
-    details:
-      tmdb-summary: 4169
+    tmdb_summary: 4169
 ```
 If you want to use a custom summary:
 ```yaml
 collections:
   Pixar:
     studio: Pixar
-    details:
-      summary: A collection of Pixar movies
+    summary: A collection of Pixar movies
 ```
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb-list:
+    tmdb_list:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
-    details:
-      summary: >-
+    summary: >-
         The Alien franchise is a science fiction horror franchise, consisting
         primarily of a series of films focusing on the species Xenomorph XX121,
         commonly referred to simply as "the Alien", a voracious endoparasitoid
@@ -269,116 +325,119 @@ collections:
         civilization known as the Engineers.
 ```
 
-#### Poster (Details Subattribute)
+### Collection Mode (Collection Attribute)
 
-There are four ways to set a poster image for a collection: local image, public URL, TMDb collection, or TMDb actor. 
+Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hide_items`, `show_items`, and `hide`.
 
-Local assets are supported by running the script with posters in the `poster-directory`. If a) the `details` attribute is set and b) there are no details filled out for the poster, the script will attempt to match a collection name with an image file of the same name. Images should be placed in the configured folder (typically `../config/posters` or `./posters`). For example, create an image `Jurassic Park.png` and placed it in the `posters` directory.
+#### Options
+- `default` (Library default)
+- `hide` (Hide Collection)
+- `hide_items` (Hide Items in this Collection)
+- `show_items` (Show this Collection and its Items)
+
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
+    background: https://i.imgur.com/2xE0R9I.png
+    collection_mode: hide_items
+```
+
+### Collection Order (Collection Attribute)
+
+Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
+
+#### Options
+- `release` (Order Collection by release dates)
+- `alpha` (Order Collection Alphabetically)
+
+```yaml
+collections:
+  Alien (Past & Present):
+    tmdb_list:
+      - https://www.themoviedb.org/collection/8091
+      - https://www.themoviedb.org/collection/135416
+    collection_order: alpha
+```
+
+### Poster (Collection Attribute)
+
+There are four ways to set a poster image for a collection: local image, public URL, TMDb collection, or TMDb actor.
+
+Local assets are supported by running the script with posters in the `poster_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a poster use `file_poster`.
+
+If multiple posters are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
 
 If you want to use an image publicly available on the internet:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb-list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb-summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
 ```
 If you want to use the default collection image on TMDb:
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb-list:
+    tmdb_list:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
-    details:
-      tmdb-poster: 8091
+    tmdb_poster: 8091
 ```
 If you want to use the default actor image on TMDb:
 ```yaml
 collections:
   Dave Chappelle:
     actors: Dave Chappelle
-    details:
-      tmdb-summary: 4169
-      tmdb-poster: 4169
+    tmdb_summary: 4169
+    tmdb_poster: 4169
 ```
-#### Background (Details Subattribute)
+If you want to use an image in your file system:
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    file_poster: C:/Users/username/Desktop/2xE0R9I.png
+    file_background: /config/backgrounds/Jurassic Park.png
+```
+### Background (Collection Attribute)
 
-There are two ways to set a background image for a collection: local image or public URL.
+There are three ways to set a background image for a collection: local image, public URL, or TMDb collection.
 
-Local assets are supported by running the script with background images in the `background-directory`. If a) the `details` attribute is set and b) there are no details filled out for the background, the script will attempt to match a collection name with an image file of the same name. Images should be placed in the configured folder (typically `../config/backgrounds` or `./backgrounds`). For example, create an image `Jurassic Park.png` and placed it in the `backgrounds` directory.
+Local assets are supported by running the script with backgrounds in the `background_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a background use `file_background`.
+
+If multiple backgrounds are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
 
 If you want to use an image publicly available on the internet:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb-list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb-summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
-      background: https://i.imgur.com/2xE0R9I.png
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
+    background: https://i.imgur.com/2xE0R9I.png
 ```
-
-#### Collection Mode (Details Subattribute)
-
-Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hideItems`, `showItems`, and `hide`.
-
-```yaml
-collections:
-  Jurassic Park:
-    tmdb-list: https://www.themoviedb.org/collection/328
-    details:
-      tmdb-summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
-      background: https://i.imgur.com/2xE0R9I.png
-      collection_mode: hideItems
-```
-
-#### Collection Order (Details Subattribute)
-
-Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
-
+If you want to use the default collection image on TMDb:
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb-list:
+    tmdb_list:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
-    details:
-      collection_order: alpha
+    tmdb_background: 8091
 ```
-
-### Subfilters (Collection Attribute)
-
-The next optional attribute for any collection is the `subfilters` key. Subfilters allows for a little more granular selection from a list of movies to add to a collection. 
-
-Many `subfilters` are supported such as actors, genres, year, studio and more. For more subfilters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the subfilter. Additionally, subfilters for `audio-language`, `subtitle-language`, and `video-resolution` have been created.
-
-Note that muliple subfilters are supported but a movie must match at least one value from **each** subfilter to be added to a collection. The values for each must match what Plex has including special characters in order to match.
-
+If you want to use an image in your file system:
 ```yaml
 collections:
-  1080p Documentaries:
-    genres: Documentary
-    details:
-      summary: A collection of 1080p Documentaries
-    subfilters:
-      video-resolution: 1080
-```
-```yaml
-collections:
-  Daniel Craig only James Bonds:
-    imdb-list: https://www.imdb.com/list/ls006405458/
-    subfilters:
-      actors: Daniel Craig
-```
-```yaml
-collections:
-  French Romance:
-    genre: Romance
-    subfilters:
-      audio-language: Français
+  Jurassic Park:
+    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    file_poster: C:/Users/username/Desktop/2xE0R9I.png
+    file_background: /config/backgrounds/Jurassic Park.png
 ```
 
 ## Plex
@@ -403,15 +462,26 @@ Lastly, if you need help finding your Plex authentication token, please see Plex
 
 ## Image Server
 
-An `image-server` mapping in the config is optional. By placing images in the `poster-directory` or `background-directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the image `../config/posters/Jurassic Park.png`, the script will upload that image to Plex.
+An `image_server` mapping in the config is optional. There are two ways to store your posters and background. Using `poster_directory` and/or `background_directory` or by using `image_directory`.
 
-Here's the full set of configurations:
+### `poster_directory` and/or `background_directory`
+By placing images in the `poster_directory` or `background_directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the images `../config/posters/Jurassic Park.png` and `../config/backgrounds/Jurassic Park.png`, the script will upload those images to Plex.
 
 ```yaml
-image-server:                                 # Opt
-  poster-directory: /config/posters           # Opt - Desired dir of posters
-  background-directory: /config/backgrounds   # Opt - Desired dir of backgrounds
+image_server:                                 # Opt
+  poster_directory: /config/posters           # Opt - Desired dir of posters
+  background_directory: /config/backgrounds   # Opt - Desired dir of backgrounds
 ```
+
+### `image_directory`
+By placing images in folders in the `image_directory` folder, the script will attempt to match folder names to collection names. For example, if there is a collection named `Jurassic Park` and the images `../config/images/Jurassic Park/poster.png` and `../config/images/Jurassic Park/background.png`, the script will upload those images to Plex.
+
+```yaml
+image_server:                                 # Opt
+  image_directory: /config/images             # Opt - Desired dir of images
+```
+
+Note: these can be used together if you want, the script will just ask you which one you want if there are multiple matching images.
 
 ## TMDb
 
@@ -430,7 +500,7 @@ If using Trakt lists, be sure to include your Trakt application credentials. To 
 2. Enter a `Name` for the application.
 3. Enter `urn:ietf:wg:oauth:2.0:oob` for `Redirect uri`.
 4. Click the `SAVE APP` button.
-5. Record the `Client ID` and `Client Secret`. 
+5. Record the `Client ID` and `Client Secret`.
 
 Here's the full set of configurations:
 ```yaml
@@ -489,7 +559,7 @@ Note that Radarr support has not been tested with extensively Trakt lists and So
 
 # Acknowledgements
 - [vladimir-tutin](https://github.com/vladimir-tutin) for writing substantially all of the code in this fork
-- [deva5610](https://github.com/deva5610) for writing [IMDBList2PlexCollection](https://github.com/deva5610/IMDBList2PlexCollection) which prompted the idea for a 
+- [deva5610](https://github.com/deva5610) for writing [IMDBList2PlexCollection](https://github.com/deva5610/IMDBList2PlexCollection) which prompted the idea for a
 configuration based collection manager
 - [JonnyWong16](https://github.com/JonnyWong16) for writing the a [IMDb Top 250](https://gist.github.com/JonnyWong16/f5b9af386ea58e19bf18c09f2681df23) collection script which served as inspiration (and for [Tautulli](https://github.com/Tautulli/Tautulli)!)
 - [pkkid](https://github.com/pkkid) and all other contributors for [python-plexapi](https://github.com/pkkid/python-plexapi)

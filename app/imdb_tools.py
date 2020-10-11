@@ -70,8 +70,13 @@ def tmdb_get_movies(config_path, plex, data):
     t_movie.api_key = tmdb.api_key  # Copy same api key to Movie
     t_col = tmdb.details(tmdb_id)
     t_movs = []
-    for tmovie in t_col.parts:
-        t_movs.append(tmovie['id'])
+    try:
+        for tmovie in t_col.parts:
+            t_movs.append(tmovie['id'])
+    except AttributeError:
+        t_movs.append(tmdb_id)
+
+
 
     # Create dictionary of movies and their guid
     # GUIDs reference from which source Plex has pulled the metadata
@@ -130,4 +135,5 @@ def tmdb_get_summary(config_path, data, type):
     elif type == "biography":       return person.details(data).biography
     elif type == "poster_path":     return collection.details(data).poster_path
     elif type == "profile_path":    return person.details(data).profile_path
+    elif type == "backdrop_path":    return collection.details(data).backdrop_path
     else: raise RuntimeError("type not yet supported in tmdb_get_summary")

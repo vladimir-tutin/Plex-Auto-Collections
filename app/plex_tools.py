@@ -5,6 +5,9 @@ from plexapi.library import MovieSection
 from plexapi.library import ShowSection
 import imdb_tools
 import trakt_tools
+from config_tools import Config
+from config_tools import TMDB
+from config_tools import TraktClient
 
 
 def get_movie(plex, data):
@@ -78,24 +81,24 @@ def get_all_items(plex):
 def get_collection(plex, data, exact=None, subtype=None):
     collection_list = plex.Library.search(title=data, libtype="collection")
     if len(collection_list) > 1:
-        if exact:
-            for collection in collection_list:
-                if collection.title == data:
-                    return collection
-        else:
-            c_names = [(str(i + 1) + ") " + collection.title + " (" + collection.subtype + ")") for i, collection in enumerate(collection_list)]
+        for collection in collection_list:
+            if collection.title == data:
+                return collection
+        if not exact:
+            c_names = ["| " + (str(i + 1) + ") " + collection.title + " (" + collection.subtype + ")") for i, collection in enumerate(collection_list)]
+            print("| 0) Do Nothing")
             print("\n".join(c_names))
             while True:
                 try:
-                    selection = int(input("Choose collection number: ")) - 1
+                    selection = int(input("| Choose collection number: ")) - 1
                     if selection >= 0:
                         return collection_list[selection]
-                    elif selection == "q":
-                        return
+                    elif selection == -1:
+                        return "No collection selected"
                     else:
-                        print("Invalid entry")
+                        print("| Invalid entry")
                 except (IndexError, ValueError) as E:
-                    print("Invalid entry")
+                    print("| Invalid entry")
     elif len(collection_list) == 1:
         if exact:
             # if collection_list[0] == data:
@@ -127,15 +130,21 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             print(e)
     else:
         if isinstance(plex.Library, MovieSection):
-            if method == "imdb-list":
-                movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
-            elif method == "tmdb-list":
-                movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
-            elif method == "trakt-list":
-                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
+            config = Config(config_path)
+            if method == "imdb_list":
+                if TMDB.valid:                  movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
+                else:                           print("| tmdb connection required")
+            elif method == "tmdb_list":
+                if TMDB.valid:                  movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
+                else:                           print("| tmdb connection required")
+            elif method == "trakt_list":
+                if TraktClient.valid:           movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
+                else:                           print("| trakt connection required")
         elif isinstance(plex.Library, ShowSection):
-            if method == "trakt-list":
-                shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
+            if method == "trakt_list":
+                if TraktClient.valid:           shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
+                else:                           print("| trakt connection required")
+
     if movies:
         # Check if already in collection
         cols = plex.Library.search(title=c, libtype="collection")
@@ -147,7 +156,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             current_m = get_movie(plex, rk)
             current_m.reload()
             if current_m in fs:
-                print("{} is already in collection: {}".format(current_m.title, c))
+                print("| {} Collection already contains: {}".format(c, current_m.title))
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -163,12 +172,12 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                             mv_attrs = [str(mv_attrs)]
                     except AttributeError:
                         for media in current_m.media:
-                            if method == "video-resolution":
+                            if method == "video_resolution":
                                 mv_attrs = [media.videoResolution]
                             for part in media.parts:
-                                if method == "audio-language":
+                                if method == "audio_language":
                                     mv_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
-                                if method == "subtitle-language":
+                                if method == "subtitle_language":
                                     mv_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
 
                     # Get the intersection of the user's terms and movie's terms
@@ -177,10 +186,10 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                         match = False
                         break
                 if match:
-                    print("+++ Adding {} to collection {}".format(current_m.title, c))
+                    print("| +++ {} Collection: {}".format(c, current_m.title))
                     current_m.addCollection(c)
             elif not subfilters:
-                print("+++ Adding {} to collection: {}".format(current_m.title, c))
+                print("| +++ {} Collection: {}".format(c, current_m.title))
                 current_m.addCollection(c)
     if shows:
         # Check if already in collection
@@ -193,7 +202,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             current_s = get_item(plex, rk)
             current_s.reload()
             if current_s in fs:
-                print("{} is already in collection: {}".format(current_s.title, c))
+                print("| {} is already in collection: {}".format(current_s.title, c))
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -210,12 +219,12 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                     except AttributeError as e:
                         print(e)
                         # for media in current_s.media:
-                        #     if method == "video-resolution":
+                        #     if method == "video_resolution":
                         #         show_attrs = [media.videoResolution]
                         #     for part in media.parts:
-                        #         if method == "audio-language":
+                        #         if method == "audio_language":
                         #             show_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
-                        #         if method == "subtitle-language":
+                        #         if method == "subtitle_language":
                         #             show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
 
                     # Get the intersection of the user's terms and movie's terms
@@ -224,10 +233,10 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                         match = False
                         break
                 if match:
-                    print("+++ Adding {} to collection {}".format(current_s.title, c))
+                    print("| +++ Adding {} to collection {}".format(current_s.title, c))
                     current_s.addCollection(c)
             elif not subfilters:
-                print("+++ Adding {} to collection: {}".format(current_s.title, c))
+                print("| +++ Adding {} to collection: {}".format(current_s.title, c))
                 current_s.addCollection(c)
     try:
         missing
@@ -237,7 +246,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
         return missing
 
 def delete_collection(data):
-    confirm = input("{} selected. Confirm deletion (y/n):".format(data.title))
+    confirm = input("| {} selected. Confirm deletion (y/n):".format(data.title))
     if confirm == "y":
         data.delete()
-        print("Collection deleted")
+        print("| Collection deleted")
