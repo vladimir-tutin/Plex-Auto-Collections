@@ -98,21 +98,25 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 except AttributeError:      pass
 
         if not no_meta:
-            def edit_value (item, name, collection):
-                if name in collection:
-                    if collection[name]:
-                        edits = {"{}.value".format(name): collection[name], "{}.locked".format(name): 1}
-                        item.edit(**edits)
-                        item.reload()
-                        print("| Detail: {} updated to {}".format(name, collection[name]))
-                    else:
-                        print("| Config Error: {} attribute is blank".format(name))
-
             # Handle collection sort_title
-            edit_value(item, "sort_title", collections[c])
+            if "sort_title" in collections:
+                if collections["sort_title"]:
+                    edits = {"titleSort.value": collections[c]["sort_title"], "titleSort.locked": 1}
+                    item.edit(**edits)
+                    item.reload()
+                    print("| Detail: sort_title updated to {}".format(collections["sort_title"]))
+                else:
+                    print("| Config Error: sort_title attribute is blank")
 
             # Handle collection content_rating
-            edit_value(item, "content_rating", collections[c])
+            if "content_rating" in collections[c]:
+                if collections["content_rating"]:
+                    edits = {"contentRating.value": collections[c]["content_rating"], "contentRating.locked": 1}
+                    item.edit(**edits)
+                    item.reload()
+                    print("| Detail: content_rating updated to {}".format(collections["content_rating"]))
+                else:
+                    print("| Config Error: content_rating attribute is blank")
 
             # Handle collection summary
             summary = None
