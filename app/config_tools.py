@@ -45,51 +45,71 @@ class Config:
         self.config_path = config_path
         with open(self.config_path, 'rt', encoding='utf-8') as yml:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
-        if "collections" not in self.data: sys.exit("| Config Error: collections attribute not found")
-        self.collections = self.data['collections']
-        if "plex" not in self.data: sys.exit("| Config Error: plex attribute not found")
-        self.plex = self.data['plex']
-        self.tmdb = self.data['tmdb'] if 'tmdb' in self.data else {}
-        self.trakt = self.data['trakt'] if 'trakt' in self.data else {}
-        self.radarr = self.data['radarr'] if 'radarr' in self.data else {}
-        self.image_server = self.data['image_server'] if 'image_server' in self.data else {}
-        if Config.valid == None:
+        if Config.valid == True:
+            self.collections = check_for_attribute(self.data, "collections", default={}, do_print=False)
+            self.plex = self.data['plex']
+            self.tmdb = check_for_attribute(self.data, "tmdb", default={}, do_print=False)
+            self.trakt = check_for_attribute(self.data, "trakt", default={}, do_print=False)
+            self.radarr = check_for_attribute(self.data, "radarr", default={}, do_print=False)
+            self.image_server = check_for_attribute(self.data, "image_serverimage_server", default={}, do_print=False)
+        elif Config.valid == None:
             Config.valid = True
             print("|===================================================================================================|")
             print("| Connecting to plex...")
-            Plex(config_path)
+            if "plex" in self.data:
+                if self.data['plex']:
+                    Plex(config_path)
+                else:
+                    sys.exit("| plex attribute is blank")
+            else:
+                sys.exit("| plex attribute not found")
+            self.collections = check_for_attribute(self.data, "collections", default={})
             print("| plex connection scuccessful")
             print("|===================================================================================================|")
-            if "tmdb" not in self.data:
+            if "tmdb" in self.data:
+                if self.data['tmdb']:
+                    TMDB(config_path)
+                else:
+                    TMDB.valid = False
+                    print("| tmdb attribute is blank")
+            else:
                 TMDB.valid = False
                 print("| tmdb attribute not found")
-            else:
-                TMDB(config_path)
             print("|===================================================================================================|")
-            if "trakt" not in self.data:
+            if "trakt" in self.data:
+                if self.data['trakt']:
+                    TraktClient(config_path)
+                else:
+                    TraktClient.valid = False
+                    print("| trakt attribute is blank")
+            else:
                 TraktClient.valid = False
                 print("| trakt attribute not found")
-            else:
-                TraktClient(config_path)
             print("|===================================================================================================|")
-            if "radarr" not in self.data:
+            if "radarr" in self.data:
+                if self.data['radarr']:
+                    Radarr(config_path)
+                else:
+                    Radarr.valid = False
+                    print("| radarr attribute is blank")
+            else:
                 Radarr.valid = False
                 print("| radarr attribute not found")
-            else:
-                Radarr(config_path)
             print("|===================================================================================================|")
-            if "image_server" not in self.data:
+            if "image_server" in self.data:
+                if self.data['image_server']:
+                    ImageServer(config_path)
+                else:
+                    ImageServer.valid = False
+                    print("| image_server attribute is blank")
+            else:
                 ImageServer.valid = False
                 print("| image_server attribute not found")
-            else:
-                ImageServer(config_path)
             print("|===================================================================================================|")
 
 class Plex:
     def __init__(self, config_path):
         config = Config(config_path).plex
-        if not config:
-            sys.exit("| Config Error: plex attribute has no sub-attributes")
         self.url = check_for_attribute(config, "url", text="plex sub-attribute {}")
         self.token = check_for_attribute(config, "token", text="plex sub-attribute {}")
         self.timeout = 60

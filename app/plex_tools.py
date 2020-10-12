@@ -16,16 +16,17 @@ def get_movie(plex, data):
         try:
             return plex.Server.fetchItem(data)
         except PlexExceptions.BadRequest:
-            return "Nothing found"
+            print("| Nothing found")
+            return None
     elif isinstance(data, Movie):
         return data
     else:
-        print(data)
         movie_list = plex.Library.search(title=data)
         if movie_list:
             return movie_list
         else:
-            return "Movie: " + data + " not found"
+            print("| Movie: " + data + " not found")
+            return None
 
 def get_item(plex, data):
     # If an int is passed as data, assume it is a movie's rating key
