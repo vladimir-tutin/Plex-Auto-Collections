@@ -24,10 +24,10 @@ collections:
     year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
     summary: A collection of 1990s movies
   28 Days/Weeks Later:
-    tmdbID: 1565
+    tmdb_id: 1565
     system_name: 28 Days-Weeks Later
   Anaconda:
-    tmdbID: 105995, 336560
+    tmdb_id: 105995, 336560
 plex:
   library: Movies
   library_type: ### 'movie' or 'show' ###
