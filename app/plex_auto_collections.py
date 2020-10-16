@@ -555,7 +555,7 @@ while not mode == "q":
             if not isinstance(collection, str):
                 delete_collection(collection)
             else:
-                print(collection)
+                print("| " + collection)
 
         elif mode == "s":
             print("|\n|===================================================================================================|")
