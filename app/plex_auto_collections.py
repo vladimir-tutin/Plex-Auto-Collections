@@ -35,7 +35,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     for c in collections:
         print("| \n|===================================================================================================|\n|")
         print("| Updating collection: {}...".format(c))
-        tmdbID = None
+        tmdb_id = None
         methods = [m for m in collections[c] if m not in ("subfilters", "sort_title", "content_rating", "summary", "tmdb_summary", "collection_mode", "collection_sort", "poster", "tmdb_poster", "file_poster", "background", "file_background", "system_name")]
         subfilters = []
         if "subfilters" in collections[c]:
@@ -50,13 +50,13 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     print("| Processing {}: {}".format(m_print, v))
                     if m == "actors" or m == "actor":       v = get_actor_rkey(plex, v)
                     met = m
-                    if m == "tmdbID":
+                    if m == "tmdb_id":
                         met = "tmdb_list"
-                        if not tmdbID:      tmdbID = v
+                        if not tmdb_id:      tmdb_id = v
                         v = "https://www.themoviedb.org/collection/" + v
 
                     check = True
-                    if (m == "tmdbID" or m == "tmdb_list") and not TMDB.valid:
+                    if (m == "tmdb_id" or m == "tmdb_list") and not TMDB.valid:
                             print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
                             check = False
 
@@ -127,8 +127,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     else:                                               print("| Config Error: tmdb_summary attribute is blank")
                 else:                                               print("| Config Error: tmdb_summary skipped. tmdb incorrectly configured")
 
-            if not summary and "tmdbID" in collections[c] and TMDB.valid:
-                summary = get_summary(config_path, tmdbID, ["overview", "biography"], "")
+            if not summary and "tmdb_id" in collections[c] and TMDB.valid:
+                summary = get_summary(config_path, tmdb_id, ["overview", "biography"], "")
 
             if summary:
                 edits = {"summary.value": summary, "summary.locked": 1}
@@ -241,11 +241,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             poster = choose_from_list("poster", posters_found, headless)
             background = choose_from_list("background", backgrounds_found, headless)
 
-            # Special case fall back for tmdbID tag if no other poster or background is found
-            if not poster and "tmdbID" in collections[c] and TMDB.valid:
-                poster = ["url", str(get_summary(config_path, tmdbID, ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original/"))]
-            if not background and "tmdbID" in collections[c] and TMDB.valid:
-                background = ["url", str(get_summary(config_path, tmdbID, ["backdrop_path"], "https://image.tmdb.org/t/p/original/"))]
+            # Special case fall back for tmdb_id tag if no other poster or background is found
+            if not poster and "tmdb_id" in collections[c] and TMDB.valid:
+                poster = ["url", str(get_summary(config_path, tmdb_id, ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original/"))]
+            if not background and "tmdb_id" in collections[c] and TMDB.valid:
+                background = ["url", str(get_summary(config_path, tmdb_id, ["backdrop_path"], "https://image.tmdb.org/t/p/original/"))]
 
             # Update poster
             if poster:

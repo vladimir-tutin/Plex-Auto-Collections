@@ -172,19 +172,19 @@ Alternatively you can specify which tmdb_list, tmdb_summary, tmdb_poster, and tm
 ```yaml
 collections:
   Jurassic Park:
-    tmdbID: 328
+    tmdb_id: 328
 ```
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdbID: 8091, 135416
+    tmdb_id: 8091, 135416
   Anaconda:
-    tmdbID: 105995, 336560
+    tmdb_id: 105995, 336560
 ```
 
 Notes:
 - The tmbdID can be either from a collection or an individual movie
-- You can specify more then one tmdbID but it will pull the summary, poster, and background from only the first one.
+- You can specify more than one tmdb_id but it will pull the summary, poster, and background from only the first one.
 - Local posters/backgrounds are loaded over tmdb_poster/tmdb_background if they exist unless tmdb_poster/tmdb_background is also specified
 
 #### IMDb List or Search (List Type)
