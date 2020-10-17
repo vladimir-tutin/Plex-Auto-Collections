@@ -3,6 +3,7 @@ import os
 import sys
 import yaml
 import requests
+from urllib.parse import urlparse
 from tmdbv3api import Collection
 from plexapi.exceptions import Unauthorized
 from plexapi.server import PlexServer
@@ -213,11 +214,19 @@ class TraktClient:
             try:
                 self.client_id = check_for_attribute(config, "client_id", text="trakt sub-attribute {}")
                 self.client_secret = check_for_attribute(config, "client_secret", text="trakt sub-attribute {}")
-                self.authorization = config['authorization']
+                if 'authorization' in config and config['authorization']:
+                    self.authorization = config['authorization']
+                else:
+                    self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
+
+                Trakt.configuration.defaults.client(self.client_id, self.client_secret)
 
                 def check_trakt (auth):
                     try:
-                        #TODO: Validate Trakt Connection
+                        Trakt.configuration.defaults.oauth.from_response(auth)
+                        trakt_list_path = urlparse("https://trakt.tv/users/movistapp/lists/christmas-movies").path
+                        trakt_list_items = trakt.Trakt[trakt_list_path].items()
+                        title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
                         return True
                     except:
                         return False
@@ -225,7 +234,6 @@ class TraktClient:
                 if not check_trakt(self.authorization):
                     self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
                     print("| Stored Authorization Failed")
-                Trakt.configuration.defaults.client(self.client_id, self.client_secret)
                 self.updated_authorization = trakt_helpers.authenticate(self.authorization, headless=Config.headless)
 
                 if check_trakt(self.updated_authorization):
