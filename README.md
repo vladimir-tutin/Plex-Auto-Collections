@@ -23,6 +23,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
       - [Collection Order (Collection Attribute)](#collection-order-collection-attribute)
       - [Poster (Collection Attribute)](#poster-collection-attribute)
       - [Background (Collection Attribute)](#background-collection-attribute)
+      - [System Name (Collection Attribute)](#system-name-collection-attribute)
   2. [Plex](#plex)
   3. [Image Server](#image-server)
       - [Poster and/or Background Directory](#poster-andor-background-directory)
@@ -110,36 +111,36 @@ The script allows utilizes a YAML config file to create collections in Plex. Thi
 - Collections change often. Having a config file pointing to dynamic data keeps collections fresh.
 
 There are currently six YAML mappings that can be set:
-- `collections` (required)
-- `plex` (required)
-- `image_server` (optional)
-- `tmdb` (optional, but recommended)
-- `trakt` (optional)
-- `radarr` (optional)
+- [`collections` (required)](#collections)
+- [`plex` (required)](#plex)
+- [`image_server` (optional)](#image-server)
+- [`tmdb` (optional, but recommended)](#tmdb)
+- [`trakt` (optional)](#trakt)
+- [`radarr` (optional)](#radarr)
 
 You can find a template config file in [config/config.yml.template](config/config.yml.template)
 
 ## Collections
 
 Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are three other attributes to set for each collection:
-- List Type (required)
-- Subfilters (optional)
-- Sort Title (optional)
-- Content Rating (optional)
-- Summary (optional)
-- Collection Mode (optional)
-- Collection Order (optional)
-- Poster (optional)
-- Background (optional)
-- System Name (optional)
+- [List Type (required)](#list-type-collection-attribute)
+- [Subfilters (optional)](#subfilters-collection-attribute)
+- [Sort Title (optional)](#sort-title-collection-attribute)
+- [Content Rating (optional)](#content-rating-collection-attribute)
+- [Summary (optional)](#summary-collection-attribute)
+- [Collection Mode (optional)](#collection-mode-collection-attribute)
+- [Collection Order (optional)](#collection-order-collection-attribute)
+- [Poster (optional)](#poster-collection-attribute)
+- [Background (optional)](#background-collection-attribute)
+- [System Name (optional)](#system-name-collection-attribute)
 
 ### List Type (Collection Attribute)
 
 The only required attribute for each collection is the list type. There are four different list types to choose from:
-- Plex Collection
-- TMDb Collection
-- IMDb List or Search
-- Trakt List
+- [Plex Collection](#plex-collection-list-type)
+- [TMDb Collection](#tmdb-collection-list-type)
+- [IMDb List or Search](#imdb-list-or-search-list-type)
+- [Trakt List](#trakt-list-list-type)
 
 Note that each list type supports multiple lists.
 
@@ -213,7 +214,7 @@ collections:
 ```
 
 Notes:
-- The tmbdID can be either from a collection or an individual movie
+- The tmdb_id can be either from a collection or an individual movie
 - You can specify more than one tmdb_id but it will pull the summary, poster, and background from only the first one.
 - Local posters/backgrounds are loaded over tmdb_poster/tmdb_background if they exist unless tmdb_poster/tmdb_background is also specified
 
@@ -315,7 +316,7 @@ collections:
 
 Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry.
 
-To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMBd if you wish to use their biography as the summary (experimental).
+To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMDb if you wish to use their biography as the summary (experimental).
 
 ```yaml
 collections:
@@ -396,7 +397,7 @@ collections:
 
 There are four ways to set a poster image for a collection: local image, public URL, TMDb collection, or TMDb actor.
 
-Local assets are supported by running the script with posters in the `poster_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a poster use `file_poster`.
+Local assets are supported by running the script with posters in the `poster_directory` or `image_directory`. See the [Image Server](#image-server) section below for more details or to specify a specific place in your file system for a poster use `file_poster`.
 
 If multiple posters are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
 
@@ -438,7 +439,7 @@ collections:
 
 There are three ways to set a background image for a collection: local image, public URL, or TMDb collection.
 
-Local assets are supported by running the script with backgrounds in the `background_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a background use `file_background`.
+Local assets are supported by running the script with backgrounds in the `background_directory` or `image_directory`. See the [Image Server](#image-server) section below for more details or to specify a specific place in your file system for a background use `file_background`.
 
 If multiple backgrounds are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
 
@@ -468,6 +469,17 @@ collections:
     tmdb_summary: 328
     file_poster: C:/Users/username/Desktop/2xE0R9I.png
     file_background: /config/backgrounds/Jurassic Park.png
+```
+
+### System Name (Collection Attribute)
+
+If you are using the image server and your collection name contains characters that are not allowed in filepaths (i.e. for windows `<`, `>`, `:`, `"`, `/`, `\`, `|`, `?`, `*` cannot be in the file path) but you want them in you collection name you can use the `system_name` attribute to specific this collection name in the file system.
+
+```yaml
+collections:
+  28 Days/Weeks Later:
+    tmdb_id: 1565
+    system_name: 28 Days-Weeks Later
 ```
 
 ## Plex
@@ -550,7 +562,7 @@ On the first run, the script will walk the user through the OAuth flow by produc
 
 ## Radarr
 
-When parsing TMBd, IMDb, or Trakt lists, the script will finds movies that are on the list but missing from Plex. If a TMDb and Radarr config are supplied, then you can add those missing movies to Radarr.
+When parsing TMDb, IMDb, or Trakt lists, the script will finds movies that are on the list but missing from Plex. If a TMDb and Radarr config are supplied, then you can add those missing movies to Radarr.
 
 Here's the full set of configurations:
 ```yaml
