@@ -473,7 +473,7 @@ collections:
 
 ### System Name (Collection Attribute)
 
-If you are using the image server and your collection name contains characters that are not allowed in filepaths (i.e. for windows `<`, `>`, `:`, `"`, `/`, `\`, `|`, `?`, `*` cannot be in the file path) but you want them in you collection name you can use the `system_name` attribute to specific this collection name in the file system.
+If you are using the image server and your collection name contains characters that are not allowed in filepaths (i.e. for windows `<`, `>`, `:`, `"`, `/`, `\`, `|`, `?`, `*` cannot be in the file path) but you want them in your collection name you can use the `system_name` attribute to specific this collection's name in the file system.
 
 ```yaml
 collections:
