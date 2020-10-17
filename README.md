@@ -1,4 +1,5 @@
 # Plex Auto Collections
+##### Version 2.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -556,6 +557,20 @@ In this example, to set any added movies to the `Ultra-HD` profile, set `quality
 The `add_movie` key allows missing to movies to be added to Radarr. If this key is missing, the script will prompt the user to add missing movies or not. If you'd like to add movies but not had Radarr search, then set `search_movie` to `false`.
 
 Note that Radarr support has not been tested with extensively Trakt lists and Sonarr support has not yet been implemented.
+
+# Version 2.0 Changes
+
+With version 2.0 we added many new tags, made all the tag names unified casing, removed details in favor of just having those tags as high level tags. Below is a list of all the tag changes.
+
+`tmdb-list` -> `tmdb_list`
+`imdb-list` -> `imdb_list`
+`trakt-list` -> `trakt_list`
+`video-resolution` -> `video_resolution`
+`audio-language` -> `audio_language`
+`subtitle-language` -> `subtitle_language`
+`tmdb-poster` -> `tmdb_poster`
+`image-server` -> `image_server`
+`poster-directory` -> `poster_directory`
 
 # Acknowledgements
 - [vladimir-tutin](https://github.com/vladimir-tutin) for writing substantially all of the code in this fork
