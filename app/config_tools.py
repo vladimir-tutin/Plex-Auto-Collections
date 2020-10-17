@@ -53,7 +53,7 @@ class Config:
             self.tmdb = check_for_attribute(self.data, "tmdb", default={}, do_print=False)
             self.trakt = check_for_attribute(self.data, "trakt", default={}, do_print=False)
             self.radarr = check_for_attribute(self.data, "radarr", default={}, do_print=False)
-            self.image_server = check_for_attribute(self.data, "image_serverimage_server", default={}, do_print=False)
+            self.image_server = check_for_attribute(self.data, "image_server", default={}, do_print=False)
         elif Config.valid == None:
             Config.valid = True
             print("|===================================================================================================|")
