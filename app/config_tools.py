@@ -4,6 +4,7 @@ import sys
 import yaml
 import requests
 from tmdbv3api import Collection
+from plexapi.exceptions import Unauthorized
 from plexapi.server import PlexServer
 from plexapi.video import Movie
 from plexapi.video import Show
@@ -115,7 +116,12 @@ class Plex:
         self.timeout = 60
         self.library = check_for_attribute(config, "library", text="plex sub-attribute {}")
         self.library_type = check_for_attribute(config, "library_type", text="plex sub-attribute {}", test_list=["movie", "show"], options="| movie (Movie Library)\n| show (Show Library)")
-        self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
+        try:
+            self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
+        except Unauthorized:
+            sys.exit("| Config Error: Plex token is invalid")
+        except:
+            sys.exit("| Config Error: Plex url is invalid")
         self.Sections = self.Server.library.sections()
         if self.library_type == "movie":
             self.Library = next((s for s in self.Sections if (s.title == self.library) and (isinstance(s, MovieSection))), None)
