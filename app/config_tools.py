@@ -106,7 +106,7 @@ class Config:
                     ImageServer(config_path)
                 else:
                     ImageServer.valid = False
-                    print("| image_server attribute is blank")
+                    print("| Config Error: image_server attribute is blank")
             else:
                 ImageServer.valid = False
                 print("| image_server attribute not found")
@@ -188,7 +188,7 @@ class Radarr:
                     except SystemExit:
                         raise
                     except:
-                        sys.exit("| Could not connect to radarr ar {}".format(self.url))
+                        sys.exit("| Could not connect to radarr at {}".format(self.url))
                 print("| radarr connection {}".format("scuccessful" if Radarr.valid else "failed"))
             else:
                 print("| tmdb must be connected to use radarr")
@@ -245,37 +245,41 @@ class TraktClient:
                 print(message)
                 TraktClient.valid = False
             else:
-                if 'authorization' in config and config['authorization']:
-                    self.authorization = config['authorization']
-                else:
-                    self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
+                try:
+                    if 'authorization' in config and config['authorization']:
+                        self.authorization = config['authorization']
+                    else:
+                        self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
 
-                Trakt.configuration.defaults.client(self.client_id, self.client_secret)
+                    Trakt.configuration.defaults.client(self.client_id, self.client_secret)
 
-                def check_trakt (auth):
-                    try:
-                        Trakt.configuration.defaults.oauth.from_response(auth)
-                        trakt_list_path = urlparse("https://trakt.tv/users/movistapp/lists/christmas-movies").path
-                        trakt_list_items = trakt.Trakt[trakt_list_path].items()
-                        title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
-                        return True
-                    except:
-                        return False
+                    def check_trakt (auth):
+                        try:
+                            Trakt.configuration.defaults.oauth.from_response(auth)
+                            trakt_list_path = urlparse("https://trakt.tv/users/movistapp/lists/christmas-movies").path
+                            trakt_list_items = trakt.Trakt[trakt_list_path].items()
+                            title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
+                            return True
+                        except:
+                            return False
 
-                if not check_trakt(self.authorization):
-                    self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
-                    print("| Stored Authorization Failed")
-                self.updated_authorization = trakt_helpers.authenticate(self.authorization, headless=Config.headless)
+                    if not check_trakt(self.authorization):
+                        self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
+                        print("| Stored Authorization Failed")
+                    self.updated_authorization = trakt_helpers.authenticate(self.authorization, headless=Config.headless)
 
-                if check_trakt(self.updated_authorization):
-                    try:
-                        Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
-                        if self.updated_authorization != self.authorization:
-                            trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
-                        TraktClient.valid = True
-                    except:
+                    if check_trakt(self.updated_authorization):
+                        try:
+                            Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
+                            if self.updated_authorization != self.authorization:
+                                trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
+                            TraktClient.valid = True
+                        except:
+                            TraktClient.valid = False
+                    else:
                         TraktClient.valid = False
-                else:
+                except SystemExit as e:
+                    print(e)
                     TraktClient.valid = False
             print("| trakt connection {}".format("scuccessful" if TraktClient.valid else "failed"))
 
