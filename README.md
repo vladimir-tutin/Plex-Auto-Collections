@@ -4,6 +4,35 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
 
+# Table of Contents
+1. [Usage](#usage)
+  - [Local Installation](#local-installation)
+  - [Docker](#docker)
+2. [Configuration](#configuration)
+  1. [Collections](#collections)
+    - [List Type](#list-type-collection-attribute)
+      - [Plex Collection (List Type)](#plex-collection-list-type)
+      - [TMDb Collection (List Type)](#tmdb-collection-list-type)
+      - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
+      - [Trakt List (List Type)](#trakt-list-list-type)
+    - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
+    - [Sort Title (Collection Attribute)](#sort-title-collection-attribute)
+    - [Content Rating (Collection Attribute)](#content-rating-collection-attribute)
+    - [Summary (Collection Attribute)](#summary-collection-attribute)
+    - [Collection Mode (Collection Attribute)](#collection-mode-collection-attribute)
+    - [Collection Order (Collection Attribute)](#collection-order-collection-attribute)
+    - [Poster (Collection Attribute)](#poster-collection-attribute)
+    - [Background (Collection Attribute)](#background-collection-attribute)
+  2. [Plex](#plex)
+  3. [Image Server](#image-server)
+    - [Poster and/or Background Directory](#poster-andor-background-directory)
+    - [Image Directory](#image-directory)
+  4. [TMDb](#tmdb)
+  5. [Trakt](#trakt)
+  6. [Radarr](#radarr)
+3. [Version 2.0 Changes](#version-20-changes)
+4. [Acknowledgements](#acknowledgements)
+
 # Usage
 
 This script can be used as an interactive Python shell script as well as a headless, configuration-driven script.
@@ -465,7 +494,7 @@ Lastly, if you need help finding your Plex authentication token, please see Plex
 
 An `image_server` mapping in the config is optional. There are two ways to store your posters and background. Using `poster_directory` and/or `background_directory` or by using `image_directory`.
 
-### `poster_directory` and/or `background_directory`
+### Poster and/or Background Directory
 By placing images in the `poster_directory` or `background_directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the images `../config/posters/Jurassic Park.png` and `../config/backgrounds/Jurassic Park.png`, the script will upload those images to Plex.
 
 ```yaml
@@ -474,7 +503,7 @@ image_server:                                 # Opt
   background_directory: /config/backgrounds   # Opt - Desired dir of backgrounds
 ```
 
-### `image_directory`
+### Image Directory
 By placing images in folders in the `image_directory` folder, the script will attempt to match folder names to collection names. For example, if there is a collection named `Jurassic Park` and the images `../config/images/Jurassic Park/poster.png` and `../config/images/Jurassic Park/background.png`, the script will upload those images to Plex.
 
 ```yaml
@@ -562,15 +591,65 @@ Note that Radarr support has not been tested with extensively Trakt lists and So
 
 With version 2.0 we added many new tags, made all the tag names unified casing, removed details in favor of just having those tags as high level tags. Below is a list of all the tag changes.
 
+`old-tag` -> `new_tag`
+
 `tmdb-list` -> `tmdb_list`
+
 `imdb-list` -> `imdb_list`
+
 `trakt-list` -> `trakt_list`
+
 `video-resolution` -> `video_resolution`
+
 `audio-language` -> `audio_language`
+
 `subtitle-language` -> `subtitle_language`
+
 `tmdb-poster` -> `tmdb_poster`
+
 `image-server` -> `image_server`
+
 `poster-directory` -> `poster_directory`
+
+### Example Version 2.0 Changes
+
+```yaml
+collections:
+    Jurassic Park:
+        tmdb-list: https://www.themoviedb.org/collection/328
+        details:
+          tmdb-summary: 328
+          poster: https://i.imgur.com/QMjbyCX.png
+      1080p Documentaries:
+        genres: Documentary
+        subfilters:
+          video-resolution: 1080
+        details:
+          summary: A collection of 1080p Documentaries
+      Daniel Craig only James Bonds:
+        imdb-list: https://www.imdb.com/list/ls006405458/
+        subfilters:
+          actors: Daniel Craig
+```
+
+The config above would be changed to below for Version 2.0
+
+```yaml
+collections:
+    Jurassic Park:
+      tmdb_list: https://www.themoviedb.org/collection/328
+      tmdb_summary: 328
+      poster: https://i.imgur.com/QMjbyCX.png
+    1080p Documentaries:
+      genres: Documentary
+      subfilters:
+        video_resolution: 1080
+      summary: A collection of 1080p Documentaries
+    Daniel Craig only James Bonds:
+      imdb_list: https://www.imdb.com/list/ls006405458/
+      subfilters:
+        actors: Daniel Craig
+```
 
 # Acknowledgements
 - [vladimir-tutin](https://github.com/vladimir-tutin) for writing substantially all of the code in this fork
