@@ -135,7 +135,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             if method == "imdb_list":
                 if TMDB.valid:                  movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
                 else:                           print("| tmdb connection required")
-            elif method == "tmdb_list":
+            elif method == "tmdb_collection":
                 if TMDB.valid:                  movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
                 else:                           print("| tmdb connection required")
             elif method == "trakt_list":

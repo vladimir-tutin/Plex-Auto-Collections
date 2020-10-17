@@ -1,6 +1,6 @@
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     poster: https://i.imgur.com/QMjbyCX.png
   1080p Documentaries:

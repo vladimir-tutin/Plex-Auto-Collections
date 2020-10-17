@@ -51,12 +51,12 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     if m == "actors" or m == "actor":       v = get_actor_rkey(plex, v)
                     met = m
                     if m == "tmdb_id":
-                        met = "tmdb_list"
+                        met = "tmdb_collection"
                         if not tmdb_id:      tmdb_id = v
                         v = "https://www.themoviedb.org/collection/" + v
 
                     check = True
-                    if (m == "tmdb_id" or m == "tmdb_list") and not TMDB.valid:
+                    if (m == "tmdb_id" or m == "tmdb_collection") and not TMDB.valid:
                             print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
                             check = False
 
@@ -86,7 +86,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             else:
                 print("| Config Error: {} attribute is blank".format(m))
 
-        if "tmdb-list" in collections[c]:               print("| Config Error: Please change the attribute tmdb-list to tmdb_list")
+        if "tmdb-list" in collections[c]:               print("| Config Error: Please change the attribute tmdb-list to tmdb_collection")
         if "imdb-list" in collections[c]:               print("| Config Error: Please change the attribute imdb-list to imdb_list")
         if "trakt-list" in collections[c]:              print("| Config Error: Please change the attribute trakt-list to trakt_list")
         if "details" in collections[c]:                 print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
@@ -368,7 +368,7 @@ def append_collection(config_path, config_update=None):
                                 method = "imdb_list"
                             elif l_type == "t":
                                 l_type = "TMDb"
-                                method = "tmdb_list"
+                                method = "tmdb_collection"
                             elif l_type == "k":
                                 l_type = "Trakt"
                                 method = "trakt_list"
@@ -516,7 +516,7 @@ while not mode == "q":
         elif mode == "l":
             print("|\n|===================================================================================================|")
             l_type = input("| \n| Enter list type IMDb(i) TMDb(t) Trakt(k): ")
-            method_map = {"i": ("IMDb", "imdb_list"), "t": ("TMDb", "tmdb_list"), "k": ("Trakt", "trakt_list")}
+            method_map = {"i": ("IMDb", "imdb_list"), "t": ("TMDb", "tmdb_collection"), "k": ("Trakt", "trakt_list")}
             if (l_type in ("i", "t") and TMDB.valid) or (l_type == "k" and TraktClient.valid):
                 l_type, method = method_map[l_type]
                 url = input("| Enter {} List URL: ".format(l_type)).strip()

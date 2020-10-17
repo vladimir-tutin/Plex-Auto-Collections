@@ -188,17 +188,17 @@ The Movie Database (TMDb) strives to group movies into logical collections. This
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
 ```
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
 ```
 
-Alternatively you can specify which tmdb_list, tmdb_summary, tmdb_poster, and tmdb_background all at once by:
+Alternatively you can specify which tmdb_collection, tmdb_summary, tmdb_poster, and tmdb_background all at once by:
 
 ```yaml
 collections:
@@ -321,7 +321,7 @@ To use a TMDb entry a TMDb api-key as well as language is required, the default 
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
 ```
 ```yaml
@@ -340,7 +340,7 @@ collections:
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     summary: >-
@@ -369,7 +369,7 @@ Plex allows for four different types of collection modes: library default, hide 
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     poster: https://i.imgur.com/QMjbyCX.png
     background: https://i.imgur.com/2xE0R9I.png
@@ -387,7 +387,7 @@ Lastly, Plex allows collections to be sorted by the media's release dates or alp
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     collection_order: alpha
@@ -405,7 +405,7 @@ If you want to use an image publicly available on the internet:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     poster: https://i.imgur.com/QMjbyCX.png
 ```
@@ -413,7 +413,7 @@ If you want to use the default collection image on TMDb:
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     tmdb_poster: 8091
@@ -430,7 +430,7 @@ If you want to use an image in your file system:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     file_poster: C:/Users/username/Desktop/2xE0R9I.png
     file_background: /config/backgrounds/Jurassic Park.png
@@ -447,7 +447,7 @@ If you want to use an image publicly available on the internet:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     poster: https://i.imgur.com/QMjbyCX.png
     background: https://i.imgur.com/2xE0R9I.png
@@ -456,7 +456,7 @@ If you want to use the default collection image on TMDb:
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     tmdb_background: 8091
@@ -465,7 +465,7 @@ If you want to use an image in your file system:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     file_poster: C:/Users/username/Desktop/2xE0R9I.png
     file_background: /config/backgrounds/Jurassic Park.png
@@ -605,7 +605,7 @@ With version 2.0 we added many new tags, made all the tag names unified casing, 
 
 `old-tag` -> `new_tag`
 
-`tmdb-list` -> `tmdb_list`
+`tmdb-list` -> `tmdb_collection`
 
 `imdb-list` -> `imdb_list`
 
@@ -649,7 +649,7 @@ The config above would be changed to below for Version 2.0
 ```yaml
 collections:
     Jurassic Park:
-      tmdb_list: https://www.themoviedb.org/collection/328
+      tmdb_collection: https://www.themoviedb.org/collection/328
       tmdb_summary: 328
       poster: https://i.imgur.com/QMjbyCX.png
     1080p Documentaries:
