@@ -101,6 +101,8 @@ class Config:
                 Radarr.valid = False
                 print("| radarr attribute not found")
             print("|===================================================================================================|")
+            if "image-server" in self.data:
+                print("| Config Error: Please change the image-server attribute to image_server")
             if "image_server" in self.data:
                 if self.data['image_server']:
                     ImageServer(config_path)
@@ -301,6 +303,8 @@ class ImageServer:
 
         if ImageServer.valid == None:
             print("| Locating image_server...")
+            if "poster-directory" in config:
+                print("| Config Error: Please change the poster-directory attribute to poster_directory")
             if config:
                 def checkPath(attribute, value, extra=None):
                     v = os.path.abspath(value)
