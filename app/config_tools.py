@@ -2,6 +2,7 @@
 import os
 import sys
 import yaml
+import ruamel.yaml
 import requests
 from urllib.parse import urlparse
 from tmdbv3api import Collection
@@ -16,23 +17,41 @@ import trakt_helpers
 import trakt
 
 
-def check_for_attribute(config, attribute, text="{} attribute", test_list=None, options="", default=None, do_print=True, default_is_none=False, type="str"):
+def check_for_attribute(config, attribute, parent=None, test_list=None, options="", default=None, do_print=True, default_is_none=False, type="str", throw=False):
     message = ""
-    if attribute not in config:                                 message = "| Config Error: " + text.format(attribute) + " not found"
-    elif not config[attribute] and config[attribute] != False:  message = "| Config Error: " + text.format(attribute) + " is blank"
+    endline = ""
+    text = "{} attribute".format(attribute) if parent == None else "{} sub-attribute {}".format(parent, attribute)
+    if config == None or attribute not in config:
+        message = "| Config Error: {} not found".format(text)
+        if parent:
+            ruamel.yaml.YAML().allow_duplicate_keys = True
+            from ruamel.yaml.util import load_yaml_guess_indent
+            new_config, ind, bsi = load_yaml_guess_indent(open(Config.config_path))
+            endline = "\n| {} sub-attribute {} added to config".format(parent, attribute)
+            if parent not in new_config:                    new_config = {parent: {attribute: default}}
+            elif not new_config[parent]:                    new_config[parent] = {attribute: default}
+            elif attribute not in new_config[parent]:       new_config[parent][attribute] = default
+            else:                                           endLine = ""
+            ruamel.yaml.round_trip_dump(new_config, open(Config.config_path, 'w'), indent=ind, block_seq_indent=bsi)
+    elif not config[attribute] and config[attribute] != False:  message = "| Config Error: {} is blank".format(text)
     elif type == "bool":
         if isinstance(config[attribute], bool):                     return config[attribute]
-        else:                                                       message = "| Config Error: " + text.format(attribute) + " must be either true or false"
+        else:                                                       message = "| Config Error: {} must be either true or false".format(text)
     elif type == "int":
         if isinstance(config[attribute], int):                      return config[attribute]
-        else:                                                       message = "| Config Error: " + text.format(attribute) + " must an integer"
+        else:                                                       message = "| Config Error: {} must an integer".format(text)
     elif test_list == None:                                      return config[attribute]
     elif config[attribute] in test_list:                         return config[attribute]
-    else:                                                       message = "| Config Error: " + text.format(attribute) + ": {} is an invalid input".format(config[attribute])
-
-    if default == None and not default_is_none:                 sys.exit(message + ("\n" if len(options) > 0 else "") + options)
+    else:                                                        message = "| Config Error: {}: {} is an invalid input".format(text, config[attribute])
+    if default is not None or default_is_none:
+        message = message + " using {} as default".format(default)
+    message = message + endline
+    if (default == None and not default_is_none) or throw:
+        if len(options) > 0 and not throw:
+            message = message + "\n" + options
+        sys.exit(message)
     if do_print:
-        print(message + " using {} as default".format(default))
+        print(message)
         if attribute in config and config[attribute] and test_list != None and config[attribute] not in test_list:
             print(options)
     return default
@@ -41,9 +60,11 @@ def check_for_attribute(config, attribute, text="{} attribute", test_list=None, 
 class Config:
     valid = None
     headless = None
+    config_path = None
     def __init__(self, config_path, headless=False):
         if Config.headless == None:
             Config.headless = headless
+        Config.config_path = config_path
         self.config_path = config_path
         with open(self.config_path, 'rt', encoding='utf-8') as yml:
             self.data = yaml.load(yml, Loader=yaml.FullLoader)
@@ -58,42 +79,24 @@ class Config:
             Config.valid = True
             print("|===================================================================================================|")
             print("| Connecting to plex...")
-            if "plex" in self.data:
-                if self.data['plex']:
-                    Plex(config_path)
-                else:
-                    sys.exit("| plex attribute is blank")
-            else:
-                sys.exit("| plex attribute not found")
+            Plex(config_path)
             self.collections = check_for_attribute(self.data, "collections", default={})
             print("| plex connection scuccessful")
             print("|===================================================================================================|")
             if "tmdb" in self.data:
-                if self.data['tmdb']:
-                    TMDB(config_path)
-                else:
-                    TMDB.valid = False
-                    print("| tmdb attribute is blank")
+                TMDB(config_path)
             else:
                 TMDB.valid = False
                 print("| tmdb attribute not found")
             print("|===================================================================================================|")
             if "trakt" in self.data:
-                if self.data['trakt']:
-                    TraktClient(config_path)
-                else:
-                    TraktClient.valid = False
-                    print("| trakt attribute is blank")
+                TraktClient(config_path)
             else:
                 TraktClient.valid = False
                 print("| trakt attribute not found")
             print("|===================================================================================================|")
             if "radarr" in self.data:
-                if self.data['radarr']:
-                    Radarr(config_path)
-                else:
-                    Radarr.valid = False
-                    print("| radarr attribute is blank")
+                Radarr(config_path)
             else:
                 Radarr.valid = False
                 print("| radarr attribute not found")
@@ -109,14 +112,22 @@ class Config:
                 print("| image_server attribute not found")
             print("|===================================================================================================|")
 
+
 class Plex:
     def __init__(self, config_path):
         config = Config(config_path).plex
-        self.url = check_for_attribute(config, "url", text="plex sub-attribute {}")
-        self.token = check_for_attribute(config, "token", text="plex sub-attribute {}")
+        message = ""
+        try:                            self.library = check_for_attribute(config, "library", parent="plex", throw=True)
+        except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+        try:                            self.library_type = check_for_attribute(config, "library_type", parent="plex", test_list=["movie", "show"], options="| movie (Movie Library)\n| show (Show Library)", throw=True)
+        except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+        try:                            self.token = check_for_attribute(config, "token", parent="plex", throw=True)
+        except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+        try:                            self.url = check_for_attribute(config, "url", parent="plex", throw=True)
+        except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
         self.timeout = 60
-        self.library = check_for_attribute(config, "library", text="plex sub-attribute {}")
-        self.library_type = check_for_attribute(config, "library_type", text="plex sub-attribute {}", test_list=["movie", "show"], options="| movie (Movie Library)\n| show (Show Library)")
+        if len(message) > 0:
+            sys.exit(message)
         try:
             self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
         except Unauthorized:
@@ -133,29 +144,41 @@ class Plex:
         if not self.Library:
             sys.exit("| Config Error: Plex Library {} not found".format(self.library))
 
+
 class Radarr:
     valid = None
     def __init__(self, config_path):
         config = Config(config_path).radarr
         if Radarr.valid:
-            self.url = check_for_attribute(config, "url", text="radarr sub-attribute {}")
-            self.version = check_for_attribute(config, "version", text="radarr sub-attribute {}", test_list=["v2", "v3"], default="v2", do_print=False)
-            self.token = check_for_attribute(config, "token", text="radarr sub-attribute {}")
-            self.quality_profile_id = check_for_attribute(config, "quality_profile_id", text="radarr sub-attribute {}")
-            self.root_folder_path = check_for_attribute(config, "root_folder_path", text="radarr sub-attribute {}")
-            self.add_movie = check_for_attribute(config, "add_movie", text="radarr sub-attribute {}", type="bool", default_is_none=True, do_print=False)
-            self.search_movie = check_for_attribute(config, "search_movie", text="radarr sub-attribute {}", type="bool", default=False, do_print=False)
+            self.url = check_for_attribute(config, "url", parent="radarr")
+            self.version = check_for_attribute(config, "version", parent="radarr", test_list=["v2", "v3"], default="v2", do_print=False)
+            self.token = check_for_attribute(config, "token", parent="radarr")
+            self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", type="int")
+            self.root_folder_path = check_for_attribute(config, "root_folder_path", parent="radarr")
+            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", type="bool", default_is_none=True, do_print=False)
+            self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", type="bool", default=False, do_print=False)
         elif Radarr.valid == None:
             if TMDB.valid:
                 print("| Connecting to radarr...")
-                try:
-                    self.url = check_for_attribute(config, "url", text="radarr sub-attribute {}")
-                    self.version = check_for_attribute(config, "version", text="radarr sub-attribute {}", test_list=["v2", "v3"], options="| v2 (For Radarr 0.2)\n| v3 (For Radarr 3.0)", default="v2")
-                    self.token = check_for_attribute(config, "token", text="radarr sub-attribute {}")
-                    self.quality_profile_id = check_for_attribute(config, "quality_profile_id", text="radarr sub-attribute {}")
-                    self.root_folder_path = check_for_attribute(config, "root_folder_path", text="radarr sub-attribute {}")
-                    self.add_movie = check_for_attribute(config, "add_movie", text="radarr sub-attribute {}", options="| true (Add missing movies to Radarr)\n| false (Do not add missing movies to Radarr)", type="bool", default_is_none=True)
-                    self.search_movie = check_for_attribute(config, "search_movie", text="radarr sub-attribute {}", options="| true (Have Radarr seach the added movies)\n| false (Do not have Radarr seach the added movies)", type="bool", default=False)
+                message = ""
+                try:                            self.url = check_for_attribute(config, "url", parent="radarr", throw=True)
+                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                try:                            self.version = check_for_attribute(config, "version", parent="radarr", test_list=["v2", "v3"], options="| v2 (For Radarr 0.2)\n| v3 (For Radarr 3.0)", default="v2", throw=True)
+                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                try:                            self.token = check_for_attribute(config, "token", parent="radarr", throw=True)
+                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                try:                            self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", type="int", throw=True)
+                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                try:                            self.root_folder_path = check_for_attribute(config, "root_folder_path", parent="radarr", throw=True)
+                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                try:                            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| true (Add missing movies to Radarr)\n| false (Do not add missing movies to Radarr)", type="bool", default_is_none=True, throw=True)
+                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                try:                            self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| true (Have Radarr seach the added movies)\n| false (Do not have Radarr seach the added movies)", type="bool", default=False, throw=True)
+                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                if len(message) > 0:
+                    print(message)
+                    Radarr.valid = False
+                else:
                     try:
                         payload = {"qualityProfileId": self.quality_profile_id}
                         response = requests.post(self.url + ("/api/v3/movie" if self.version == "v3" else "/api/movie"), json=payload, params={"apikey": "{}".format(self.token)})
@@ -166,27 +189,31 @@ class Radarr:
                         raise
                     except:
                         sys.exit("| Could not connect to radarr ar {}".format(self.url))
-                except SystemExit as e:
-                    print(e)
-                    Radarr.valid = False
                 print("| radarr connection {}".format("scuccessful" if Radarr.valid else "failed"))
             else:
                 print("| tmdb must be connected to use radarr")
                 Radarr.valid = False
+
 
 class TMDB:
     valid = None
     def __init__(self, config_path):
         config = Config(config_path).tmdb
         if TMDB.valid:
-            self.apikey = check_for_attribute(config, "apikey", text="tmdb sub-attribute {}")
-            self.language = check_for_attribute(config, "language", text="tmdb sub-attribute {}", default="en", do_print=False)
+            self.apikey = check_for_attribute(config, "apikey", parent="tmdb")
+            self.language = check_for_attribute(config, "language", parent="tmdb", default="en", do_print=False)
         elif TMDB.valid == None:
             print("| Connecting to tmdb...")
+            message = ""
             tmdb = Collection()
-            try:
-                self.apikey = check_for_attribute(config, "apikey", text="tmdb sub-attribute {}")
-                self.language = check_for_attribute(config, "language", text="tmdb sub-attribute {}", default="en")
+            try:                        self.apikey = check_for_attribute(config, "apikey", parent="tmdb", throw=True)
+            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            try:                        self.language = check_for_attribute(config, "language", parent="tmdb", default="en", throw=True)
+            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            if len(message) > 0:
+                print(message)
+                TMDB.valid = False
+            else:
                 try:
                     tmdb.api_key = self.apikey
                     tmdb.details("100693").parts
@@ -194,26 +221,30 @@ class TMDB:
                 except AttributeError:
                     print("| Config Error: Invalid apikey")
                     TMDB.valid = False
-            except SystemExit as e:
-                print(e)
-                TMDB.valid = False
             print("| tmdb connection {}".format("scuccessful" if TMDB.valid else "failed"))
+
 
 class TraktClient:
     valid = None
     def __init__(self, config_path):
         config = Config(config_path).trakt
         if TraktClient.valid:
-            self.client_id = check_for_attribute(config, "client_id", text="trakt sub-attribute {}")
-            self.client_secret = check_for_attribute(config, "client_secret", text="trakt sub-attribute {}")
+            self.client_id = check_for_attribute(config, "client_id", parent="trakt")
+            self.client_secret = check_for_attribute(config, "client_secret", parent="trakt")
             self.authorization = config['authorization']
             Trakt.configuration.defaults.client(self.client_id, self.client_secret)
             Trakt.configuration.defaults.oauth.from_response(self.authorization)
         elif TraktClient.valid == None:
             print("| Connecting to trakt...")
-            try:
-                self.client_id = check_for_attribute(config, "client_id", text="trakt sub-attribute {}")
-                self.client_secret = check_for_attribute(config, "client_secret", text="trakt sub-attribute {}")
+            message = ""
+            try:                        self.client_id = check_for_attribute(config, "client_id", parent="trakt", throw=True)
+            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            try:                        self.client_secret = check_for_attribute(config, "client_secret", parent="trakt", throw=True)
+            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            if len(message) > 0:
+                print(message)
+                TraktClient.valid = False
+            else:
                 if 'authorization' in config and config['authorization']:
                     self.authorization = config['authorization']
                 else:
@@ -246,10 +277,8 @@ class TraktClient:
                         TraktClient.valid = False
                 else:
                     TraktClient.valid = False
-            except SystemExit as e:
-                print(e)
-                TraktClient.valid = False
             print("| trakt connection {}".format("scuccessful" if TraktClient.valid else "failed"))
+
 
 class ImageServer:
     valid = None
