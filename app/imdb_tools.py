@@ -3,6 +3,7 @@ import requests
 from lxml import html
 from tmdbv3api import TMDb
 from tmdbv3api import Movie
+from tmdbv3api import List
 from tmdbv3api import Collection
 from tmdbv3api import Person
 import config_tools
@@ -55,26 +56,42 @@ def imdb_get_movies(config_path, plex, data):
         return matched_imbd_movies, missing_imdb_movies
 
 
-def tmdb_get_movies(config_path, plex, data):
+def tmdb_get_movies(config_path, plex, data, list=False):
     try:
         tmdb_id = re.search('.*?(\\d+)', data)
         tmdb_id = tmdb_id.group(1)
     except AttributeError:  # Bad URL Provided
         return
 
-    t_movie = Movie()
-    tmdb = Collection()
-    tmdb.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Collection
-    if tmdb.api_key == "None":
-        raise KeyError("Invalid TMDb API Key")
-    t_movie.api_key = tmdb.api_key  # Copy same api key to Movie
-    t_col = tmdb.details(tmdb_id)
     t_movs = []
-    try:
-        for tmovie in t_col.parts:
-            t_movs.append(tmovie['id'])
-    except AttributeError:
-        t_movs.append(tmdb_id)
+    t_movie = Movie()
+    t_movie.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
+    if t_movie.api_key == "None":
+        raise KeyError("Invalid TMDb API Key")
+
+    if list:
+        tmdb = List()
+        tmdb.api_key = t_movie.api_key
+        try:
+            t_col = tmdb.details(tmdb_id)
+            for tmovie in t_col:
+                t_movs.append(tmovie.id)
+        except:
+            raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+    else:
+        tmdb = Collection()
+        tmdb.api_key = t_movie.api_key
+        t_col = tmdb.details(tmdb_id)
+        try:
+            for tmovie in t_col.parts:
+                t_movs.append(tmovie['id'])
+        except AttributeError:
+            try:
+                t_movie.details(tmdb_id).imdb_id
+                t_movs.append(tmdb_id)
+            except:
+                raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
+
 
 
 

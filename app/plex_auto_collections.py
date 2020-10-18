@@ -43,46 +43,36 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 sf_string = sf, collections[c]["subfilters"][sf]
                 subfilters.append(sf_string)
         for m in methods:
-            if collections[c][m]:
+            if "tmdb" in m and not TMDB.valid:
+                print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
+            elif collections[c][m]:
                 values = collections[c][m] if isinstance(collections[c][m], list) else str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
                 for v in values:
                     m_print = m[:-1] if m[-1:] == "s" else m
                     print("| Processing {}: {}".format(m_print, v))
                     if m == "actors" or m == "actor":       v = get_actor_rkey(plex, v)
-                    met = m
-                    if m == "tmdb_id":
-                        met = "tmdb_collection"
-                        if not tmdb_id:      tmdb_id = v
-                        v = "https://www.themoviedb.org/collection/" + v
-
-                    check = True
-                    if (m == "tmdb_id" or m == "tmdb_collection") and not TMDB.valid:
-                            print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
-                            check = False
-
-                    if check:
-                        try:                            missing = add_to_collection(config_path, plex, met, v, c, subfilters)
-                        except UnboundLocalError:       missing = add_to_collection(config_path, plex, met, v, c)               # No sub-filters
-                        except (KeyError, ValueError) as e:
-                            print(e)
-                            missing = False
-                        if missing:
-                            if libtype == "movie":
-                                method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                                print("| {} missing movies from {} List: {}".format(len(missing), method_name, v))
-                                if Radarr.valid:
-                                    radarr = Radarr(config_path)
-                                    if radarr.add_movie:
-                                        print("| Adding missing movies to Radarr")
-                                        add_to_radarr(config_path, missing)
-                                    elif not headless and radarr.add_movie == None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                                        add_to_radarr(config_path, missing)
-                            elif libtype == "show":
-                                method_name = "Trakt" if "trakt" in m else "TMDb"
-                                print("| {} missing shows from {} List: {}".format(len(missing), method_name, v))
-                                # if not skip_sonarr:
-                                #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
-                                #         add_to_radarr(missing_shows)
+                    try:                                    missing = add_to_collection(config_path, plex, m, v, c, subfilters)
+                    except UnboundLocalError:               missing = add_to_collection(config_path, plex, m, v, c)               # No sub-filters
+                    except (KeyError, ValueError) as e:
+                        print(e)
+                        missing = False
+                    if missing:
+                        if libtype == "movie":
+                            method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
+                            print("| {} missing movies from {} List: {}".format(len(missing), method_name, v))
+                            if Radarr.valid:
+                                radarr = Radarr(config_path)
+                                if radarr.add_movie:
+                                    print("| Adding missing movies to Radarr")
+                                    add_to_radarr(config_path, missing)
+                                elif not headless and radarr.add_movie == None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                                    add_to_radarr(config_path, missing)
+                        elif libtype == "show":
+                            method_name = "Trakt" if "trakt" in m else "TMDb"
+                            print("| {} missing shows from {} List: {}".format(len(missing), method_name, v))
+                            # if not skip_sonarr:
+                            #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                            #         add_to_radarr(missing_shows)
             else:
                 print("| Config Error: {} attribute is blank".format(m))
 

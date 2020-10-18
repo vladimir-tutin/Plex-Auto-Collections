@@ -13,6 +13,8 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
       - [List Type](#list-type-collection-attribute)
           - [Plex Collection (List Type)](#plex-collection-list-type)
           - [TMDb Collection (List Type)](#tmdb-collection-list-type)
+          - [TMDb List (List Type)](#tmdb-list-list-type)
+          - [TMDb Movie (List Type)](#tmdb-movie-list-type)
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
@@ -139,6 +141,8 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 The only required attribute for each collection is the list type. There are four different list types to choose from:
 - [Plex Collection](#plex-collection-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
+- [TMDb List](#tmdb-list-list-type)
+- [TMDb Movie](#tmdb-movie-list-type)
 - [IMDb List or Search](#imdb-list-or-search-list-type)
 - [Trakt List](#trakt-list-list-type)
 
@@ -183,7 +187,7 @@ collections:
 
 #### TMDb Collection (List Type)
 
-The Movie Database (TMDb) strives to group movies into logical collections. This script can easily leverage that data:
+The Movie Database (TMDb) strives to group movies into logical collections. This script can easily leverage that data. You can use the full url or just type in the TMDb ID for the collection:
 
 ```yaml
 collections:
@@ -192,13 +196,18 @@ collections:
 ```
 ```yaml
 collections:
+  Jurassic Park:
+    tmdb_collection: 328
+```
+```yaml
+collections:
   Alien (Past & Present):
     tmdb_collection:
       - https://www.themoviedb.org/collection/8091
-      - https://www.themoviedb.org/collection/135416
+      - 135416
 ```
 
-Alternatively you can specify which tmdb_collection, tmdb_summary, tmdb_poster, and tmdb_background all at once by:
+Alternatively you can specify which `tmdb_collection`, `tmdb_summary`, `tmdb_poster`, and `tmdb_background` all at once by:
 
 ```yaml
 collections:
@@ -217,6 +226,38 @@ Notes:
 - The tmdb_id can be either from a collection or an individual movie
 - You can specify more than one tmdb_id but it will pull the summary, poster, and background from only the first one.
 - Local posters/backgrounds are loaded over tmdb_poster/tmdb_background if they exist unless tmdb_poster/tmdb_background is also specified
+
+#### TMDb List (List Type)
+
+In addition to TMDb collections you can also build collections based off of TMDb Lists using `tmdb_list`.
+
+```yaml
+collections:
+  Top 50 Grossing Films of All Time (Worldwide):
+    tmdb_list: https://www.themoviedb.org/list/10
+```
+```yaml
+collections:
+  Top 50 Grossing Films of All Time (Worldwide):
+    tmdb_list: 10
+```
+
+#### TMDb Movie (List Type)
+
+You can also add individual movies to a collection using `tmdb_movie`.
+
+```yaml
+collections:
+  Anaconda:
+    tmdb_collection: https://www.themoviedb.org/collection/105995
+    tmdb_movie: https://www.themoviedb.org/movie/336560
+```
+```yaml
+collections:
+  Anaconda:
+    tmdb_collection: 105995
+    tmdb_movie: 336560
+```
 
 #### IMDb List or Search (List Type)
 

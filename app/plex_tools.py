@@ -130,21 +130,17 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
         except PlexExceptions.BadRequest as e:
             print(e)
     else:
+        if method == "trakt_list" and not TraktClient.valid:            raise KeyError("| trakt connection required")
         if isinstance(plex.Library, MovieSection):
             config = Config(config_path)
-            if method == "imdb_list":
-                if TMDB.valid:                  movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
-                else:                           print("| tmdb connection required")
-            elif method == "tmdb_collection":
-                if TMDB.valid:                  movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
-                else:                           print("| tmdb connection required")
-            elif method == "trakt_list":
-                if TraktClient.valid:           movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
-                else:                           print("| trakt connection required")
+            if "imdb" in method or "tmdb" in method and not TMDB.valid:     raise KeyError("| tmdb connection required")
+            elif "imdb" in method or "tmdb" in method and TMDB.valid:
+                if method == "imdb_list":                                       movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
+                elif method == "tmdb_list":                                     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, list=True)
+                elif "tmdb" in method:                                          movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
+            if method == "trakt_list" and TraktClient.valid:                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
         elif isinstance(plex.Library, ShowSection):
-            if method == "trakt_list":
-                if TraktClient.valid:           shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
-                else:                           print("| trakt connection required")
+            if method == "trakt_list" and TraktClient.valid:                shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
 
     if movies:
         # Check if already in collection
