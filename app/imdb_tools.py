@@ -75,7 +75,8 @@ def tmdb_get_movies(config_path, plex, data, list=False):
         try:
             t_col = tmdb.details(tmdb_id)
             for tmovie in t_col:
-                t_movs.append(tmovie.id)
+                if tmovie.media_type == "movie":
+                    t_movs.append(tmovie.id)
         except:
             raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
     else:
