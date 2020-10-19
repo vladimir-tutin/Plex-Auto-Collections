@@ -138,7 +138,7 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 
 ### List Type (Collection Attribute)
 
-The only required attribute for each collection is the list type. There are four different list types to choose from:
+The only required attribute for each collection is the list type. There are six different list types to choose from:
 - [Plex Collection](#plex-collection-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb List](#tmdb-list-list-type)
@@ -207,7 +207,7 @@ collections:
       - 135416
 ```
 
-Alternatively you can specify which `tmdb_collection`, `tmdb_summary`, `tmdb_poster`, and `tmdb_background` all at once by:
+Alternatively you can specify which `tmdb_collection`, `tmdb_summary`, `tmdb_poster`, and `tmdb_background` all at once by using `tmdb_id`:
 
 ```yaml
 collections:
@@ -223,9 +223,9 @@ collections:
 ```
 
 Notes:
-- The tmdb_id can be either from a collection or an individual movie
-- You can specify more than one tmdb_id but it will pull the summary, poster, and background from only the first one.
-- Local posters/backgrounds are loaded over tmdb_poster/tmdb_background if they exist unless tmdb_poster/tmdb_background is also specified
+- The `tmdb_id` can be either from a collection or an individual movie
+- You can specify more than one `tmdb_id` but it will pull the summary, poster, and background from only the first one.
+- Local posters/backgrounds are loaded over `tmdb_poster`/`tmdb_background` if they exist unless `tmdb_poster`/`tmdb_background` is also specified
 
 #### TMDb List (List Type)
 
