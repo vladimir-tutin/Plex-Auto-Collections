@@ -116,30 +116,30 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
     movies = []
     shows = []
     items = []
-    if method in Movie.__doc__ or hasattr(Movie, method):
-        try:
-            movies = plex.Library.search(**{method: value})
-        except PlexExceptions.BadRequest:
-            # If last character is "s" remove it and try again
-            if method[-1:] == "s":
-                movies = plex.Library.search(**{method[:-1]: value})
-                movies = [m.ratingKey for m in movies if movies]
-    elif method in Show.__doc__ or hasattr(Show, method):
-        try:
-            shows = plex.Library.search(**{method: value})
-        except PlexExceptions.BadRequest as e:
-            print(e)
-    else:
-        if method == "trakt_list" and not TraktClient.valid:            raise KeyError("| trakt connection required")
-        if isinstance(plex.Library, MovieSection):
-            config = Config(config_path)
-            if "imdb" in method or "tmdb" in method and not TMDB.valid:     raise KeyError("| tmdb connection required")
-            elif "imdb" in method or "tmdb" in method and TMDB.valid:
+    if method == "trakt_list" and not TraktClient.valid:            raise KeyError("| trakt connection required for {}",format(method))
+    if "imdb" in method or "tmdb" in method and not TMDB.valid:     raise KeyError("| tmdb connection required for {}",format(method))
+    if plex.library_type == "movie":
+        if (method in Movie.__doc__ or hasattr(Movie, method)):
+            try:
+                movies = plex.Library.search(**{method: value})
+            except PlexExceptions.BadRequest:
+                # If last character is "s" remove it and try again
+                if method[-1:] == "s":
+                    movies = plex.Library.search(**{method[:-1]: value})
+                    movies = [m.ratingKey for m in movies if movies]
+        else:
+            if "imdb" in method or "tmdb" in method and TMDB.valid:
                 if method == "imdb_list":                                       movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
                 elif method == "tmdb_list":                                     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, list=True)
                 elif "tmdb" in method:                                          movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
             if method == "trakt_list" and TraktClient.valid:                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
-        elif isinstance(plex.Library, ShowSection):
+    elif plex.library_type == "show":
+        if (method in Show.__doc__ or hasattr(Show, method)):
+            try:
+                shows = plex.Library.search(**{method: value})
+            except PlexExceptions.BadRequest as e:
+                print(e)
+        else:
             if method == "trakt_list" and TraktClient.valid:                shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
 
     if movies:

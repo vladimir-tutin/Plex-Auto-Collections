@@ -43,8 +43,10 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 sf_string = sf, collections[c]["subfilters"][sf]
                 subfilters.append(sf_string)
         for m in methods:
-            if "tmdb" in m and not TMDB.valid:
+            if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
+            elif m == "trakt_list" and TraktClient.valid:
+                print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
             elif collections[c][m]:
                 values = collections[c][m] if isinstance(collections[c][m], list) else str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
                 for v in values:
