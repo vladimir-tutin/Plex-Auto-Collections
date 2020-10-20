@@ -135,6 +135,15 @@ def tmdb_get_movies(config_path, plex, data, isList=False):
 
     return matched, missing
 
+def get_tvdb_id_from_tmdb_id(id):
+    lookup = trakt.Trakt['search'].lookup(id, 'tmdb', 'show')
+    if lookup:
+        if isinstance(lookup, list):
+            return trakt.Trakt['search'].lookup(id, 'tmdb', 'show')[0].get_key('tvdb')
+        else:
+            return trakt.Trakt['search'].lookup(id, 'tmdb', 'show').get_key('tvdb')
+    else:
+        return None
 
 def tmdb_get_shows(config_path, plex, data, isList=False):
     config_tools.TraktClient(config_path)
@@ -166,16 +175,6 @@ def tmdb_get_shows(config_path, plex, data, isList=False):
         except:
             raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
 
-    def get_tvdb_id_from_tmdb_id(id):
-        lookup = trakt.Trakt['search'].lookup(id, 'tmdb', 'show')
-        if lookup:
-            if isinstance(lookup, list):
-                return trakt.Trakt['search'].lookup(id, 'tmdb', 'show')[0].get_key('tvdb')
-            else:
-                return trakt.Trakt['search'].lookup(id, 'tmdb', 'show').get_key('tvdb')
-        else:
-            return None
-
     p_tv_map = {}
     for item in plex.Library.all():
         guid = urlparse(item.guid)
@@ -199,6 +198,36 @@ def tmdb_get_shows(config_path, plex, data, isList=False):
             matched.append(t)
         else:
             missing.append(tvdb_id)
+
+    return matched, missing
+
+
+def tvdb_get_shows(config_path, plex, data, isList=False):
+    config_tools.TraktClient(config_path)
+    if not isinstance(data, int):
+        raise ValueError("| Config Error: TVDb ID: {} is invalid it must be an integer".format(data))
+
+    p_tv_map = {}
+    for item in plex.Library.all():
+        guid = urlparse(item.guid)
+        item_type = guid.scheme.split('.')[-1]
+        if item_type == 'thetvdb':                                  tvdb_id = guid.netloc
+        elif item_type == 'themoviedb' and TraktClient.valid:       tvdb_id = get_tvdb_id_from_tmdb_id(guid.netloc)
+        else:                                                       tvdb_id = None
+        p_tv_map[item] = tvdb_id
+
+    matched = []
+    missing = []
+    match = False
+    for t in p_tv_map:
+        if p_tv_map[t] and "tt" not in p_tv_map[t] is not "None":
+            if int(p_tv_map[t]) == int(data):
+                match = True
+                break
+    if match:
+        matched.append(t)
+    else:
+        missing.append(tvdb_id)
 
     return matched, missing
 

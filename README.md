@@ -16,6 +16,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
           - [TMDb List (List Type)](#tmdb-list-list-type)
           - [TMDb Movie (List Type)](#tmdb-movie-list-type)
           - [TMDb Show (List Type)](#tmdb-show-list-type)
+          - [TVDb Show (List Type)](#tvdb-show-list-type)
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
@@ -139,12 +140,13 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 
 ### List Type (Collection Attribute)
 
-The only required attribute for each collection is the list type. There are six different list types to choose from:
+The only required attribute for each collection is the list type. There are eight different list types to choose from:
 - [Plex Collection](#plex-collection-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb List](#tmdb-list-list-type)
 - [TMDb Movie](#tmdb-movie-list-type)
 - [TMDb Show](#tmdb-show-list-type)
+- [TVDb Show](#tvdb-show-list-type)
 - [IMDb List or Search](#imdb-list-or-search-list-type)
 - [Trakt List](#trakt-list-list-type)
 
@@ -273,7 +275,7 @@ collections:
 
 ###### Works with TV Show Libraries
 
-You can also add individual movies to a collection using `tmdb_show`.
+You can also add individual shows to a collection using `tmdb_show`.
 
 ```yaml
 collections:
@@ -288,6 +290,20 @@ collections:
     tmdb_show:
       - 4194
       - 60554
+```
+
+#### TVDb Show (List Type)
+
+###### Works with TV Show Libraries
+
+You can also add individual shows to a collection using `tvdb_show`.
+
+```yaml
+collections:
+  Star Wars (Animated Shows):
+    tvdb_show:
+      - 83268
+      - 283468
 ```
 
 #### IMDb List or Search (List Type)

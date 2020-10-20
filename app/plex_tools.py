@@ -133,7 +133,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             if "imdb" in method or "tmdb" in method and TMDB.valid:
                 if method == "imdb_list":                                       movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
                 elif method == "tmdb_list":                                     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, isList=True)
-                elif method in ["tmdb_id", "tmdb_movie", "tmd_collection":      movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
+                elif method in ["tmdb_id", "tmdb_movie", "tmd_collection"]:     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
             if method == "trakt_list" and TraktClient.valid:                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
     elif plex.library_type == "show":
         if (method in Show.__doc__ or hasattr(Show, method)):
@@ -145,6 +145,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             if TraktClient.valid:
                 if method == "tmdb_list" and TMDB.valid:                        shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, isList=True)
                 elif method in ["tmdb_id", "tmdb_show"] and TMDB.valid:         shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value)
+                elif method == "tvdb_show":                                     shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
                 elif method == "trakt_list":                                    shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
 
     if movies:
@@ -204,7 +205,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             current_s = get_item(plex, rk)
             current_s.reload()
             if current_s in fs:
-                print("| {} is already in collection: {}".format(current_s.title, c))
+                print("| {} Collection already contains: {}".format(c, current_s.title))
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -235,10 +236,10 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                         match = False
                         break
                 if match:
-                    print("| +++ Adding {} to collection {}".format(current_s.title, c))
+                    print("| +++ {} Collection: {}".format(c, current_s.title))
                     current_s.addCollection(c)
             elif not subfilters:
-                print("| +++ Adding {} to collection: {}".format(current_s.title, c))
+                print("| +++ {} Collection: {}".format(c, current_s.title))
                 current_s.addCollection(c)
     try:
         missing

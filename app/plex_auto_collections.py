@@ -62,7 +62,12 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     if missing:
                         if libtype == "movie":
                             method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                            print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            if m == "tmdb_list" or m == "tmdb_list" or m == "imdb_list":
+                                print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            elif m == "tmdb_collection":
+                                print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            else:
+                                print("| {} ID: {} missing".format(method_name, v))
                             if Radarr.valid:
                                 radarr = Radarr(config_path)
                                 if radarr.add_movie:
@@ -71,11 +76,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                                 elif not headless and radarr.add_movie == None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
                                     add_to_radarr(config_path, missing)
                         elif libtype == "show":
-                            method_name = "Trakt" if "trakt" in m else "TMDb"
-                            if m == "tmdb_list" or "tmdb" not in m:
+                            method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
+                            if m == "trakt_list" or m == "tmdb_list":
                                 print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                             else:
-                                print("| TMDb ID: {} missing".format(v))
+                                print("| {} ID: {} missing".format(method_name, v))
 
                             # if not skip_sonarr:
                             #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
