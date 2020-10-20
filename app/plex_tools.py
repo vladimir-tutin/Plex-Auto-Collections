@@ -25,7 +25,7 @@ def get_movie(plex, data):
         if movie_list:
             return movie_list
         else:
-            print("| Movie: " + data + " not found")
+            print("| Movie: {} not found".format(data))
             return None
 
 def get_item(plex, data):
@@ -116,8 +116,10 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
     movies = []
     shows = []
     items = []
-    if method == "trakt_list" and not TraktClient.valid:            raise KeyError("| trakt connection required for {}",format(method))
-    if "imdb" in method or "tmdb" in method and not TMDB.valid:     raise KeyError("| tmdb connection required for {}",format(method))
+    if (method == "trakt_list" or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
+        raise KeyError("| trakt connection required for {}",format(method))
+    if ("imdb" in method or "tmdb" in method) and not TMDB.valid:
+        raise KeyError("| tmdb connection required for {}",format(method))
     if plex.library_type == "movie":
         if (method in Movie.__doc__ or hasattr(Movie, method)):
             try:
@@ -130,8 +132,8 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
         else:
             if "imdb" in method or "tmdb" in method and TMDB.valid:
                 if method == "imdb_list":                                       movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
-                elif method == "tmdb_list":                                     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, list=True)
-                elif "tmdb" in method:                                          movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
+                elif method == "tmdb_list":                                     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, isList=True)
+                elif method in ["tmdb_id", "tmdb_movie", "tmd_collection":      movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
             if method == "trakt_list" and TraktClient.valid:                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
     elif plex.library_type == "show":
         if (method in Show.__doc__ or hasattr(Show, method)):
@@ -140,7 +142,10 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             except PlexExceptions.BadRequest as e:
                 print(e)
         else:
-            if method == "trakt_list" and TraktClient.valid:                shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
+            if TraktClient.valid:
+                if method == "tmdb_list" and TMDB.valid:                        shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, isList=True)
+                elif method in ["tmdb_id", "tmdb_show"] and TMDB.valid:         shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value)
+                elif method == "trakt_list":                                    shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
 
     if movies:
         # Check if already in collection

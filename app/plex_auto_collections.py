@@ -23,6 +23,7 @@ from config_tools import TraktClient
 from config_tools import ImageServer
 from config_tools import modify_config
 from radarr_tools import add_to_radarr
+from urllib.parse import urlparse
 
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
@@ -45,7 +46,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         for m in methods:
             if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
-            elif m == "trakt_list" and TraktClient.valid:
+            elif (m == "trakt_list" or ("tmdb" in m and plex.library_type == "show")) and not TraktClient.valid:
                 print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
             elif collections[c][m]:
                 values = collections[c][m] if isinstance(collections[c][m], list) else str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
@@ -61,7 +62,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     if missing:
                         if libtype == "movie":
                             method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                            print("| {} missing movies from {} List: {}".format(len(missing), method_name, v))
+                            print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                             if Radarr.valid:
                                 radarr = Radarr(config_path)
                                 if radarr.add_movie:
@@ -71,7 +72,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                                     add_to_radarr(config_path, missing)
                         elif libtype == "show":
                             method_name = "Trakt" if "trakt" in m else "TMDb"
-                            print("| {} missing shows from {} List: {}".format(len(missing), method_name, v))
+                            if m == "tmdb_list" or "tmdb" not in m:
+                                print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            else:
+                                print("| TMDb ID: {} missing".format(v))
+
                             # if not skip_sonarr:
                             #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
                             #         add_to_radarr(missing_shows)

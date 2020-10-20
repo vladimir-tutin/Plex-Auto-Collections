@@ -15,6 +15,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
           - [TMDb Collection (List Type)](#tmdb-collection-list-type)
           - [TMDb List (List Type)](#tmdb-list-list-type)
           - [TMDb Movie (List Type)](#tmdb-movie-list-type)
+          - [TMDb Show (List Type)](#tmdb-show-list-type)
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
@@ -143,12 +144,15 @@ The only required attribute for each collection is the list type. There are six 
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb List](#tmdb-list-list-type)
 - [TMDb Movie](#tmdb-movie-list-type)
+- [TMDb Show](#tmdb-show-list-type)
 - [IMDb List or Search](#imdb-list-or-search-list-type)
 - [Trakt List](#trakt-list-list-type)
 
 Note that each list type supports multiple lists.
 
 #### Plex Collection (List Type)
+
+###### Works with Movie and TV Show Libraries
 
 There are a number of built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the filter.
 
@@ -186,6 +190,8 @@ collections:
 ```
 
 #### TMDb Collection (List Type)
+
+###### Works with Movie Libraries
 
 The Movie Database (TMDb) strives to group movies into logical collections. This script can easily leverage that data. You can use the full url or just type in the TMDb ID for the collection:
 
@@ -229,6 +235,8 @@ Notes:
 
 #### TMDb List (List Type)
 
+###### Works with Movie and TV Show Libraries
+
 In addition to TMDb collections you can also build collections based off of TMDb Lists using `tmdb_list`.
 
 ```yaml
@@ -243,6 +251,8 @@ collections:
 ```
 
 #### TMDb Movie (List Type)
+
+###### Works with Movie Libraries
 
 You can also add individual movies to a collection using `tmdb_movie`.
 
@@ -259,7 +269,30 @@ collections:
     tmdb_movie: 336560
 ```
 
+#### TMDb Show (List Type)
+
+###### Works with TV Show Libraries
+
+You can also add individual movies to a collection using `tmdb_show`.
+
+```yaml
+collections:
+  Star Wars (Animated Shows):
+    tmdb_show:
+      - https://www.themoviedb.org/tv/4194-star-wars-the-clone-wars
+      - https://www.themoviedb.org/tv/60554-star-wars-rebels
+```
+```yaml
+collections:
+  Star Wars (Animated Shows):
+    tmdb_show:
+      - 4194
+      - 60554
+```
+
 #### IMDb List or Search (List Type)
+
+###### Works with Movie Libraries
 
 This script can also scrape IMDb lists as well as searches (particularly useful for dynamic data):
 
@@ -282,6 +315,8 @@ collections:
 
 #### Trakt List (List Type)
 
+###### Works with Movie and TV Show Libraries
+
 Similarly, this script can also pull public or private Trakt lists via the Trakt API:
 
 ```yaml
@@ -298,6 +333,8 @@ collections:
 ```
 
 ### Subfilters (Collection Attribute)
+
+###### Works with Movie and TV Show Libraries
 
 The next optional attribute for any collection is the `subfilters` key. Subfilters allows for a little more granular selection from a list of movies to add to a collection.
 

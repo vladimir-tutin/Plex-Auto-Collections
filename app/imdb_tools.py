@@ -1,12 +1,15 @@
 import re
 import requests
+from urllib.parse import urlparse
 from lxml import html
 from tmdbv3api import TMDb
 from tmdbv3api import Movie
 from tmdbv3api import List
+from tmdbv3api import TV
 from tmdbv3api import Collection
 from tmdbv3api import Person
 import config_tools
+import trakt
 
 
 def imdb_get_movies(config_path, plex, data):
@@ -56,33 +59,30 @@ def imdb_get_movies(config_path, plex, data):
         return matched_imbd_movies, missing_imdb_movies
 
 
-def tmdb_get_movies(config_path, plex, data, list=False):
+def tmdb_get_movies(config_path, plex, data, isList=False):
     try:
         tmdb_id = re.search('.*?(\\d+)', data)
         tmdb_id = tmdb_id.group(1)
     except AttributeError:  # Bad URL Provided
         return
-
     t_movs = []
     t_movie = Movie()
     t_movie.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
     if t_movie.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
 
-    if list:
-        tmdb = List()
-        tmdb.api_key = t_movie.api_key
+    tmdb = List() if isList else Collection()
+    tmdb.api_key = t_movie.api_key
+    t_col = tmdb.details(tmdb_id)
+
+    if isList:
         try:
-            t_col = tmdb.details(tmdb_id)
             for tmovie in t_col:
                 if tmovie.media_type == "movie":
                     t_movs.append(tmovie.id)
         except:
             raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
     else:
-        tmdb = Collection()
-        tmdb.api_key = t_movie.api_key
-        t_col = tmdb.details(tmdb_id)
         try:
             for tmovie in t_col.parts:
                 t_movs.append(tmovie['id'])
@@ -92,8 +92,6 @@ def tmdb_get_movies(config_path, plex, data, list=False):
                 t_movs.append(tmdb_id)
             except:
                 raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
-
-
 
 
     # Create dictionary of movies and their guid
@@ -138,20 +136,96 @@ def tmdb_get_movies(config_path, plex, data, list=False):
     return matched, missing
 
 
+def tmdb_get_shows(config_path, plex, data, isList=False):
+    config_tools.TraktClient(config_path)
+    try:
+        tmdb_id = re.search('.*?(\\d+)', data)
+        tmdb_id = tmdb_id.group(1)
+    except AttributeError:  # Bad URL Provided
+        return
+    t_tvs = []
+    t_tv = TV()
+    t_tv.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
+    if t_tv.api_key == "None":
+        raise KeyError("Invalid TMDb API Key")
+
+    if isList:
+        tmdb = List()
+        tmdb.api_key = t_tv.api_key
+        try:
+            t_col = tmdb.details(tmdb_id)
+            for ttv in t_col:
+                if ttv.media_type == "tv":
+                    t_tvs.append(ttv.id)
+        except:
+            raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+    else:
+        try:
+            t_tv.details(tmdb_id).number_of_seasons
+            t_tvs.append(tmdb_id)
+        except:
+            raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
+
+    def get_tvdb_id_from_tmdb_id(id):
+        lookup = trakt.Trakt['search'].lookup(id, 'tmdb', 'show')
+        if lookup:
+            if isinstance(lookup, list):
+                return trakt.Trakt['search'].lookup(id, 'tmdb', 'show')[0].get_key('tvdb')
+            else:
+                return trakt.Trakt['search'].lookup(id, 'tmdb', 'show').get_key('tvdb')
+        else:
+            return None
+
+    p_tv_map = {}
+    for item in plex.Library.all():
+        guid = urlparse(item.guid)
+        item_type = guid.scheme.split('.')[-1]
+        if item_type == 'thetvdb':                  tvdb_id = guid.netloc
+        elif item_type == 'themoviedb':             tvdb_id = get_tvdb_id_from_tmdb_id(guid.netloc)
+        else:                                       tvdb_id = None
+        p_tv_map[item] = tvdb_id
+
+    matched = []
+    missing = []
+    for mid in t_tvs:
+        match = False
+        tvdb_id = get_tvdb_id_from_tmdb_id(mid)
+        for t in p_tv_map:
+            if p_tv_map[t] and "tt" not in p_tv_map[t] is not "None":
+                if int(p_tv_map[t]) == int(tvdb_id):
+                    match = True
+                    break
+        if match:
+            matched.append(t)
+        else:
+            missing.append(tvdb_id)
+
+    return matched, missing
+
 def tmdb_get_summary(config_path, data, type):
     # Instantiate TMDB objects
     collection = Collection()
     collection.api_key = config_tools.TMDB(config_path).apikey
     collection.language = config_tools.TMDB(config_path).language
-    
+
+    media = Movie() if config_tools.Plex(config_path).library_type == "movie" else TV()
+    media.api_key = config_tools.TMDB(config_path).apikey
+    media.language = config_tools.TMDB(config_path).language
+
     person = Person()
     person.api_key = collection.api_key
     person.language = collection.language
 
     # Return object based on type
-    if type == "overview":          return collection.details(data).overview
+    if type == "overview":
+        try:                            return collection.details(data).overview
+        except:                         return media.details(data).overview
     elif type == "biography":       return person.details(data).biography
-    elif type == "poster_path":     return collection.details(data).poster_path
+    elif type == "poster_path":
+        try:                            return collection.details(data).poster_path
+        except:                         return media.details(data).poster_path
     elif type == "profile_path":    return person.details(data).profile_path
-    elif type == "backdrop_path":    return collection.details(data).backdrop_path
+    elif type == "backdrop_path":
+        try:                            return collection.details(data).backdrop_path
+        except:                         return media.details(data).backdrop_path
     else: raise RuntimeError("type not yet supported in tmdb_get_summary")
