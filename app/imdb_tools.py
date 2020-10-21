@@ -119,7 +119,7 @@ def tmdb_get_movies(config_path, plex, data, isList=False):
     for mid in t_movs:  # For each TMBd ID in TMBd Collection
         match = False
         for m in p_m_map:  # For each movie in Plex
-            if "tt" not in p_m_map[m] is not "None":  # If the Plex movie's guid does not start with tt
+            if "tt" not in p_m_map[m] != "None":  # If the Plex movie's guid does not start with tt
                 if int(p_m_map[m]) == int(mid):
                     match = True
                     break
@@ -193,7 +193,7 @@ def tmdb_get_shows(config_path, plex, data, isList=False):
         match = False
         tvdb_id = get_tvdb_id_from_tmdb_id(mid)
         for t in p_tv_map:
-            if p_tv_map[t] and "tt" not in p_tv_map[t] is not "None":
+            if p_tv_map[t] and "tt" not in p_tv_map[t] != "None":
                 if int(p_tv_map[t]) == int(tvdb_id):
                     match = True
                     break
@@ -223,7 +223,7 @@ def tvdb_get_shows(config_path, plex, data, isList=False):
     missing = []
     match = False
     for t in p_tv_map:
-        if p_tv_map[t] and "tt" not in p_tv_map[t] is not "None":
+        if p_tv_map[t] and "tt" not in p_tv_map[t] != "None":
             if int(p_tv_map[t]) == int(data):
                 match = True
                 break
