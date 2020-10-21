@@ -30,16 +30,19 @@ def imdb_get_movies(config_path, plex, data):
                            "//a/img//@data-tconst")
     if title_ids:
         for m in plex.Library.all():
-            if 'themoviedb://' in m.guid:
-                if not tmdb.api_key == "None":
-                    tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
-                    tmdbapi = movie.details(tmdb_id)
-                    imdb_id = tmdbapi.imdb_id
+            try:
+                if 'themoviedb://' in m.guid:
+                    if not tmdb.api_key == "None":
+                        tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
+                        tmdbapi = movie.details(tmdb_id)
+                        imdb_id = tmdbapi.imdb_id
+                    else:
+                        imdb_id = None
+                elif 'imdb://' in m.guid:
+                    imdb_id = m.guid.split('imdb://')[1].split('?')[0]
                 else:
                     imdb_id = None
-            elif 'imdb://' in m.guid:
-                imdb_id = m.guid.split('imdb://')[1].split('?')[0]
-            else:
+            except:
                 imdb_id = None
 
             if imdb_id and imdb_id in title_ids:
