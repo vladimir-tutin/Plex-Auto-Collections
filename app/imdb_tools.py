@@ -1,5 +1,6 @@
 import re
 import requests
+import math
 from urllib.parse import urlparse
 from lxml import html
 from tmdbv3api import TMDb
@@ -28,6 +29,17 @@ def imdb_get_movies(config_path, plex, data):
     tree = html.fromstring(r.content)
     title_ids = tree.xpath("//div[contains(@class, 'lister-item-image')]"
                            "//a/img//@data-tconst")
+
+    results = re.search('(?<=<div class="desc lister-total-num-results">).*?(?=</div>)', str(r.content))
+    total = re.search('.*?(\\d+)', results.group(0)).group(1)
+    for i in range(1, math.ceil(int(total) / 100)):
+        try:
+            r = requests.get(imdb_url + '?page={}'.format(i + 1), headers={'Accept-Language': library_language})
+        except requests.exceptions.MissingSchema:
+            return
+        tree = html.fromstring(r.content)
+        title_ids.extend(tree.xpath("//div[contains(@class, 'lister-item-image')]"
+                                    "//a/img//@data-tconst"))
     if title_ids:
         for m in plex.Library.all():
             try:
