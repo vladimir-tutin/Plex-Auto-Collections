@@ -74,7 +74,7 @@ def imdb_get_movies(config_path, plex, data):
         return matched_imbd_movies, missing_imdb_movies
 
 
-def tmdb_get_movies(config_path, plex, data, isList=False):
+def tmdb_get_movies(config_path, plex, data, is_list=False):
     try:
         tmdb_id = re.search('.*?(\\d+)', data)
         tmdb_id = tmdb_id.group(1)
@@ -86,11 +86,11 @@ def tmdb_get_movies(config_path, plex, data, isList=False):
     if t_movie.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
 
-    tmdb = List() if isList else Collection()
+    tmdb = List() if is_list else Collection()
     tmdb.api_key = t_movie.api_key
     t_col = tmdb.details(tmdb_id)
 
-    if isList:
+    if is_list:
         try:
             for tmovie in t_col:
                 if tmovie.media_type == "movie":
@@ -160,7 +160,7 @@ def get_tvdb_id_from_tmdb_id(id):
     else:
         return None
 
-def tmdb_get_shows(config_path, plex, data, isList=False):
+def tmdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
     try:
         tmdb_id = re.search('.*?(\\d+)', data)
@@ -173,7 +173,7 @@ def tmdb_get_shows(config_path, plex, data, isList=False):
     if t_tv.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
 
-    if isList:
+    if is_list:
         tmdb = List()
         tmdb.api_key = t_tv.api_key
         try:
@@ -217,7 +217,7 @@ def tmdb_get_shows(config_path, plex, data, isList=False):
     return matched, missing
 
 
-def tvdb_get_shows(config_path, plex, data, isList=False):
+def tvdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
     if not isinstance(data, int):
         raise ValueError("| Config Error: TVDb ID: {} is invalid it must be an integer".format(data))

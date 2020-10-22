@@ -102,7 +102,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
         if not isinstance(plex_collection, Collections): continue       # No collections created with requested criteria
 
-        item = plex.Server.fetchItem(plex_collection.ratingKey)
 
         def get_summary (config_path, data, meta, prefix):
             for m in meta:
@@ -110,23 +109,23 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 except AttributeError:      pass
 
         if not no_meta:
-            def edit_value (item, name, group, key=None):
+            def edit_value (plex_collection, name, group, key=None):
                 if key == None:
                     key = name
                 if name in group:
                     if group[name]:
                         edits = {"{}.value".format(key): group[name], "{}.locked".format(key): 1}
-                        item.edit(**edits)
-                        item.reload()
+                        plex_collection.edit(**edits)
+                        plex_collection.reload()
                         print("| Detail: {} updated to {}".format(name, group[name]))
                     else:
                         print("| Config Error: {} attribute is blank".format(name))
 
             # Handle collection sort_title
-            edit_value(item, "sort_title", collections[c], key="titleSort")
+            edit_value(plex_collection, "sort_title", collections[c], key="titleSort")
 
             # Handle collection content_rating
-            edit_value(item, "content_rating", collections[c], key="contentRating")
+            edit_value(plex_collection, "content_rating", collections[c], key="contentRating")
 
             # Handle collection summary
             summary = None
@@ -144,8 +143,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
             if summary:
                 edits = {"summary.value": summary, "summary.locked": 1}
-                item.edit(**edits)
-                item.reload()
+                plex_collection.edit(**edits)
+                plex_collection.reload()
                 print('| Detail: summary updated to "{}"'.format(summary))
 
             # Handle collection collection_mode
@@ -155,7 +154,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     if collection_mode in ('default', 'hide', 'hide_items', 'show_items'):
                         if collection_mode == 'hide_items':              collection_mode = 'hideItems'
                         if collection_mode == 'show_items':              collection_mode = 'showItems'
-                        item.modeUpdate(mode=collection_mode)
+                        plex_collection.modeUpdate(mode=collection_mode)
                         print("| Detail: collection_mode updated to {}".format(collection_mode))
                     else:                                                   print("| Config Error: {} collection_mode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thide_items (Hide Items in this Collection)\n| \tshow_items (Show this Collection and its Items)".format(collection_mode))
                 else:                                                       print("| Config Error: collection_mode attribute is blank")
@@ -165,7 +164,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 if collections[c]["collection_sort"]:
                     collection_sort = collections[c]["collection_sort"]
                     if collection_sort in ('release', 'alpha'):
-                        item.sortUpdate(sort=collection_sort)
+                        plex_collection.sortUpdate(sort=collection_sort)
                         print("| Detail: collection_sort updated to {}".format(collection_sort))
                     else:                                                   print("| Config Error: {} collection_sort Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collection_sort))
                 else:                                                       print("| Config Error: collection_sort attribute is blank")
@@ -261,14 +260,14 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
             # Update poster
             if poster:
-                if poster[0] == "url":          item.uploadPoster(url=poster[1])
-                else:                           item.uploadPoster(filepath=poster[1])
+                if poster[0] == "url":          plex_collection.uploadPoster(url=poster[1])
+                else:                           plex_collection.uploadPoster(filepath=poster[1])
                 print("| Detail: poster updated to [{}] {}".format(poster[0], poster[1]))
 
             # Update background
             if background:
-                if background[0] == "url":      item.uploadArt(url=background[1])
-                else:                           item.uploadArt(filepath=background[1])
+                if background[0] == "url":      plex_collection.uploadArt(url=background[1])
+                else:                           plex_collection.uploadArt(filepath=background[1])
                 print("| Detail: background updated to [{}] {}".format(background[0], background[1]))
 
 def append_collection(config_path, config_update=None):
