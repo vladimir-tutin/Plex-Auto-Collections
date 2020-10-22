@@ -44,7 +44,7 @@ def imdb_get_movies(config_path, plex, data):
     for i in range(1, math.ceil(int(total) / 100)):
         try:
             if "/search/" in imdb_url:
-                r = requests.get(imdb_url + '?start={}'.format(i * 100 + 1), headers={'Accept-Language': library_language})
+                r = requests.get(imdb_url + '&start={}'.format(i * 100 + 1), headers={'Accept-Language': library_language})
             else:
                 r = requests.get(imdb_url + '?page={}'.format(i + 1), headers={'Accept-Language': library_language})
         except requests.exceptions.MissingSchema:
