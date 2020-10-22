@@ -22,6 +22,11 @@ def imdb_get_movies(config_path, plex, data):
         imdb_url = imdb_url[:-1]
     imdb_map = {}
     library_language = plex.Library.language
+    if "/search/" in imdb_url:
+        if "&count=" in imdb_url:
+            imdb_url = re.sub("&count=\d+", "&count=100", imdb_url)
+        else:
+            imdb_url = imdb_url + "&count=100"
     try:
         r = requests.get(imdb_url, headers={'Accept-Language': library_language})
     except requests.exceptions.MissingSchema:
@@ -29,12 +34,19 @@ def imdb_get_movies(config_path, plex, data):
     tree = html.fromstring(r.content)
     title_ids = tree.xpath("//div[contains(@class, 'lister-item-image')]"
                            "//a/img//@data-tconst")
+    if "/search/" in imdb_url:
+        results = re.search('<span>\\d+-\\d+ of \\d+ titles.</span>', str(r.content))
+        total = re.findall('(\\d+)', results.group(0))[2]
+    else:
+        results = re.search('(?<=<div class="desc lister-total-num-results">).*?(?=</div>)', str(r.content))
+        total = re.search('.*?(\\d+)', results.group(0)).group(1)
 
-    results = re.search('(?<=<div class="desc lister-total-num-results">).*?(?=</div>)', str(r.content))
-    total = re.search('.*?(\\d+)', results.group(0)).group(1)
     for i in range(1, math.ceil(int(total) / 100)):
         try:
-            r = requests.get(imdb_url + '?page={}'.format(i + 1), headers={'Accept-Language': library_language})
+            if "/search/" in imdb_url:
+                r = requests.get(imdb_url + '?start={}'.format(i * 100 + 1), headers={'Accept-Language': library_language})
+            else:
+                r = requests.get(imdb_url + '?page={}'.format(i + 1), headers={'Accept-Language': library_language})
         except requests.exceptions.MissingSchema:
             return
         tree = html.fromstring(r.content)
