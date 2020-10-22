@@ -102,15 +102,15 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             else:
                 print("| Config Error: {} attribute is blank".format(m))
 
-        if "tmdb-list" in collections[c]:               print("| Config Error: Please change the attribute tmdb-list to tmdb_collection")
-        if "imdb-list" in collections[c]:               print("| Config Error: Please change the attribute imdb-list to imdb_list")
-        if "trakt-list" in collections[c]:              print("| Config Error: Please change the attribute trakt-list to trakt_list")
-        if "details" in collections[c]:                 print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
-        if "tmdb-poster" in collections[c]:             print("| Config Error: Please change the attribute tmdb-poster to tmdb_poster")
+        if "tmdb-list" in collections[c]:                       print("| Config Error: Please change the attribute tmdb-list to tmdb_collection")
+        if "imdb-list" in collections[c]:                       print("| Config Error: Please change the attribute imdb-list to imdb_list")
+        if "trakt-list" in collections[c]:                      print("| Config Error: Please change the attribute trakt-list to trakt_list")
+        if "details" in collections[c]:                         print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
+        if "tmdb-poster" in collections[c]:                     print("| Config Error: Please change the attribute tmdb-poster to tmdb_poster")
         if "subfilters" in collections[c] and collections[c]["subfilters"]:
-            if collections[c]["subfilters"] == "video-resolution": print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
-            if collections[c]["subfilters"] == "audio-language": print("| Config Error: Please change the subfilter attribute audio-language to audio_language")
-            if collections[c]["subfilters"] == "subtitle-language": print("| Config Error: Please change the subfilter attribute subtitle-language to subtitle_language")
+            if "video-resolution" in collections[c]["subfilters"]:      print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
+            if "audio-language" in collections[c]["subfilters"]:        print("| Config Error: Please change the subfilter attribute audio-language to audio_language")
+            if "subtitle-language" in collections[c]["subfilters"]:     print("| Config Error: Please change the subfilter attribute subtitle-language to subtitle_language")
 
         plex_collection = get_collection(plex, c, headless)
 

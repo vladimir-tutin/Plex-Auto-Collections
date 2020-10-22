@@ -43,7 +43,7 @@ def check_for_attribute(config, attribute, parent=None, test_list=None, options=
     elif test_list == None:                                      return config[attribute]
     elif config[attribute] in test_list:                         return config[attribute]
     else:                                                        message = "| Config Error: {}: {} is an invalid input".format(text, config[attribute])
-    if default is not None or default_is_none:
+    if default != None or default_is_none:
         message = message + " using {} as default".format(default)
     message = message + endline
     if (default == None and not default_is_none) or throw:
