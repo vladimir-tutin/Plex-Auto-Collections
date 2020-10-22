@@ -20,6 +20,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
+      - [Remove Items (optional)](#remove-items-collection-attribute)
       - [Sort Title (Collection Attribute)](#sort-title-collection-attribute)
       - [Content Rating (Collection Attribute)](#content-rating-collection-attribute)
       - [Summary (Collection Attribute)](#summary-collection-attribute)
@@ -129,6 +130,7 @@ You can find a template config file in [config/config.yml.template](config/confi
 Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are three other attributes to set for each collection:
 - [List Type (required)](#list-type-collection-attribute)
 - [Subfilters (optional)](#subfilters-collection-attribute)
+- [Remove Items (optional)](#remove-items-collection-attribute)
 - [Sort Title (optional)](#sort-title-collection-attribute)
 - [Content Rating (optional)](#content-rating-collection-attribute)
 - [Summary (optional)](#summary-collection-attribute)
@@ -380,6 +382,17 @@ collections:
     subfilters:
       audio_language: Français
 ```
+
+### Remove Items (Collection Attribute)
+If you want the collection to remove movies/shows that are not found in its lists then add the `remove_items` attribute and set it to true.
+
+```yaml
+collections:
+  IMDb Top 250:
+    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
+    remove_items: true
+```
+
 
 ### Sort Title (Collection Attribute)
 

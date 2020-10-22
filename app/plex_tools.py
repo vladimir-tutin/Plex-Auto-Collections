@@ -112,7 +112,7 @@ def get_collection(plex, data, exact=None, subtype=None):
     else:
         return "No collection found"
 
-def add_to_collection(config_path, plex, method, value, c, subfilters=None):
+def add_to_collection(config_path, plex, method, value, c, map, subfilters=None):
     movies = []
     shows = []
     items = []
@@ -160,6 +160,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             current_m.reload()
             if current_m in fs:
                 print("| {} Collection already contains: {}".format(c, current_m.title))
+                map[current_m.ratingKey] = None
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -206,6 +207,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             current_s.reload()
             if current_s in fs:
                 print("| {} Collection already contains: {}".format(c, current_s.title))
+                map[current_s.ratingKey] = None
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -246,7 +248,7 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
     except UnboundLocalError:
         return
     else:
-        return missing
+        return missing, map
 
 def delete_collection(data):
     confirm = input("| {} selected. Confirm deletion (y/n):".format(data.title))
