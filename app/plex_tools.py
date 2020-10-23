@@ -116,6 +116,7 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
     movies = []
     shows = []
     items = []
+    missing = []
     if (method == "trakt_list" or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
         raise KeyError("| trakt connection required for {}",format(method))
     if ("imdb" in method or "tmdb" in method) and not TMDB.valid:
