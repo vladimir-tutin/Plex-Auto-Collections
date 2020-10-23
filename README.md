@@ -396,16 +396,16 @@ collections:
 
 ### Sort Title (Collection Attribute)
 
-Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk.
+Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk. If you do use an asterisk or other special characters including `:` You have to surround the whole name with quotes.
 
 ```yaml
 collections:
   IMDb Top 250:
     imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
-    sort_title: *100
+    sort_title: "*100"
   Reddit Top 250:
     trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
-    sort_title: *101
+    sort_title: "*101"
 ```
 
 ### Content Rating (Collection Attribute)
