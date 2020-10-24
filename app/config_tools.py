@@ -104,11 +104,7 @@ class Config:
             if "image-server" in self.data:
                 print("| Config Error: Please change the image-server attribute to image_server")
             if "image_server" in self.data:
-                if self.data['image_server']:
-                    ImageServer(config_path)
-                else:
-                    ImageServer.valid = False
-                    print("| Config Error: image_server attribute is blank")
+                ImageServer(config_path)
             else:
                 ImageServer.valid = False
                 print("| image_server attribute not found")
@@ -294,10 +290,16 @@ class ImageServer:
         app_dir = os.path.dirname(os.path.abspath(__file__))
 
         if config:
-            self.poster = config['poster_directory'] if 'poster_directory' in config and config['poster_directory'] and os.path.exists(os.path.abspath(config['poster_directory'])) else None
-            self.background = config['background_directory'] if 'background_directory' in config and config['background_directory'] and os.path.exists(os.path.abspath(config['background_directory'])) else None
-            self.image = config['image_directory'] if 'image_directory' in config and config['image_directory'] and os.path.exists(os.path.abspath(config['image_directory'])) else None
+            input_poster = config['poster_directory'] if 'poster_directory' in config else None
+            input_background = config['background_directory'] if 'background_directory' in config else None
+            input_image = config['image_directory'] if 'image_directory' in config else None
+            self.poster = input_poster if input_poster and os.path.exists(os.path.abspath(input_poster)) else None
+            self.background = input_background if input_background and os.path.exists(os.path.abspath(input_background)) else None
+            self.image = input_image if input_image and os.path.exists(os.path.abspath(input_image)) else None
         else:
+            input_poster = None
+            input_background = None
+            input_image = None
             self.poster = "posters" if os.path.exists(os.path.join(app_dir, "posters")) else "..\\config\\posters" if os.path.exists(os.path.join(app_dir, "..", "config", "posters")) else None
             self.background = "backgrounds" if os.path.exists(os.path.join(app_dir, "backgrounds")) else "..\\config\\backgrounds" if os.path.exists(os.path.join(app_dir, "..", "config", "backgrounds")) else None
             self.image = "images" if os.path.exists(os.path.join(app_dir, "images")) else "..\\config\\images" if os.path.exists(os.path.join(app_dir, "..", "config", "images")) else None
@@ -307,16 +309,17 @@ class ImageServer:
             if "poster-directory" in config:
                 print("| Config Error: Please change the poster-directory attribute to poster_directory")
             if config:
-                def checkPath(attribute, value, extra=None):
-                    if v is None:
-                        print("| {}: not found".format(attribute))
+                def checkPath(attribute, path, type, input_directory, extra=None):
+                    if path is None:
+                        if input_directory is None:             print("| {} Directory was blank and defaults were not found".format(type))
+                        else:                                   print("| {} Directory: {} not found".format(type, input_directory))
                     else:
-                        v = os.path.abspath(value)
-                        if attribute in config:               print("| Using {} for {}".format(v, attribute) if os.path.exists(v) else "{} not found: {}".format(attribute, v) if value else "{} attribute is empty".format(attribute))
-                        elif extra and extra not in config:   print("| {} & {} attributes not found".format(attribute, extra))
-                checkPath("poster_directory", self.poster, "image_directory")
-                checkPath("background_directory", self.background, "image_directory")
-                checkPath("image_directory", self.image)
+                        abspath = os.path.abspath(path)
+                        if attribute in config:                 print("| Using {} for {} Directory".format(abspath, type) if os.path.exists(abspath) else "{} Directory not found: {}".format(type, abspath) if value else "{} attribute is empty".format(attribute))
+                        elif extra and extra not in config:     print("| {} & {} attributes not found".format(attribute, extra))
+                checkPath("poster_directory", self.poster, "Posters", input_poster, "image_directory")
+                checkPath("background_directory", self.background, "Backgrounds", input_background, "image_directory")
+                checkPath("image_directory", self.image, "Images", input_image)
             else:
                 if self.poster:            print("| Using {} for posters directory".format(os.path.abspath(self.poster)))
                 if self.background:        print("| Using {} for backgrounds directory".format(os.path.abspath(self.background)))
