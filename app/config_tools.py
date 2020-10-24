@@ -78,10 +78,10 @@ class Config:
         elif Config.valid == None:
             Config.valid = True
             print("|===================================================================================================|")
-            print("| Connecting to plex...")
+            print("| Connecting to Plex...")
             Plex(config_path)
             self.collections = check_for_attribute(self.data, "collections", default={})
-            print("| plex connection scuccessful")
+            print("| Plex Connection Scuccessful")
             print("|===================================================================================================|")
             if "tmdb" in self.data:
                 TMDB(config_path)
@@ -161,7 +161,7 @@ class Radarr:
             self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", type="bool", default=False, do_print=False)
         elif Radarr.valid == None:
             if TMDB.valid:
-                print("| Connecting to radarr...")
+                print("| Connecting to Radarr...")
                 message = ""
                 try:                            self.url = check_for_attribute(config, "url", parent="radarr", throw=True)
                 except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
@@ -190,10 +190,10 @@ class Radarr:
                     except SystemExit:
                         raise
                     except:
-                        sys.exit("| Could not connect to radarr at {}".format(self.url))
-                print("| radarr connection {}".format("scuccessful" if Radarr.valid else "failed"))
+                        sys.exit("| Could not connect to Radarr at {}".format(self.url))
+                print("| Radarr Connection {}".format("Scuccessful" if Radarr.valid else "Failed"))
             else:
-                print("| tmdb must be connected to use radarr")
+                print("| TMDb must be connected to use Radarr")
                 Radarr.valid = False
 
 
@@ -205,7 +205,7 @@ class TMDB:
             self.apikey = check_for_attribute(config, "apikey", parent="tmdb")
             self.language = check_for_attribute(config, "language", parent="tmdb", default="en", do_print=False)
         elif TMDB.valid == None:
-            print("| Connecting to tmdb...")
+            print("| Connecting to TMDb...")
             message = ""
             tmdb = Collection()
             try:                        self.apikey = check_for_attribute(config, "apikey", parent="tmdb", throw=True)
@@ -223,7 +223,7 @@ class TMDB:
                 except AttributeError:
                     print("| Config Error: Invalid apikey")
                     TMDB.valid = False
-            print("| tmdb connection {}".format("scuccessful" if TMDB.valid else "failed"))
+            print("| TMDb Connection {}".format("Scuccessful" if TMDB.valid else "Failed"))
 
 
 class TraktClient:
@@ -237,7 +237,7 @@ class TraktClient:
             Trakt.configuration.defaults.client(self.client_id, self.client_secret)
             Trakt.configuration.defaults.oauth.from_response(self.authorization)
         elif TraktClient.valid == None:
-            print("| Connecting to trakt...")
+            print("| Connecting to Trakt...")
             message = ""
             try:                        self.client_id = check_for_attribute(config, "client_id", parent="trakt", throw=True)
             except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
@@ -247,43 +247,40 @@ class TraktClient:
                 print(message)
                 TraktClient.valid = False
             else:
-                try:
-                    if 'authorization' in config and config['authorization']:
-                        self.authorization = config['authorization']
-                    else:
-                        self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
+                if 'authorization' in config and config['authorization']:
+                    self.authorization = config['authorization']
+                else:
+                    self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
 
-                    Trakt.configuration.defaults.client(self.client_id, self.client_secret)
+                Trakt.configuration.defaults.client(self.client_id, self.client_secret)
+                def check_trakt (auth):
+                    with Trakt.configuration.oauth.from_response(auth, refresh=True):
+                        return True if Trakt['users/settings'].get() else False
 
-                    def check_trakt (auth):
-                        try:
-                            Trakt.configuration.defaults.oauth.from_response(auth)
-                            trakt_list_path = urlparse("https://trakt.tv/users/movistapp/lists/christmas-movies").path
-                            trakt_list_items = trakt.Trakt[trakt_list_path].items()
-                            title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
-                            return True
-                        except:
-                            return False
+                if check_trakt(self.authorization):
+                    TraktClient.valid = True
+                else:
+                    self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
+                    print("| Stored Authorization Failed")
 
-                    if not check_trakt(self.authorization):
-                        self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
-                        print("| Stored Authorization Failed")
-                    self.updated_authorization = trakt_helpers.authenticate(self.authorization, headless=Config.headless)
-
-                    if check_trakt(self.updated_authorization):
-                        try:
-                            Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
-                            if self.updated_authorization != self.authorization:
-                                trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
-                            TraktClient.valid = True
-                        except:
-                            TraktClient.valid = False
-                    else:
+                    if Config.headless:
+                        print("| Run without --update/-u to configure Trakt")
                         TraktClient.valid = False
-                except SystemExit as e:
-                    print(e)
-                    TraktClient.valid = False
-            print("| trakt connection {}".format("scuccessful" if TraktClient.valid else "failed"))
+                    else:
+                        try:
+                            self.updated_authorization = trakt_helpers.authenticate(self.authorization)
+                            if check_trakt(self.updated_authorization):
+                                Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
+                                if self.updated_authorization != self.authorization:
+                                    trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
+                                TraktClient.valid = True
+                            else:
+                                TraktClient.valid = False
+                                print("| New Authorization Failed")
+                        except SystemExit as e:
+                            print(e)
+                            TraktClient.valid = False
+            print("| Trakt Connection {}".format("Scuccessful" if TraktClient.valid else "Failed"))
 
 
 class ImageServer:
@@ -302,7 +299,7 @@ class ImageServer:
             self.image = "images" if os.path.exists(os.path.join(app_dir, "images")) else "..\\config\\images" if os.path.exists(os.path.join(app_dir, "..", "config", "images")) else None
 
         if ImageServer.valid == None:
-            print("| Locating image_server...")
+            print("| Locating Image Server...")
             if "poster-directory" in config:
                 print("| Config Error: Please change the poster-directory attribute to poster_directory")
             if config:
@@ -318,9 +315,9 @@ class ImageServer:
                 if self.background:        print("| Using {} for backgrounds directory".format(os.path.abspath(self.background)))
                 if self.image:             print("| Using {} for images directory".format(os.path.abspath(self.image)))
                 if not self.poster and not self.background and not self.image:
-                    print("| posters directory not found: {} or {}".format(os.path.join(app_dir, "posters"), os.path.join(app_dir, "..", "config", "posters")))
-                    print("| backgrounds directory not found: {} or {}".format(os.path.join(app_dir, "backgrounds"), os.path.join(app_dir, "..", "config", "backgrounds")))
-                    print("| images directory not found: {} or {}".format(os.path.join(app_dir, "images"), os.path.join(app_dir, "..", "config", "images")))
+                    print("| Posters Directory not found: {} or {}".format(os.path.join(app_dir, "posters"), os.path.join(app_dir, "..", "config", "posters")))
+                    print("| Backgrounds Directory not found: {} or {}".format(os.path.join(app_dir, "backgrounds"), os.path.join(app_dir, "..", "config", "backgrounds")))
+                    print("| Images Directory not found: {} or {}".format(os.path.join(app_dir, "images"), os.path.join(app_dir, "..", "config", "images")))
             ImageServer.valid = True if self.poster or self.background or self.image else False
 
 

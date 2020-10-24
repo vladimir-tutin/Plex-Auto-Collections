@@ -7,30 +7,23 @@ import copy
 import ruamel.yaml
 import webbrowser
 
-def authenticate(authorization=None, headless=False):
+def authenticate(authorization=None):
+    Trakt.configuration.oauth.from_response(authorization, refresh=True)
+    url = Trakt['oauth'].authorize_url('urn:ietf:wg:oauth:2.0:oob')
+    print('| Navigate to: %s' % url)
+    print("| If you get an OAuth error your client_id or client_secret is invalid")
+    webbrowser.open(url, new=2)
 
-    if authorization['access_token']:
-        # Test authorization
-        with Trakt.configuration.oauth.from_response(authorization, refresh=True):
-            if Trakt['users/settings']:
-                # Successful authorization
-                return authorization
-    if not headless:
-        url = Trakt['oauth'].authorize_url('urn:ietf:wg:oauth:2.0:oob')
-        print('| Navigate to: %s' % url)
-        print("| If you get an OAuth error your client_id or client_secret is invalid")
-        webbrowser.open(url, new=2)
+    code = six.moves.input('| trakt pin (case insensitive): ')
+    if not code:
+        exit("| No Input")
 
-        code = six.moves.input('| trakt pin (case insensitive): ')
-        if not code:
-            exit("| No Input")
+    authorization = Trakt['oauth'].token(code, 'urn:ietf:wg:oauth:2.0:oob')
+    if not authorization:
+        exit("| Invalid trakt pin. If you're sure you typed it in correctly your client_id or client_secret may be invalid")
 
-        authorization = Trakt['oauth'].token(code, 'urn:ietf:wg:oauth:2.0:oob')
-        if not authorization:
-            exit("| Invalid trakt pin. If you're sure you typed it in correctly your client_id or client_secret may be invalid")
-
-        # print('Authorization: %r' % authorization)
-        return authorization
+    # print('Authorization: %r' % authorization)
+    return authorization
 
 def save_authorization(config_file, authorization):
     ruamel.yaml.YAML().allow_duplicate_keys = True
