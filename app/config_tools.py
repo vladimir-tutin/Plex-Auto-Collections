@@ -112,24 +112,28 @@ class Config:
 
 
 class Plex:
+    valid = None
     def __init__(self, config_path):
         config = Config(config_path).plex
+        fatal_message = ""
         message = ""
         try:                            self.library = check_for_attribute(config, "library", parent="plex", throw=True)
-        except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
-        try:                            self.library_type = check_for_attribute(config, "library_type", parent="plex", test_list=["movie", "show"], options="| movie (Movie Library)\n| show (Show Library)", throw=True)
-        except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+        except SystemExit as e:         fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
+        try:                            self.library_type = check_for_attribute(config, "library_type", parent="plex", test_list=["movie", "show"], options="| \tmovie (Movie Library)\n| \tshow (Show Library)", throw=True)
+        except SystemExit as e:         fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
         try:                            self.token = check_for_attribute(config, "token", parent="plex", throw=True)
-        except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+        except SystemExit as e:         fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
         try:                            self.url = check_for_attribute(config, "url", parent="plex", throw=True)
-        except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+        except SystemExit as e:         fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
         try:                            self.sync_mode = check_for_attribute(config, "sync_mode", parent="plex", default="append", test_list=["append", "sync"], options="| \tappend (Only Add Items to the Collection)\n| \tsync (Add & Remove Items from the Collection)", throw=True)
         except SystemExit as e:
             self.sync_mode = check_for_attribute(config, "sync_mode", parent="plex", default="append", test_list=["append", "sync"], do_print=False)
             message = message + "\n" + str(e) if len(message) > 0 else str(e)
         self.timeout = 60
-        if len(message) > 0:
-            sys.exit(message)
+        if len(fatal_message) > 0:
+            sys.exit(fatal_message + "\n" + message)
+        if Plex.valid is None and len(message) > 0:
+            print(message)
         try:
             self.Server = PlexServer(self.url, self.token, timeout=self.timeout)
         except Unauthorized:
@@ -145,6 +149,7 @@ class Plex:
         self.Show = Show
         if not self.Library:
             sys.exit("| Config Error: Plex Library {} not found".format(self.library))
+        Plex.valid = True
 
 
 class Radarr:
@@ -162,25 +167,28 @@ class Radarr:
         elif Radarr.valid == None:
             if TMDB.valid:
                 print("| Connecting to Radarr...")
+                fatal_message = ""
                 message = ""
                 try:                            self.url = check_for_attribute(config, "url", parent="radarr", throw=True)
-                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
-                try:                            self.version = check_for_attribute(config, "version", parent="radarr", test_list=["v2", "v3"], options="| v2 (For Radarr 0.2)\n| v3 (For Radarr 3.0)", default="v2", throw=True)
+                except SystemExit as e:         fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
+                try:                            self.version = check_for_attribute(config, "version", parent="radarr", test_list=["v2", "v3"], options="| \tv2 (For Radarr 0.2)\n| \tv3 (For Radarr 3.0)", default="v2", throw=True)
                 except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
                 try:                            self.token = check_for_attribute(config, "token", parent="radarr", throw=True)
-                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                except SystemExit as e:         fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:                            self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", type="int", throw=True)
-                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                except SystemExit as e:         fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:                            self.root_folder_path = check_for_attribute(config, "root_folder_path", parent="radarr", throw=True)
+                except SystemExit as e:         fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
+                try:                            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", type="bool", default_is_none=True, throw=True)
                 except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
-                try:                            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| true (Add missing movies to Radarr)\n| false (Do not add missing movies to Radarr)", type="bool", default_is_none=True, throw=True)
+                try:                            self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| \ttrue (Have Radarr seach the added movies)\n| \tfalse (Do not have Radarr seach the added movies)", type="bool", default=False, throw=True)
                 except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
-                try:                            self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| true (Have Radarr seach the added movies)\n| false (Do not have Radarr seach the added movies)", type="bool", default=False, throw=True)
-                except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
-                if len(message) > 0:
-                    print(message)
+                if len(fatal_message) > 0:
+                    print(fatal_message + "\n" + message)
                     Radarr.valid = False
                 else:
+                    if len(message) > 0:
+                        print(message)
                     try:
                         payload = {"qualityProfileId": self.quality_profile_id}
                         response = requests.post(self.url + ("/api/v3/movie" if self.version == "v3" else "/api/movie"), json=payload, params={"apikey": "{}".format(self.token)})
@@ -206,16 +214,19 @@ class TMDB:
             self.language = check_for_attribute(config, "language", parent="tmdb", default="en", do_print=False)
         elif TMDB.valid == None:
             print("| Connecting to TMDb...")
+            fatal_message = ""
             message = ""
             tmdb = Collection()
             try:                        self.apikey = check_for_attribute(config, "apikey", parent="tmdb", throw=True)
-            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            except SystemExit as e:     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
             try:                        self.language = check_for_attribute(config, "language", parent="tmdb", default="en", throw=True)
             except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
-            if len(message) > 0:
-                print(message)
+            if len(fatal_message) > 0:
+                print(fatal_message + "\n" + message)
                 TMDB.valid = False
             else:
+                if len(message) > 0:
+                    print(message)
                 try:
                     tmdb.api_key = self.apikey
                     tmdb.details("100693").parts
@@ -238,13 +249,13 @@ class TraktClient:
             Trakt.configuration.defaults.oauth.from_response(self.authorization)
         elif TraktClient.valid == None:
             print("| Connecting to Trakt...")
-            message = ""
+            fatal_message = ""
             try:                        self.client_id = check_for_attribute(config, "client_id", parent="trakt", throw=True)
-            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            except SystemExit as e:     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
             try:                        self.client_secret = check_for_attribute(config, "client_secret", parent="trakt", throw=True)
-            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
-            if len(message) > 0:
-                print(message)
+            except SystemExit as e:     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
+            if len(fatal_message) > 0:
+                print(fatal_message)
                 TraktClient.valid = False
             else:
                 if 'authorization' in config and config['authorization']:
