@@ -72,7 +72,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 values = collections[c][m] if isinstance(collections[c][m], list) else str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
                 for v in values:
                     m_print = m[:-1] if m[-1:] == "s" else m
-                    print("| Processing {}: {}".format(m_print, v))
+                    print("| \n| Processing {}: {}".format(m_print, v))
                     if m == "actors" or m == "actor":       v = get_actor_rkey(plex, v)
                     try:                                    missing, map = add_to_collection(config_path, plex, m, v, c, map, subfilters)
                     except UnboundLocalError:               missing, map = add_to_collection(config_path, plex, m, v, c, map)               # No sub-filters
@@ -107,7 +107,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             #         add_to_radarr(missing_shows)
             else:
                 print("| Config Error: {} attribute is blank".format(m))
-
+        print("| ")
         if "tmdb-list" in collections[c]:                       print("| Config Error: Please change the attribute tmdb-list to tmdb_collection")
         if "imdb-list" in collections[c]:                       print("| Config Error: Please change the attribute imdb-list to imdb_list")
         if "trakt-list" in collections[c]:                      print("| Config Error: Please change the attribute trakt-list to trakt_list")
