@@ -28,7 +28,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
       - [Collection Order (Collection Attribute)](#collection-order-collection-attribute)
       - [Poster (Collection Attribute)](#poster-collection-attribute)
       - [Background (Collection Attribute)](#background-collection-attribute)
-      - [System Name (Collection Attribute)](#system-name-collection-attribute)
+      - [Name Mapping (Collection Attribute)](#name-mapping-collection-attribute)
   2. [Plex](#plex)
   3. [Image Server](#image-server)
       - [Poster and/or Background Directory](#poster-andor-background-directory)
@@ -138,7 +138,7 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 - [Collection Order (optional)](#collection-order-collection-attribute)
 - [Poster (optional)](#poster-collection-attribute)
 - [Background (optional)](#background-collection-attribute)
-- [System Name (optional)](#system-name-collection-attribute)
+- [Name Mapping (optional)](#name-mapping-collection-attribute)
 
 ### List Type (Collection Attribute)
 
@@ -581,15 +581,15 @@ collections:
     file_background: /config/backgrounds/Jurassic Park.png
 ```
 
-### System Name (Collection Attribute)
+### Name Mapping (Collection Attribute)
 
-If you are using the image server and your collection name contains characters that are not allowed in filepaths (i.e. for windows `<`, `>`, `:`, `"`, `/`, `\`, `|`, `?`, `*` cannot be in the file path) but you want them in your collection name you can use the `system_name` attribute to specific this collection's name in the file system.
+If you are using the image server and your collection name contains characters that are not allowed in filepaths (i.e. for windows `<`, `>`, `:`, `"`, `/`, `\`, `|`, `?`, `*` cannot be in the file path) but you want them in your collection name you can use the `name_mapping` attribute to specific this collection's name in the file system.
 
 ```yaml
 collections:
   28 Days/Weeks Later:
     tmdb_id: 1565
-    system_name: 28 Days-Weeks Later
+    name_mapping: 28 Days-Weeks Later
 ```
 
 ## Plex

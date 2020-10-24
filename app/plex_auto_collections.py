@@ -226,32 +226,32 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             # Handle Image Server
             image_server = ImageServer(config_path)
             if image_server.valid:
-                system_name = c
-                if "system_name" in collections[c]:
-                    if collections[c]["system_name"]:       system_name = collections[c]["system_name"]
-                    else:                                   print("| Config Error: system_name attribute is blank")
+                name_mapping = c
+                if "name_mapping" in collections[c]:
+                    if collections[c]["name_mapping"]:       name_mapping = collections[c]["name_mapping"]
+                    else:                                   print("| Config Error: name_mapping attribute is blank")
                 if image_server.poster:
-                    path = os.path.join(image_server.poster, "{}.*".format(system_name))
+                    path = os.path.join(image_server.poster, "{}.*".format(name_mapping))
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(posters_found) > 0:
                         for match in matches:       posters_found.append(["file", os.path.abspath(match)])
                     else:
                         print("| poster not found at: {}".format(os.path.abspath(path)))
                 if image_server.background:
-                    path = os.path.join(image_server.background, "{}.*".format(system_name))
+                    path = os.path.join(image_server.background, "{}.*".format(name_mapping))
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(backgrounds_found) > 0:
                         for match in matches:       backgrounds_found.append(["file", os.path.abspath(match)])
                     else:
                         print("| background not found at: {}".format(os.path.abspath(path)))
                 if image_server.image:
-                    path = os.path.join(image_server.image, "{}".format(system_name), "poster.*")
+                    path = os.path.join(image_server.image, "{}".format(name_mapping), "poster.*")
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(posters_found) > 0:
                         for match in matches:       posters_found.append(["file", os.path.abspath(match)])
                     else:
                         print("| poster not found at: {}".format(os.path.abspath(path)))
-                    path = os.path.join(image_server.image, "{}".format(system_name), "background.*")
+                    path = os.path.join(image_server.image, "{}".format(name_mapping), "background.*")
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(backgrounds_found) > 0:
                         for match in matches:       backgrounds_found.append(["file", os.path.abspath(match)])

@@ -28,7 +28,7 @@ collections:
     summary: A collection of 1990s movies
   28 Days/Weeks Later:
     tmdb_id: 1565
-    system_name: 28 Days-Weeks Later
+    name_mapping: 28 Days-Weeks Later
   Anaconda:
     tmdb_id: 105995, 336560
 plex:
