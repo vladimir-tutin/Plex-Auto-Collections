@@ -8,6 +8,9 @@ collections:
     subfilters:
       video_resolution: 1080
     summary: A collection of 1080p Documentaries
+  IMDb Top 250:
+    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
+    sync_mode: sync
   Dave Chappelle:
     actors: Dave Chappelle
     tmdb_summary: 4169
@@ -33,6 +36,7 @@ plex:
   library_type: ### 'movie' or 'show' ###
   token: ###################
   url: http://192.168.1.5:32400
+  sync_mode: append
 radarr:
   url: http://192.168.1.5:7878/radarr/
   token: ###########################

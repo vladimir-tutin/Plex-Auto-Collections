@@ -20,7 +20,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
-      - [Remove Items (optional)](#remove-items-collection-attribute)
+      - [Sync Mode (Collection Attribute)](#sync-mode-collection-attribute)
       - [Sort Title (Collection Attribute)](#sort-title-collection-attribute)
       - [Content Rating (Collection Attribute)](#content-rating-collection-attribute)
       - [Summary (Collection Attribute)](#summary-collection-attribute)
@@ -130,7 +130,7 @@ You can find a template config file in [config/config.yml.template](config/confi
 Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are three other attributes to set for each collection:
 - [List Type (required)](#list-type-collection-attribute)
 - [Subfilters (optional)](#subfilters-collection-attribute)
-- [Remove Items (optional)](#remove-items-collection-attribute)
+- [Sync Mode (optional)](#sync-mode-collection-attribute)
 - [Sort Title (optional)](#sort-title-collection-attribute)
 - [Content Rating (optional)](#content-rating-collection-attribute)
 - [Summary (optional)](#summary-collection-attribute)
@@ -383,16 +383,19 @@ collections:
       audio_language: Français
 ```
 
-### Remove Items (Collection Attribute)
-If you want the collection to remove movies/shows that are not found in its lists then add the `remove_items` attribute and set it to true.
+### Sync Mode (Collection Attribute)
+You can specify how collections sync using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
+
+#### Options
+- `append` (Only Add Items to the Collection)
+- `sync` (Add & Remove Items from the Collection)
 
 ```yaml
 collections:
   IMDb Top 250:
     imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
-    remove_items: true
+    sync_mode: sync
 ```
-
 
 ### Sort Title (Collection Attribute)
 
@@ -599,6 +602,7 @@ plex:                                         # Req
   library_type: movie                         # Req - Type of Plex library (movie or show)
   token: #####                                # Req - User's Plex authentication token
   url: http://192.168.1.1:32400               # Req - URL to access Plex
+  sync_mode: append                           # Opt - Global Sync Mode
 ```
 
 **This script does not currently support Plex's [new metadata agent / matching](https://forums.plex.tv/t/introducing-the-new-plex-movie-agent/615989)**. Do not "update matching" until the script's dependencies support the new agent (feel free to follow issue #33).
@@ -606,6 +610,12 @@ plex:                                         # Req
 Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
 
 This script can be run on a remote Plex server, but be sure that the `url` provided is publicly addressable and it's recommended to use `HTTPS`.
+
+You can set the global default [Sync Mode](#sync-mode-collection-attribute) here by using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
+
+#### Options
+- `append` (Only Add Items to the Collection)
+- `sync` (Add & Remove Items from the Collection)
 
 Lastly, if you need help finding your Plex authentication token, please see Plex's [support article](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 

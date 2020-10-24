@@ -37,21 +37,27 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         print("| \n|===================================================================================================|\n|")
         print("| Updating collection: {}...".format(c))
         map = {}
-
-        if "remove_items" in collections[c]:
-            if collections[c]["remove_items"]:
-                if isinstance(collections[c]["remove_items"], bool):
-                    if collections[c]["remove_items"] == True:
-                        plex_collection = get_collection(plex, c, headless)
-                        if isinstance(plex_collection, Collections):
-                            for item in plex_collection.children:
-                                map[item.ratingKey] = item
+        sync_collection = True if plex.sync_mode == "sync" else False
+        if "sync_mode" in collections[c]:
+            if collections[c]["sync_mode"]:
+                if collections[c]["sync_mode"] == "append" or collections[c]["sync_mode"] == "sync":
+                    if collections[c]["sync_mode"] == "sync":           sync_collection = True
+                    else:                                               sync_collection = False
                 else:
-                    print("| Config Error: remove_items attribute must be either true or false")
+                    print("| Config Error: {} sync_mode Invalid\n| \tappend (Only Add Items to the Collection)\n| \tsync (Add & Remove Items from the Collection)".format(collections[c]["sync_mode"]))
             else:
-                print("| Config Error: remove_items attribute is blank")
+                print("| Config Error: sync_mode attribute is blank")
+        if sync_collection == True:
+            print("| Sync Mode: sync")
+            plex_collection = get_collection(plex, c, headless)
+            if isinstance(plex_collection, Collections):
+                for item in plex_collection.children:
+                    map[item.ratingKey] = item
+        else:
+            print("| Sync Mode: append")
+
         tmdb_id = None
-        methods = [m for m in collections[c] if m not in ("remove_items","tmdb-list", "imdb-list", "trakt-list", "tmdb-poster", "details", "subfilters", "sort_title", "content_rating", "summary", "tmdb_summary", "collection_mode", "collection_sort", "poster", "tmdb_poster", "file_poster", "background", "file_background", "system_name")]
+        methods = [m for m in collections[c] if m not in ("sync_mode","tmdb-list", "imdb-list", "trakt-list", "tmdb-poster", "details", "subfilters", "sort_title", "content_rating", "summary", "tmdb_summary", "collection_mode", "collection_sort", "poster", "tmdb_poster", "file_poster", "background", "file_background", "name_mapping")]
         subfilters = []
         if "subfilters" in collections[c]:
             for sf in collections[c]["subfilters"]:

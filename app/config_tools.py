@@ -127,6 +127,10 @@ class Plex:
         except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
         try:                            self.url = check_for_attribute(config, "url", parent="plex", throw=True)
         except SystemExit as e:         message = message + "\n" + str(e) if len(message) > 0 else str(e)
+        try:                            self.sync_mode = check_for_attribute(config, "sync_mode", parent="plex", default="append", test_list=["append", "sync"], options="| \tappend (Only Add Items to the Collection)\n| \tsync (Add & Remove Items from the Collection)", throw=True)
+        except SystemExit as e:
+            self.sync_mode = check_for_attribute(config, "sync_mode", parent="plex", default="append", test_list=["append", "sync"], do_print=False)
+            message = message + "\n" + str(e) if len(message) > 0 else str(e)
         self.timeout = 60
         if len(message) > 0:
             sys.exit(message)
