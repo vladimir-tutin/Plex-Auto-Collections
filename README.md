@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.0
+##### Version 2.0.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -36,7 +36,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
   4. [TMDb](#tmdb)
   5. [Trakt](#trakt)
   6. [Radarr](#radarr)
-3. [Version 2.0 Changes](#version-20-changes)
+3. [Version 2.0.0 Changes](#version-200-changes)
 4. [Acknowledgements](#acknowledgements)
 
 # Usage
@@ -706,9 +706,9 @@ The `add_movie` key allows missing to movies to be added to Radarr. If this key 
 
 Note that Radarr support has not been tested with extensively Trakt lists and Sonarr support has not yet been implemented.
 
-# Version 2.0 Changes
+# Version 2.0.0 Changes
 
-With version 2.0 we added many new tags, made all the tag names unified casing, removed details in favor of just having those tags as high level tags. Below is a list of all the tag changes.
+With version 2.0.0 we added many new tags, made all the tag names unified casing, removed details in favor of just having those tags as high level tags. Below is a list of all the tag changes.
 
 `old-tag` -> `new_tag`
 
@@ -730,7 +730,7 @@ With version 2.0 we added many new tags, made all the tag names unified casing, 
 
 `poster-directory` -> `poster_directory`
 
-### Example Version 2.0 Changes
+### Example Version 2.0.0 Changes
 
 ```yaml
 collections:
@@ -751,7 +751,7 @@ collections:
           actors: Daniel Craig
 ```
 
-The config above would be changed to below for Version 2.0
+The config above would be changed to below for Version 2.0.0
 
 ```yaml
 collections:
