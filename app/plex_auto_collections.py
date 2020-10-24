@@ -124,7 +124,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
         for ratingKey, item in map.items():
             if item is not None:
-                print("| --- {} Collection: {}".format(c, item.title))
+                print("| {} Collection | - | {}".format(c, item.title))
                 item.removeCollection(c)
 
         def get_summary (config_path, data, meta, prefix):

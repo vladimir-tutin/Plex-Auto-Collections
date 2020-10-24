@@ -160,7 +160,7 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
             current_m = get_movie(plex, rk)
             current_m.reload()
             if current_m in fs:
-                print("| {} Collection already contains: {}".format(c, current_m.title))
+                print("| {} Collection | = | {}".format(c, current_m.title))
                 map[current_m.ratingKey] = None
             elif subfilters:
                 match = True
@@ -191,10 +191,10 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
                         match = False
                         break
                 if match:
-                    print("| +++ {} Collection: {}".format(c, current_m.title))
+                    print("| {} Collection | + | {}".format(c, current_m.title))
                     current_m.addCollection(c)
             elif not subfilters:
-                print("| +++ {} Collection: {}".format(c, current_m.title))
+                print("| {} Collection | + | {}".format(c, current_m.title))
                 current_m.addCollection(c)
     if shows:
         # Check if already in collection
@@ -207,7 +207,7 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
             current_s = get_item(plex, rk)
             current_s.reload()
             if current_s in fs:
-                print("| {} Collection already contains: {}".format(c, current_s.title))
+                print("| {} Collection | = | {}".format(c, current_s.title))
                 map[current_s.ratingKey] = None
             elif subfilters:
                 match = True
@@ -239,10 +239,10 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
                         match = False
                         break
                 if match:
-                    print("| +++ {} Collection: {}".format(c, current_s.title))
+                    print("| {} Collection | + | {}".format(c, current_s.title))
                     current_s.addCollection(c)
             elif not subfilters:
-                print("| +++ {} Collection: {}".format(c, current_s.title))
+                print("| {} Collection | + | {}".format(c, current_s.title))
                 current_s.addCollection(c)
     try:
         missing
