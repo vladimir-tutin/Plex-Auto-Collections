@@ -304,9 +304,12 @@ class ImageServer:
                 print("| Config Error: Please change the poster-directory attribute to poster_directory")
             if config:
                 def checkPath(attribute, value, extra=None):
-                    v = os.path.abspath(value)
-                    if attribute in config:               print("| Using {} for {}".format(v, attribute) if os.path.exists(v) else "{} not found: {}".format(attribute, v) if value else "{} attribute is empty".format(attribute))
-                    elif extra and extra not in config:   print("| {} & {} attributes not found".format(attribute, extra))
+                    if v is None:
+                        print("| {}: not found".format(attribute))
+                    else:
+                        v = os.path.abspath(value)
+                        if attribute in config:               print("| Using {} for {}".format(v, attribute) if os.path.exists(v) else "{} not found: {}".format(attribute, v) if value else "{} attribute is empty".format(attribute))
+                        elif extra and extra not in config:   print("| {} & {} attributes not found".format(attribute, extra))
                 checkPath("poster_directory", self.poster, "image_directory")
                 checkPath("background_directory", self.background, "image_directory")
                 checkPath("image_directory", self.image)
