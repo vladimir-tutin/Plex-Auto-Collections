@@ -8,7 +8,6 @@ import ruamel.yaml
 import webbrowser
 
 def authenticate(authorization=None):
-    Trakt.configuration.oauth.from_response(authorization, refresh=True)
     url = Trakt['oauth'].authorize_url('urn:ietf:wg:oauth:2.0:oob')
     print('| Navigate to: %s' % url)
     print("| If you get an OAuth error your client_id or client_secret is invalid")
