@@ -85,7 +85,6 @@ def imdb_get_movies(config_path, plex, data):
 
         return matched_imbd_movies, missing_imdb_movies
 
-
 def tmdb_get_movies(config_path, plex, data, is_list=False):
     try:
         tmdb_id = re.search('.*?(\\d+)', data)
@@ -231,11 +230,13 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
 
     return matched, missing
 
-
 def tvdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
-    if not isinstance(data, int):
-        raise ValueError("| Config Error: TVDb ID: {} is invalid it must be an integer".format(data))
+    try:
+        id = re.search('(\\d+)', data)
+        id = id.group(1)
+    except AttributeError:
+        raise ValueError("| Config Error: TVDb ID: {} is invalid it must be a number".format(data))
 
     p_tv_map = {}
     for item in plex.Library.all():
@@ -254,13 +255,13 @@ def tvdb_get_shows(config_path, plex, data, is_list=False):
     match = False
     for t in p_tv_map:
         if p_tv_map[t] and "tt" not in p_tv_map[t] != "None":
-            if int(p_tv_map[t]) == int(data):
+            if int(p_tv_map[t]) == int(id):
                 match = True
                 break
     if match:
         matched.append(t)
     else:
-        missing.append(tvdb_id)
+        missing.append(id)
 
     return matched, missing
 
