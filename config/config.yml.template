@@ -1,6 +1,6 @@
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     poster: https://i.imgur.com/QMjbyCX.png
   1080p Documentaries:
@@ -8,6 +8,9 @@ collections:
     subfilters:
       video_resolution: 1080
     summary: A collection of 1080p Documentaries
+  IMDb Top 250:
+    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
+    sync_mode: sync
   Dave Chappelle:
     actors: Dave Chappelle
     tmdb_summary: 4169
@@ -25,7 +28,7 @@ collections:
     summary: A collection of 1990s movies
   28 Days/Weeks Later:
     tmdb_id: 1565
-    system_name: 28 Days-Weeks Later
+    name_mapping: 28 Days-Weeks Later
   Anaconda:
     tmdb_id: 105995, 336560
 plex:
@@ -33,6 +36,7 @@ plex:
   library_type: ### 'movie' or 'show' ###
   token: ###################
   url: http://192.168.1.5:32400
+  sync_mode: append
 radarr:
   url: http://192.168.1.5:7878/radarr/
   token: ###########################

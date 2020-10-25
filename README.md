@@ -1,7 +1,43 @@
 # Plex Auto Collections
+##### Version 2.0.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
+
+# Table of Contents
+1. [Usage](#usage)
+    - [Local Installation](#local-installation)
+    - [Docker](#docker)
+2. [Configuration](#configuration)
+  1. [Collections](#collections)
+      - [List Type](#list-type-collection-attribute)
+          - [Plex Collection (List Type)](#plex-collection-list-type)
+          - [TMDb Collection (List Type)](#tmdb-collection-list-type)
+          - [TMDb List (List Type)](#tmdb-list-list-type)
+          - [TMDb Movie (List Type)](#tmdb-movie-list-type)
+          - [TMDb Show (List Type)](#tmdb-show-list-type)
+          - [TVDb Show (List Type)](#tvdb-show-list-type)
+          - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
+          - [Trakt List (List Type)](#trakt-list-list-type)
+      - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
+      - [Sync Mode (Collection Attribute)](#sync-mode-collection-attribute)
+      - [Sort Title (Collection Attribute)](#sort-title-collection-attribute)
+      - [Content Rating (Collection Attribute)](#content-rating-collection-attribute)
+      - [Summary (Collection Attribute)](#summary-collection-attribute)
+      - [Collection Mode (Collection Attribute)](#collection-mode-collection-attribute)
+      - [Collection Order (Collection Attribute)](#collection-order-collection-attribute)
+      - [Poster (Collection Attribute)](#poster-collection-attribute)
+      - [Background (Collection Attribute)](#background-collection-attribute)
+      - [Name Mapping (Collection Attribute)](#name-mapping-collection-attribute)
+  2. [Plex](#plex)
+  3. [Image Server](#image-server)
+      - [Poster and/or Background Directory](#poster-andor-background-directory)
+      - [Image Directory](#image-directory)
+  4. [TMDb](#tmdb)
+  5. [Trakt](#trakt)
+  6. [Radarr](#radarr)
+3. [Version 2.0.0 Changes](#version-200-changes)
+4. [Acknowledgements](#acknowledgements)
 
 # Usage
 
@@ -80,40 +116,47 @@ The script allows utilizes a YAML config file to create collections in Plex. Thi
 - Collections change often. Having a config file pointing to dynamic data keeps collections fresh.
 
 There are currently six YAML mappings that can be set:
-- `collections` (required)
-- `plex` (required)
-- `image_server` (optional)
-- `tmdb` (optional, but recommended)
-- `trakt` (optional)
-- `radarr` (optional)
+- [`collections` (required)](#collections)
+- [`plex` (required)](#plex)
+- [`image_server` (optional)](#image-server)
+- [`tmdb` (optional, but recommended)](#tmdb)
+- [`trakt` (optional)](#trakt)
+- [`radarr` (optional)](#radarr)
 
 You can find a template config file in [config/config.yml.template](config/config.yml.template)
 
 ## Collections
 
 Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are three other attributes to set for each collection:
-- List Type (required)
-- Subfilters (optional)
-- Sort Title (optional)
-- Content Rating (optional)
-- Summary (optional)
-- Collection Mode (optional)
-- Collection Order (optional)
-- Poster (optional)
-- Background (optional)
-- System Name (optional)
+- [List Type (required)](#list-type-collection-attribute)
+- [Subfilters (optional)](#subfilters-collection-attribute)
+- [Sync Mode (optional)](#sync-mode-collection-attribute)
+- [Sort Title (optional)](#sort-title-collection-attribute)
+- [Content Rating (optional)](#content-rating-collection-attribute)
+- [Summary (optional)](#summary-collection-attribute)
+- [Collection Mode (optional)](#collection-mode-collection-attribute)
+- [Collection Order (optional)](#collection-order-collection-attribute)
+- [Poster (optional)](#poster-collection-attribute)
+- [Background (optional)](#background-collection-attribute)
+- [Name Mapping (optional)](#name-mapping-collection-attribute)
 
 ### List Type (Collection Attribute)
 
-The only required attribute for each collection is the list type. There are four different list types to choose from:
-- Plex Collection
-- TMDb Collection
-- IMDb List or Search
-- Trakt List
+The only required attribute for each collection is the list type. There are eight different list types to choose from:
+- [Plex Collection](#plex-collection-list-type)
+- [TMDb Collection](#tmdb-collection-list-type)
+- [TMDb List](#tmdb-list-list-type)
+- [TMDb Movie](#tmdb-movie-list-type)
+- [TMDb Show](#tmdb-show-list-type)
+- [TVDb Show](#tvdb-show-list-type)
+- [IMDb List or Search](#imdb-list-or-search-list-type)
+- [Trakt List](#trakt-list-list-type)
 
 Note that each list type supports multiple lists.
 
 #### Plex Collection (List Type)
+
+###### Works with Movie and TV Show Libraries
 
 There are a number of built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the filter.
 
@@ -152,22 +195,29 @@ collections:
 
 #### TMDb Collection (List Type)
 
-The Movie Database (TMDb) strives to group movies into logical collections. This script can easily leverage that data:
+###### Works with Movie Libraries
+
+The Movie Database (TMDb) strives to group movies into logical collections. This script can easily leverage that data. You can use the full url or just type in the TMDb ID for the collection:
 
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
+```
+```yaml
+collections:
+  Jurassic Park:
+    tmdb_collection: 328
 ```
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
-      - https://www.themoviedb.org/collection/135416
+      - 135416
 ```
 
-Alternatively you can specify which tmdb_list, tmdb_summary, tmdb_poster, and tmdb_background all at once by:
+Alternatively you can specify which `tmdb_collection`, `tmdb_summary`, `tmdb_poster`, and `tmdb_background` all at once by using `tmdb_id`:
 
 ```yaml
 collections:
@@ -183,11 +233,84 @@ collections:
 ```
 
 Notes:
-- The tmbdID can be either from a collection or an individual movie
-- You can specify more than one tmdb_id but it will pull the summary, poster, and background from only the first one.
-- Local posters/backgrounds are loaded over tmdb_poster/tmdb_background if they exist unless tmdb_poster/tmdb_background is also specified
+- The `tmdb_id` can be either from a collection or an individual movie
+- You can specify more than one `tmdb_id` but it will pull the summary, poster, and background from only the first one.
+- Local posters/backgrounds are loaded over `tmdb_poster`/`tmdb_background` if they exist unless `tmdb_poster`/`tmdb_background` is also specified
+
+#### TMDb List (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+In addition to TMDb collections you can also build collections based off of TMDb Lists using `tmdb_list`.
+
+```yaml
+collections:
+  Top 50 Grossing Films of All Time (Worldwide):
+    tmdb_list: https://www.themoviedb.org/list/10
+```
+```yaml
+collections:
+  Top 50 Grossing Films of All Time (Worldwide):
+    tmdb_list: 10
+```
+
+#### TMDb Movie (List Type)
+
+###### Works with Movie Libraries
+
+You can also add individual movies to a collection using `tmdb_movie`.
+
+```yaml
+collections:
+  Anaconda:
+    tmdb_collection: https://www.themoviedb.org/collection/105995
+    tmdb_movie: https://www.themoviedb.org/movie/336560
+```
+```yaml
+collections:
+  Anaconda:
+    tmdb_collection: 105995
+    tmdb_movie: 336560
+```
+
+#### TMDb Show (List Type)
+
+###### Works with TV Show Libraries
+
+You can also add individual shows to a collection using `tmdb_show`.
+
+```yaml
+collections:
+  Star Wars (Animated Shows):
+    tmdb_show:
+      - https://www.themoviedb.org/tv/4194-star-wars-the-clone-wars
+      - https://www.themoviedb.org/tv/60554-star-wars-rebels
+```
+```yaml
+collections:
+  Star Wars (Animated Shows):
+    tmdb_show:
+      - 4194
+      - 60554
+```
+
+#### TVDb Show (List Type)
+
+###### Works with TV Show Libraries
+
+You can also add individual shows to a collection using `tvdb_show`.
+
+```yaml
+collections:
+  Star Wars (Animated Shows):
+    tvdb_show:
+      - 83268
+      - 283468
+```
 
 #### IMDb List or Search (List Type)
+
+###### Works with Movie Libraries
 
 This script can also scrape IMDb lists as well as searches (particularly useful for dynamic data):
 
@@ -210,6 +333,8 @@ collections:
 
 #### Trakt List (List Type)
 
+###### Works with Movie and TV Show Libraries
+
 Similarly, this script can also pull public or private Trakt lists via the Trakt API:
 
 ```yaml
@@ -226,6 +351,8 @@ collections:
 ```
 
 ### Subfilters (Collection Attribute)
+
+###### Works with Movie and TV Show Libraries
 
 The next optional attribute for any collection is the `subfilters` key. Subfilters allows for a little more granular selection from a list of movies to add to a collection.
 
@@ -256,18 +383,32 @@ collections:
       audio_language: Français
 ```
 
-### Sort Title (Collection Attribute)
+### Sync Mode (Collection Attribute)
+You can specify how collections sync using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
 
-Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk.
+#### Options
+- `append` (Only Add Items to the Collection)
+- `sync` (Add & Remove Items from the Collection)
 
 ```yaml
 collections:
   IMDb Top 250:
     imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
-    sort_title: *100
+    sync_mode: sync
+```
+
+### Sort Title (Collection Attribute)
+
+Setting the sort title is possible for each collection. This can be helpful to rearrange the collections in alphabetical sort. One example of this might be to "promote" certain collections to the top of a library by creating a sort title starting with an asterisk. If you do use an asterisk or other special characters including `:` You have to surround the whole name with quotes.
+
+```yaml
+collections:
+  IMDb Top 250:
+    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
+    sort_title: "*100"
   Reddit Top 250:
     trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
-    sort_title: *101
+    sort_title: "*101"
 ```
 
 ### Content Rating (Collection Attribute)
@@ -285,12 +426,12 @@ collections:
 
 Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry.
 
-To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMBd if you wish to use their biography as the summary (experimental).
+To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMDb if you wish to use their biography as the summary (experimental).
 
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
 ```
 ```yaml
@@ -309,7 +450,7 @@ collections:
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     summary: >-
@@ -338,7 +479,7 @@ Plex allows for four different types of collection modes: library default, hide 
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     poster: https://i.imgur.com/QMjbyCX.png
     background: https://i.imgur.com/2xE0R9I.png
@@ -356,7 +497,7 @@ Lastly, Plex allows collections to be sorted by the media's release dates or alp
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     collection_order: alpha
@@ -366,7 +507,7 @@ collections:
 
 There are four ways to set a poster image for a collection: local image, public URL, TMDb collection, or TMDb actor.
 
-Local assets are supported by running the script with posters in the `poster_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a poster use `file_poster`.
+Local assets are supported by running the script with posters in the `poster_directory` or `image_directory`. See the [Image Server](#image-server) section below for more details or to specify a specific place in your file system for a poster use `file_poster`.
 
 If multiple posters are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
 
@@ -374,7 +515,7 @@ If you want to use an image publicly available on the internet:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     poster: https://i.imgur.com/QMjbyCX.png
 ```
@@ -382,7 +523,7 @@ If you want to use the default collection image on TMDb:
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     tmdb_poster: 8091
@@ -399,7 +540,7 @@ If you want to use an image in your file system:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     file_poster: C:/Users/username/Desktop/2xE0R9I.png
     file_background: /config/backgrounds/Jurassic Park.png
@@ -408,7 +549,7 @@ collections:
 
 There are three ways to set a background image for a collection: local image, public URL, or TMDb collection.
 
-Local assets are supported by running the script with backgrounds in the `background_directory` or `image_directory`. See the Image Server section below for more details or to specify a specific place in your file system for a background use `file_background`.
+Local assets are supported by running the script with backgrounds in the `background_directory` or `image_directory`. See the [Image Server](#image-server) section below for more details or to specify a specific place in your file system for a background use `file_background`.
 
 If multiple backgrounds are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
 
@@ -416,7 +557,7 @@ If you want to use an image publicly available on the internet:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     poster: https://i.imgur.com/QMjbyCX.png
     background: https://i.imgur.com/2xE0R9I.png
@@ -425,7 +566,7 @@ If you want to use the default collection image on TMDb:
 ```yaml
 collections:
   Alien (Past & Present):
-    tmdb_list:
+    tmdb_collection:
       - https://www.themoviedb.org/collection/8091
       - https://www.themoviedb.org/collection/135416
     tmdb_background: 8091
@@ -434,10 +575,21 @@ If you want to use an image in your file system:
 ```yaml
 collections:
   Jurassic Park:
-    tmdb_list: https://www.themoviedb.org/collection/328
+    tmdb_collection: https://www.themoviedb.org/collection/328
     tmdb_summary: 328
     file_poster: C:/Users/username/Desktop/2xE0R9I.png
     file_background: /config/backgrounds/Jurassic Park.png
+```
+
+### Name Mapping (Collection Attribute)
+
+If you are using the image server and your collection name contains characters that are not allowed in filepaths (i.e. for windows `<`, `>`, `:`, `"`, `/`, `\`, `|`, `?`, `*` cannot be in the file path) but you want them in your collection name you can use the `name_mapping` attribute to specific this collection's name in the file system.
+
+```yaml
+collections:
+  28 Days/Weeks Later:
+    tmdb_id: 1565
+    name_mapping: 28 Days-Weeks Later
 ```
 
 ## Plex
@@ -450,6 +602,7 @@ plex:                                         # Req
   library_type: movie                         # Req - Type of Plex library (movie or show)
   token: #####                                # Req - User's Plex authentication token
   url: http://192.168.1.1:32400               # Req - URL to access Plex
+  sync_mode: append                           # Opt - Global Sync Mode
 ```
 
 **This script does not currently support Plex's [new metadata agent / matching](https://forums.plex.tv/t/introducing-the-new-plex-movie-agent/615989)**. Do not "update matching" until the script's dependencies support the new agent (feel free to follow issue #33).
@@ -458,13 +611,19 @@ Note that Plex does not allow a `show` to be added to a `movie` library or vice 
 
 This script can be run on a remote Plex server, but be sure that the `url` provided is publicly addressable and it's recommended to use `HTTPS`.
 
+You can set the global default [Sync Mode](#sync-mode-collection-attribute) here by using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
+
+#### Options
+- `append` (Only Add Items to the Collection)
+- `sync` (Add & Remove Items from the Collection)
+
 Lastly, if you need help finding your Plex authentication token, please see Plex's [support article](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 
 ## Image Server
 
 An `image_server` mapping in the config is optional. There are two ways to store your posters and background. Using `poster_directory` and/or `background_directory` or by using `image_directory`.
 
-### `poster_directory` and/or `background_directory`
+### Poster and/or Background Directory
 By placing images in the `poster_directory` or `background_directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the images `../config/posters/Jurassic Park.png` and `../config/backgrounds/Jurassic Park.png`, the script will upload those images to Plex.
 
 ```yaml
@@ -473,7 +632,7 @@ image_server:                                 # Opt
   background_directory: /config/backgrounds   # Opt - Desired dir of backgrounds
 ```
 
-### `image_directory`
+### Image Directory
 By placing images in folders in the `image_directory` folder, the script will attempt to match folder names to collection names. For example, if there is a collection named `Jurassic Park` and the images `../config/images/Jurassic Park/poster.png` and `../config/images/Jurassic Park/background.png`, the script will upload those images to Plex.
 
 ```yaml
@@ -520,7 +679,7 @@ On the first run, the script will walk the user through the OAuth flow by produc
 
 ## Radarr
 
-When parsing TMBd, IMDb, or Trakt lists, the script will finds movies that are on the list but missing from Plex. If a TMDb and Radarr config are supplied, then you can add those missing movies to Radarr.
+When parsing TMDb, IMDb, or Trakt lists, the script will finds movies that are on the list but missing from Plex. If a TMDb and Radarr config are supplied, then you can add those missing movies to Radarr.
 
 Here's the full set of configurations:
 ```yaml
@@ -556,6 +715,70 @@ In this example, to set any added movies to the `Ultra-HD` profile, set `quality
 The `add_movie` key allows missing to movies to be added to Radarr. If this key is missing, the script will prompt the user to add missing movies or not. If you'd like to add movies but not had Radarr search, then set `search_movie` to `false`.
 
 Note that Radarr support has not been tested with extensively Trakt lists and Sonarr support has not yet been implemented.
+
+# Version 2.0.0 Changes
+
+With version 2.0.0 we added many new tags, made all the tag names unified casing, removed details in favor of just having those tags as high level tags. Below is a list of all the tag changes.
+
+`old-tag` -> `new_tag`
+
+`tmdb-list` -> `tmdb_collection`
+
+`imdb-list` -> `imdb_list`
+
+`trakt-list` -> `trakt_list`
+
+`video-resolution` -> `video_resolution`
+
+`audio-language` -> `audio_language`
+
+`subtitle-language` -> `subtitle_language`
+
+`tmdb-poster` -> `tmdb_poster`
+
+`image-server` -> `image_server`
+
+`poster-directory` -> `poster_directory`
+
+### Example Version 2.0.0 Changes
+
+```yaml
+collections:
+    Jurassic Park:
+        tmdb-list: https://www.themoviedb.org/collection/328
+        details:
+          tmdb-summary: 328
+          poster: https://i.imgur.com/QMjbyCX.png
+      1080p Documentaries:
+        genres: Documentary
+        subfilters:
+          video-resolution: 1080
+        details:
+          summary: A collection of 1080p Documentaries
+      Daniel Craig only James Bonds:
+        imdb-list: https://www.imdb.com/list/ls006405458/
+        subfilters:
+          actors: Daniel Craig
+```
+
+The config above would be changed to below for Version 2.0.0
+
+```yaml
+collections:
+    Jurassic Park:
+      tmdb_collection: https://www.themoviedb.org/collection/328
+      tmdb_summary: 328
+      poster: https://i.imgur.com/QMjbyCX.png
+    1080p Documentaries:
+      genres: Documentary
+      subfilters:
+        video_resolution: 1080
+      summary: A collection of 1080p Documentaries
+    Daniel Craig only James Bonds:
+      imdb_list: https://www.imdb.com/list/ls006405458/
+      subfilters:
+        actors: Daniel Craig
+```
 
 # Acknowledgements
 - [vladimir-tutin](https://github.com/vladimir-tutin) for writing substantially all of the code in this fork

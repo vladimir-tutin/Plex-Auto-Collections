@@ -16,16 +16,17 @@ def get_movie(plex, data):
         try:
             return plex.Server.fetchItem(data)
         except PlexExceptions.BadRequest:
-            return "Nothing found"
+            print("| Nothing found")
+            return None
     elif isinstance(data, Movie):
         return data
     else:
-        print(data)
         movie_list = plex.Library.search(title=data)
         if movie_list:
             return movie_list
         else:
-            return "Movie: " + data + " not found"
+            print("| Movie: {} not found".format(data))
+            return None
 
 def get_item(plex, data):
     # If an int is passed as data, assume it is a movie's rating key
@@ -111,39 +112,42 @@ def get_collection(plex, data, exact=None, subtype=None):
     else:
         return "No collection found"
 
-def add_to_collection(config_path, plex, method, value, c, subfilters=None):
+def add_to_collection(config_path, plex, method, value, c, map, subfilters=None):
     movies = []
     shows = []
     items = []
-    if method in Movie.__doc__ or hasattr(Movie, method):
-        try:
-            movies = plex.Library.search(**{method: value})
-        except PlexExceptions.BadRequest:
-            # If last character is "s" remove it and try again
-            if method[-1:] == "s":
-                movies = plex.Library.search(**{method[:-1]: value})
-                movies = [m.ratingKey for m in movies if movies]
-    elif method in Show.__doc__ or hasattr(Show, method):
-        try:
-            shows = plex.Library.search(**{method: value})
-        except PlexExceptions.BadRequest as e:
-            print(e)
-    else:
-        if isinstance(plex.Library, MovieSection):
-            config = Config(config_path)
-            if method == "imdb_list":
-                if TMDB.valid:                  movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
-                else:                           print("| tmdb connection required")
-            elif method == "tmdb_list":
-                if TMDB.valid:                  movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
-                else:                           print("| tmdb connection required")
-            elif method == "trakt_list":
-                if TraktClient.valid:           movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
-                else:                           print("| trakt connection required")
-        elif isinstance(plex.Library, ShowSection):
-            if method == "trakt_list":
-                if TraktClient.valid:           shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
-                else:                           print("| trakt connection required")
+    missing = []
+    if (method == "trakt_list" or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
+        raise KeyError("| trakt connection required for {}",format(method))
+    if ("imdb" in method or "tmdb" in method) and not TMDB.valid:
+        raise KeyError("| tmdb connection required for {}",format(method))
+    if plex.library_type == "movie":
+        if (method in Movie.__doc__ or hasattr(Movie, method)):
+            try:
+                movies = plex.Library.search(**{method: value})
+            except PlexExceptions.BadRequest:
+                # If last character is "s" remove it and try again
+                if method[-1:] == "s":
+                    movies = plex.Library.search(**{method[:-1]: value})
+                    movies = [m.ratingKey for m in movies if movies]
+        else:
+            if "imdb" in method or "tmdb" in method and TMDB.valid:
+                if method == "imdb_list":                                       movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
+                elif method == "tmdb_list":                                     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, is_list=True)
+                elif method in ["tmdb_id", "tmdb_movie", "tmd_collection"]:     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
+            if method == "trakt_list" and TraktClient.valid:                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
+    elif plex.library_type == "show":
+        if (method in Show.__doc__ or hasattr(Show, method)):
+            try:
+                shows = plex.Library.search(**{method: value})
+            except PlexExceptions.BadRequest as e:
+                print(e)
+        else:
+            if TraktClient.valid:
+                if method == "tmdb_list" and TMDB.valid:                        shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, is_list=True)
+                elif method in ["tmdb_id", "tmdb_show"] and TMDB.valid:         shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value)
+                elif method == "tvdb_show":                                     shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
+                elif method == "trakt_list":                                    shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
 
     if movies:
         # Check if already in collection
@@ -156,7 +160,8 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             current_m = get_movie(plex, rk)
             current_m.reload()
             if current_m in fs:
-                print("| {} Collection already contains: {}".format(c, current_m.title))
+                print("| {} Collection | = | {}".format(c, current_m.title))
+                map[current_m.ratingKey] = None
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -186,10 +191,10 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                         match = False
                         break
                 if match:
-                    print("| +++ {} Collection: {}".format(c, current_m.title))
+                    print("| {} Collection | + | {}".format(c, current_m.title))
                     current_m.addCollection(c)
             elif not subfilters:
-                print("| +++ {} Collection: {}".format(c, current_m.title))
+                print("| {} Collection | + | {}".format(c, current_m.title))
                 current_m.addCollection(c)
     if shows:
         # Check if already in collection
@@ -202,7 +207,8 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
             current_s = get_item(plex, rk)
             current_s.reload()
             if current_s in fs:
-                print("| {} is already in collection: {}".format(current_s.title, c))
+                print("| {} Collection | = | {}".format(c, current_s.title))
+                map[current_s.ratingKey] = None
             elif subfilters:
                 match = True
                 for sf in subfilters:
@@ -233,17 +239,17 @@ def add_to_collection(config_path, plex, method, value, c, subfilters=None):
                         match = False
                         break
                 if match:
-                    print("| +++ Adding {} to collection {}".format(current_s.title, c))
+                    print("| {} Collection | + | {}".format(c, current_s.title))
                     current_s.addCollection(c)
             elif not subfilters:
-                print("| +++ Adding {} to collection: {}".format(current_s.title, c))
+                print("| {} Collection | + | {}".format(c, current_s.title))
                 current_s.addCollection(c)
     try:
         missing
     except UnboundLocalError:
         return
     else:
-        return missing
+        return missing, map
 
 def delete_collection(data):
     confirm = input("| {} selected. Confirm deletion (y/n):".format(data.title))

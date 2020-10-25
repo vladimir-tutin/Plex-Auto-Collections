@@ -23,6 +23,7 @@ from config_tools import TraktClient
 from config_tools import ImageServer
 from config_tools import modify_config
 from radarr_tools import add_to_radarr
+from urllib.parse import urlparse
 
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
@@ -35,62 +36,96 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     for c in collections:
         print("| \n|===================================================================================================|\n|")
         print("| Updating collection: {}...".format(c))
+        map = {}
+        sync_collection = True if plex.sync_mode == "sync" else False
+        if "sync_mode" in collections[c]:
+            if collections[c]["sync_mode"]:
+                if collections[c]["sync_mode"] == "append" or collections[c]["sync_mode"] == "sync":
+                    if collections[c]["sync_mode"] == "sync":           sync_collection = True
+                    else:                                               sync_collection = False
+                else:
+                    print("| Config Error: {} sync_mode Invalid\n| \tappend (Only Add Items to the Collection)\n| \tsync (Add & Remove Items from the Collection)".format(collections[c]["sync_mode"]))
+            else:
+                print("| Config Error: sync_mode attribute is blank")
+        if sync_collection == True:
+            print("| Sync Mode: sync")
+            plex_collection = get_collection(plex, c, headless)
+            if isinstance(plex_collection, Collections):
+                for item in plex_collection.children:
+                    map[item.ratingKey] = item
+        else:
+            print("| Sync Mode: append")
+
         tmdb_id = None
-        methods = [m for m in collections[c] if m not in ("subfilters", "sort_title", "content_rating", "summary", "tmdb_summary", "collection_mode", "collection_sort", "poster", "tmdb_poster", "file_poster", "background", "file_background", "system_name")]
+        methods = [m for m in collections[c] if m not in ("sync_mode","tmdb-list", "imdb-list", "trakt-list", "tmdb-poster", "details", "subfilters", "sort_title", "content_rating", "summary", "tmdb_summary", "collection_mode", "collection_sort", "poster", "tmdb_poster", "file_poster", "background", "file_background", "name_mapping")]
         subfilters = []
         if "subfilters" in collections[c]:
             for sf in collections[c]["subfilters"]:
                 sf_string = sf, collections[c]["subfilters"][sf]
                 subfilters.append(sf_string)
         for m in methods:
-            if collections[c][m]:
+            if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
+                print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
+            elif (m == "trakt_list" or ("tmdb" in m and plex.library_type == "show")) and not TraktClient.valid:
+                print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
+            elif collections[c][m]:
                 values = collections[c][m] if isinstance(collections[c][m], list) else str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
                 for v in values:
                     m_print = m[:-1] if m[-1:] == "s" else m
-                    print("| Processing {}: {}".format(m_print, v))
+                    print("| \n| Processing {}: {}".format(m_print, v))
                     if m == "actors" or m == "actor":       v = get_actor_rkey(plex, v)
-                    met = m
-                    if m == "tmdb_id":
-                        met = "tmdb_list"
-                        if not tmdb_id:      tmdb_id = v
-                        v = "https://www.themoviedb.org/collection/" + v
+                    try:                                    missing, map = add_to_collection(config_path, plex, m, v, c, map, subfilters)
+                    except UnboundLocalError:               missing, map = add_to_collection(config_path, plex, m, v, c, map)               # No sub-filters
+                    except (KeyError, ValueError) as e:
+                        print(e)
+                        missing = False
+                    if missing:
+                        if libtype == "movie":
+                            method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
+                            if m == "trakt_list" or m == "tmdb_list" or m == "imdb_list":
+                                print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            elif m == "tmdb_collection":
+                                print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            else:
+                                print("| {} ID: {} missing".format(method_name, v))
+                            if Radarr.valid:
+                                radarr = Radarr(config_path)
+                                if radarr.add_movie:
+                                    print("| Adding missing movies to Radarr")
+                                    add_to_radarr(config_path, missing)
+                                elif not headless and radarr.add_movie == None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                                    add_to_radarr(config_path, missing)
+                        elif libtype == "show":
+                            method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
+                            if m == "trakt_list" or m == "tmdb_list":
+                                print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            else:
+                                print("| {} ID: {} missing".format(method_name, v))
 
-                    check = True
-                    if (m == "tmdb_id" or m == "tmdb_list") and not TMDB.valid:
-                            print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
-                            check = False
-
-                    if check:
-                        try:                            missing = add_to_collection(config_path, plex, met, v, c, subfilters)
-                        except UnboundLocalError:       missing = add_to_collection(config_path, plex, met, v, c)               # No sub-filters
-                        except (KeyError, ValueError) as e:
-                            print(e)
-                            missing = False
-                        if missing:
-                            if libtype == "movie":
-                                method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                                print("| {} missing movies from {} List: {}".format(len(missing), method_name, v))
-                                if Radarr.valid:
-                                    radarr = Radarr(config_path)
-                                    if radarr.add_movie:
-                                        print("| Adding missing movies to Radarr")
-                                        add_to_radarr(config_path, missing)
-                                    elif not headless and radarr.add_movie == None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                                        add_to_radarr(config_path, missing)
-                            elif libtype == "show":
-                                method_name = "Trakt" if "trakt" in m else "TMDb"
-                                print("| {} missing shows from {} List: {}".format(len(missing), method_name, v))
-                                # if not skip_sonarr:
-                                #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
-                                #         add_to_radarr(missing_shows)
+                            # if not skip_sonarr:
+                            #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                            #         add_to_radarr(missing_shows)
             else:
                 print("| Config Error: {} attribute is blank".format(m))
+        print("| ")
+        if "tmdb-list" in collections[c]:                       print("| Config Error: Please change the attribute tmdb-list to tmdb_collection")
+        if "imdb-list" in collections[c]:                       print("| Config Error: Please change the attribute imdb-list to imdb_list")
+        if "trakt-list" in collections[c]:                      print("| Config Error: Please change the attribute trakt-list to trakt_list")
+        if "details" in collections[c]:                         print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
+        if "tmdb-poster" in collections[c]:                     print("| Config Error: Please change the attribute tmdb-poster to tmdb_poster")
+        if "subfilters" in collections[c] and collections[c]["subfilters"]:
+            if "video-resolution" in collections[c]["subfilters"]:      print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
+            if "audio-language" in collections[c]["subfilters"]:        print("| Config Error: Please change the subfilter attribute audio-language to audio_language")
+            if "subtitle-language" in collections[c]["subfilters"]:     print("| Config Error: Please change the subfilter attribute subtitle-language to subtitle_language")
 
         plex_collection = get_collection(plex, c, headless)
 
         if not isinstance(plex_collection, Collections): continue       # No collections created with requested criteria
 
-        item = plex.Server.fetchItem(plex_collection.ratingKey)
+        for ratingKey, item in map.items():
+            if item is not None:
+                print("| {} Collection | - | {}".format(c, item.title))
+                item.removeCollection(c)
 
         def get_summary (config_path, data, meta, prefix):
             for m in meta:
@@ -98,23 +133,23 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 except AttributeError:      pass
 
         if not no_meta:
-            def edit_value (item, name, group, key=None):
+            def edit_value (plex_collection, name, group, key=None):
                 if key == None:
                     key = name
                 if name in group:
                     if group[name]:
                         edits = {"{}.value".format(key): group[name], "{}.locked".format(key): 1}
-                        item.edit(**edits)
-                        item.reload()
+                        plex_collection.edit(**edits)
+                        plex_collection.reload()
                         print("| Detail: {} updated to {}".format(name, group[name]))
                     else:
                         print("| Config Error: {} attribute is blank".format(name))
 
             # Handle collection sort_title
-            edit_value(item, "sort_title", collections[c], key="titleSort")
+            edit_value(plex_collection, "sort_title", collections[c], key="titleSort")
 
             # Handle collection content_rating
-            edit_value(item, "content_rating", collections[c], key="contentRating")
+            edit_value(plex_collection, "content_rating", collections[c], key="contentRating")
 
             # Handle collection summary
             summary = None
@@ -132,8 +167,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
             if summary:
                 edits = {"summary.value": summary, "summary.locked": 1}
-                item.edit(**edits)
-                item.reload()
+                plex_collection.edit(**edits)
+                plex_collection.reload()
                 print('| Detail: summary updated to "{}"'.format(summary))
 
             # Handle collection collection_mode
@@ -143,7 +178,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     if collection_mode in ('default', 'hide', 'hide_items', 'show_items'):
                         if collection_mode == 'hide_items':              collection_mode = 'hideItems'
                         if collection_mode == 'show_items':              collection_mode = 'showItems'
-                        item.modeUpdate(mode=collection_mode)
+                        plex_collection.modeUpdate(mode=collection_mode)
                         print("| Detail: collection_mode updated to {}".format(collection_mode))
                     else:                                                   print("| Config Error: {} collection_mode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thide_items (Hide Items in this Collection)\n| \tshow_items (Show this Collection and its Items)".format(collection_mode))
                 else:                                                       print("| Config Error: collection_mode attribute is blank")
@@ -153,7 +188,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 if collections[c]["collection_sort"]:
                     collection_sort = collections[c]["collection_sort"]
                     if collection_sort in ('release', 'alpha'):
-                        item.sortUpdate(sort=collection_sort)
+                        plex_collection.sortUpdate(sort=collection_sort)
                         print("| Detail: collection_sort updated to {}".format(collection_sort))
                     else:                                                   print("| Config Error: {} collection_sort Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collection_sort))
                 else:                                                       print("| Config Error: collection_sort attribute is blank")
@@ -191,32 +226,32 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             # Handle Image Server
             image_server = ImageServer(config_path)
             if image_server.valid:
-                system_name = c
-                if "system_name" in collections[c]:
-                    if collections[c]["system_name"]:       system_name = collections[c]["system_name"]
-                    else:                                   print("| Config Error: system_name attribute is blank")
+                name_mapping = c
+                if "name_mapping" in collections[c]:
+                    if collections[c]["name_mapping"]:       name_mapping = collections[c]["name_mapping"]
+                    else:                                   print("| Config Error: name_mapping attribute is blank")
                 if image_server.poster:
-                    path = os.path.join(image_server.poster, "{}.*".format(system_name))
+                    path = os.path.join(image_server.poster, "{}.*".format(name_mapping))
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(posters_found) > 0:
                         for match in matches:       posters_found.append(["file", os.path.abspath(match)])
                     else:
                         print("| poster not found at: {}".format(os.path.abspath(path)))
                 if image_server.background:
-                    path = os.path.join(image_server.background, "{}.*".format(system_name))
+                    path = os.path.join(image_server.background, "{}.*".format(name_mapping))
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(backgrounds_found) > 0:
                         for match in matches:       backgrounds_found.append(["file", os.path.abspath(match)])
                     else:
                         print("| background not found at: {}".format(os.path.abspath(path)))
                 if image_server.image:
-                    path = os.path.join(image_server.image, "{}".format(system_name), "poster.*")
+                    path = os.path.join(image_server.image, "{}".format(name_mapping), "poster.*")
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(posters_found) > 0:
                         for match in matches:       posters_found.append(["file", os.path.abspath(match)])
                     else:
                         print("| poster not found at: {}".format(os.path.abspath(path)))
-                    path = os.path.join(image_server.image, "{}".format(system_name), "background.*")
+                    path = os.path.join(image_server.image, "{}".format(name_mapping), "background.*")
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(backgrounds_found) > 0:
                         for match in matches:       backgrounds_found.append(["file", os.path.abspath(match)])
@@ -249,14 +284,14 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
             # Update poster
             if poster:
-                if poster[0] == "url":          item.uploadPoster(url=poster[1])
-                else:                           item.uploadPoster(filepath=poster[1])
+                if poster[0] == "url":          plex_collection.uploadPoster(url=poster[1])
+                else:                           plex_collection.uploadPoster(filepath=poster[1])
                 print("| Detail: poster updated to [{}] {}".format(poster[0], poster[1]))
 
             # Update background
             if background:
-                if background[0] == "url":      item.uploadArt(url=background[1])
-                else:                           item.uploadArt(filepath=background[1])
+                if background[0] == "url":      plex_collection.uploadArt(url=background[1])
+                else:                           plex_collection.uploadArt(filepath=background[1])
                 print("| Detail: background updated to [{}] {}".format(background[0], background[1]))
 
 def append_collection(config_path, config_update=None):
@@ -358,7 +393,7 @@ def append_collection(config_path, config_update=None):
                                 method = "imdb_list"
                             elif l_type == "t":
                                 l_type = "TMDb"
-                                method = "tmdb_list"
+                                method = "tmdb_collection"
                             elif l_type == "k":
                                 l_type = "Trakt"
                                 method = "trakt_list"
@@ -446,7 +481,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-
+print("| Version 2.0.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
@@ -506,7 +541,7 @@ while not mode == "q":
         elif mode == "l":
             print("|\n|===================================================================================================|")
             l_type = input("| \n| Enter list type IMDb(i) TMDb(t) Trakt(k): ")
-            method_map = {"i": ("IMDb", "imdb_list"), "t": ("TMDb", "tmdb_list"), "k": ("Trakt", "trakt_list")}
+            method_map = {"i": ("IMDb", "imdb_list"), "t": ("TMDb", "tmdb_collection"), "k": ("Trakt", "trakt_list")}
             if (l_type in ("i", "t") and TMDB.valid) or (l_type == "k" and TraktClient.valid):
                 l_type, method = method_map[l_type]
                 url = input("| Enter {} List URL: ".format(l_type)).strip()
@@ -555,7 +590,7 @@ while not mode == "q":
             if not isinstance(collection, str):
                 delete_collection(collection)
             else:
-                print(collection)
+                print("| " + collection)
 
         elif mode == "s":
             print("|\n|===================================================================================================|")
