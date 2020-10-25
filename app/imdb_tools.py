@@ -1,6 +1,7 @@
 import re
 import requests
 import math
+import sys
 from urllib.parse import urlparse
 from lxml import html
 from tmdbv3api import TMDb
@@ -158,6 +159,44 @@ def tmdb_get_movies(config_path, plex, data, is_list=False):
         else:
             # Duplicate TMDb call?
             missing.append(t_movie.details(mid).imdb_id)
+
+    return matched, missing
+
+def get_tautulli(config_path, plex, data):
+    tautulli = config_tools.Tautulli(config_path)
+    type = config_tools.check_for_attribute(data, "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
+    time_range = config_tools.check_for_attribute(data, "list_days", parent="tautulli", type="int", default=30, save=False)
+    max = config_tools.check_for_attribute(data, "list_size", parent="tautulli", type="int", default=10, save=False)
+    buffer = config_tools.check_for_attribute(data, "list_buffer", parent="tautulli", type="int", default=20, save=False)
+    stats_count = max + buffer
+
+    response = requests.get("{}/api/v2?apikey={}&cmd=get_home_stats&time_range={}&stats_count={}".format(tautulli.url, tautulli.apikey, time_range, stats_count)).json()
+    stat_id = ("popular" if type == "popular" else "top") + "_" + ("movies" if plex.library_type == "movie" else "tv")
+
+    items = None
+    for entry in response['response']['data']:
+        if entry['stat_id'] == stat_id:
+            items = entry['rows']
+            break
+    if items is None:
+        sys.exit("| No Items found in the response")
+
+    section_id = None
+    response = requests.get("{}/api/v2?apikey={}&cmd=get_library_names".format(tautulli.url, tautulli.apikey)).json()
+    for entry in response['response']['data']:
+        if entry['section_name'] == plex.library:
+            section_id = entry['section_id']
+            break
+    if section_id is None:
+        sys.exit("| No Library named {} in the response".format(plex.library))
+
+    matched = []
+    missing = []
+    count = 0
+    for item in items:
+        if item['section_id'] == section_id and count < max:
+            matched.append(plex.Library.fetchItem(item['rating_key']))
+            count = count + 1
 
     return matched, missing
 

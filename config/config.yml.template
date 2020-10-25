@@ -5,17 +5,21 @@ collections:
     poster: https://i.imgur.com/QMjbyCX.png
   1080p Documentaries:
     genres: Documentary
+    collection_mode: show_items
     subfilters:
       video_resolution: 1080
     summary: A collection of 1080p Documentaries
   IMDb Top 250:
     imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
     sync_mode: sync
+    collection_mode: show_items
   Dave Chappelle:
     actors: Dave Chappelle
+    collection_mode: show_items
     tmdb_summary: 4169
   Marvel:
     trakt_list: https://trakt.tv/users/movistapp/lists/marvel
+    collection_mode: show_items
   Pixar:
     studio: Pixar
     summary: A collection of Pixar movies
@@ -31,6 +35,13 @@ collections:
     name_mapping: 28 Days-Weeks Later
   Anaconda:
     tmdb_id: 105995, 336560
+  Most Popular Movies (30 Days):
+    sync_mode: sync
+    collection_mode: show_items
+    tautulli:
+      list_type: popular
+      list_days: 30
+      list_size: 10
 plex:
   library: Movies
   library_type: ### 'movie' or 'show' ###
@@ -47,6 +58,9 @@ radarr:
 tmdb:
   apikey: ############################
   language: en
+tautulli:
+  url: http://192.168.1.5:8181
+  apikey: ############################
 trakt:
   client_id: ############################
   client_secret: ############################

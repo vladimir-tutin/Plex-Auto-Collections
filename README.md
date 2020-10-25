@@ -19,6 +19,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
           - [TVDb Show (List Type)](#tvdb-show-list-type)
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
+          - [Tautulli List (List Type)](#tautulli-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
       - [Sync Mode (Collection Attribute)](#sync-mode-collection-attribute)
       - [Sort Title (Collection Attribute)](#sort-title-collection-attribute)
@@ -33,9 +34,10 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
   3. [Image Server](#image-server)
       - [Poster and/or Background Directory](#poster-andor-background-directory)
       - [Image Directory](#image-directory)
-  4. [TMDb](#tmdb)
-  5. [Trakt](#trakt)
-  6. [Radarr](#radarr)
+  4. [Tautulli](#tautulli)
+  5. [TMDb](#tmdb)
+  6. [Trakt](#trakt)
+  7. [Radarr](#radarr)
 3. [Version 2.0.0 Changes](#version-200-changes)
 4. [Acknowledgements](#acknowledgements)
 
@@ -350,6 +352,44 @@ collections:
     trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
 ```
 
+#### Tautulli List (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+Tautulli has watch analytics that can show the most watched or most popular Movies/Shows in your Library. This script can easily leverage that data into making and sync collection based on those lists using the `tautulli` attribute. Unlike other lists this one has subattribute options:
+
+```yaml
+tautulli:
+    list_type: popular                        # Req - `watched` (For Most Watched Lists) or `popular` (For Most Popular Lists)
+    list_days: 30                             # Opt - Number of Days to look back of the list defaults to 30
+    list_size: 10                             # Opt - Number of Movies/Shows to add to this list defaults to 10
+    list_buffer: 10                           # Opt - Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries defaults to 10
+```
+
+```yaml
+collections:
+  Most Popular Movies (30 Days):
+    sync_mode: sync
+    collection_mode: show_items
+    tautulli:
+      list_type: popular
+      list_days: 30
+      list_size: 10
+```
+```yaml
+collections:
+  Most Watched Movies (30 Days):
+    sync_mode: sync
+    collection_mode: show_items
+    tautulli:
+      list_type: watched
+      list_days: 30
+      list_size: 10
+```
+
+Note that if you have multiple movie Libraries or multiple show Libraries Tautulli combines those in the popular/watched lists so there might not be 10 movies/shows from the library to make your `list_size`. In order to get around that we added a `list_buffer` attribute that defaults to 10. This will get that many more movies from Tautulli but only add to the collection until the number in `list_size`. So if your collection doesn't have as many movies/shows as your `list_size` attribute increase the number in the `list_buffer` attribute.
+
+
 ### Subfilters (Collection Attribute)
 
 ###### Works with Movie and TV Show Libraries
@@ -641,6 +681,18 @@ image_server:                                 # Opt
 ```
 
 Note: these can be used together if you want, the script will just ask you which one you want if there are multiple matching images.
+
+## Tautulli
+
+If using Tautulli lists, be sure to include your Tautulli URL and API key.
+
+```yaml
+tautulli:                                     # Opt
+    url: http://192.168.1.1:8181              # Req - URL to access Tautulli
+    apikey: #####                             # Req - User's Tautulli API key
+```
+
+The `apikey` can be found by going to `Tautulli > Settings > Web Interface > API > API Key`
 
 ## TMDb
 
