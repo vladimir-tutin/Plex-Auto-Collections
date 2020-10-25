@@ -82,7 +82,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     if missing:
                         if libtype == "movie":
                             method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                            if m == "tmdb_list" or m == "tmdb_list" or m == "imdb_list":
+                            if m == "trakt_list" or m == "tmdb_list" or m == "imdb_list":
                                 print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                             elif m == "tmdb_collection":
                                 print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
