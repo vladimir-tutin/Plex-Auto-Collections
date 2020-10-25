@@ -81,7 +81,7 @@ class Config:
             print("| Connecting to Plex...")
             Plex(config_path)
             self.collections = check_for_attribute(self.data, "collections", default={})
-            print("| Plex Connection Scuccessful")
+            print("| Plex Connection Successful")
             print("|===================================================================================================|")
             if "tmdb" in self.data:
                 TMDB(config_path)
@@ -199,7 +199,7 @@ class Radarr:
                         raise
                     except:
                         sys.exit("| Could not connect to Radarr at {}".format(self.url))
-                print("| Radarr Connection {}".format("Scuccessful" if Radarr.valid else "Failed"))
+                print("| Radarr Connection {}".format("Successful" if Radarr.valid else "Failed"))
             else:
                 print("| TMDb must be connected to use Radarr")
                 Radarr.valid = False
@@ -234,7 +234,7 @@ class TMDB:
                 except AttributeError:
                     print("| Config Error: Invalid apikey")
                     TMDB.valid = False
-            print("| TMDb Connection {}".format("Scuccessful" if TMDB.valid else "Failed"))
+            print("| TMDb Connection {}".format("Successful" if TMDB.valid else "Failed"))
 
 
 class TraktClient:
@@ -291,7 +291,7 @@ class TraktClient:
                         except SystemExit as e:
                             print(e)
                             TraktClient.valid = False
-            print("| Trakt Connection {}".format("Scuccessful" if TraktClient.valid else "Failed"))
+            print("| Trakt Connection {}".format("Successful" if TraktClient.valid else "Failed"))
 
 
 class ImageServer:
