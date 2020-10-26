@@ -622,13 +622,13 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 if args.config_path and os.path.exists(args.config_path):
-    config_path = os.path.abspath(args.config_path)                                         # Set config_path from command line switch
+    config_path = os.path.abspath(args.config_path)    # Set config_path from command line switch
 elif args.config_path and not os.path.exists(args.config_path):
     sys.exit("| Config Error: config not found at {}".format(os.path.abspath(args.config_path)))
 elif os.path.exists(os.path.join(app_dir, "config.yml")):
-    config_path = os.path.abspath(os.path.join(app_dir, "config.yml"))                      # Set config_path from app_dir
+    config_path = os.path.abspath(os.path.join(app_dir, "config.yml"))    # Set config_path from app_dir
 elif os.path.exists(os.path.join(app_dir, "..", "config", "config.yml")):
-    config_path = os.path.abspath(os.path.join(app_dir, "..", "config", "config.yml"))      # Set config_path from config_dir
+    config_path = os.path.abspath(os.path.join(app_dir, "..", "config", "config.yml"))    # Set config_path from config_dir
 else:
     sys.exit("| Config Error: No config found, exiting")
 

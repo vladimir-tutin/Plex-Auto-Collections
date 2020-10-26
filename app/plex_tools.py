@@ -148,7 +148,10 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
             try:
                 shows = plex.Library.search(**{method: value})
             except PlexExceptions.BadRequest as e:
-                print(e)
+                # If last character is "s" remove it and try again
+                if method[-1:] == "s":
+                    shows = plex.Library.search(**{method[:-1]: value})
+                    shows = [s.ratingKey for s in shows if shows]
         else:
             if method == "tmdb_list" and TMDB.valid and TraktClient.valid:
                 shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, is_list=True)
