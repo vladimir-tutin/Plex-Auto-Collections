@@ -91,7 +91,7 @@ def tmdb_get_movies(config_path, plex, data, is_list=False):
         tmdb_id = re.search('.*?(\\d+)', data)
         tmdb_id = tmdb_id.group(1)
     except AttributeError:  # Bad URL Provided
-        return
+        raise ValueError("| Config Error: TMDb: {} is invalid".format(data))
     t_movs = []
     t_movie = Movie()
     t_movie.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
@@ -306,37 +306,50 @@ def tvdb_get_shows(config_path, plex, data, is_list=False):
 
 def tmdb_get_summary(config_path, data, type):
     # Instantiate TMDB objects
-    collection = Collection()
-    collection.api_key = config_tools.TMDB(config_path).apikey
-    collection.language = config_tools.TMDB(config_path).language
+    try:
+        id = re.search('.*?(\\d+)', data).group(1)
+    except AttributeError:
+        raise ValueError("| Config Error: TMBd ID: {} is invalid it must be a number".format(data))
+    api_key = config_tools.TMDB(config_path).apikey
+    language = config_tools.TMDB(config_path).language
+    is_movie = config_tools.Plex(config_path).library_type == "movie"
 
-    media = Movie() if config_tools.Plex(config_path).library_type == "movie" else TV()
-    media.api_key = config_tools.TMDB(config_path).apikey
-    media.language = config_tools.TMDB(config_path).language
-
-    person = Person()
-    person.api_key = collection.api_key
-    person.language = collection.language
-
-    # Return object based on type
-    if type == "overview":
+    if type in ["overview", "poster_path", "backdrop_path"]:
+        collection = Collection()
+        collection.api_key = api_key
+        collection.language = language
         try:
-            return collection.details(data).overview
-        except:
-            return media.details(data).overview
-    elif type == "biography":
-        return person.details(data).biography
-    elif type == "poster_path":
+            if type == "overview":
+                return collection.details(id).overview
+            elif type == "poster_path":
+                return collection.details(id).poster_path
+            elif type == "backdrop_path":
+                return collection.details(id).backdrop_path
+        except AttributeError:
+            media = Movie() if is_movie else TV()
+            media.api_key = api_key
+            media.language = language
+            try:
+                if type == "overview":
+                    return media.details(id).overview
+                elif type == "poster_path":
+                    return media.details(id).poster_path
+                elif type == "backdrop_path":
+                    return media.details(id).backdrop_path
+            except AttributeError:
+                raise ValueError("| Config Error: TMBd {} ID: {} not found".format("Movie/Collection" if is_movie else "Show", id))
+    elif type in ["biography", "profile_path", "name"]:
+        person = Person()
+        person.api_key = api_key
+        person.language = language
         try:
-            return collection.details(data).poster_path
-        except:
-            return media.details(data).poster_path
-    elif type == "profile_path":
-        return person.details(data).profile_path
-    elif type == "backdrop_path":
-        try:
-            return collection.details(data).backdrop_path
-        except:
-            return media.details(data).backdrop_path
+            if type == "biography":
+                return person.details(id).biography
+            elif type == "profile_path":
+                return person.details(id).profile_path
+            elif type == "name":
+                return person.details(id).name
+        except AttributeError:
+            raise ValueError("| Config Error: TMBd Actor ID: {} not found".format(id))
     else:
-        raise RuntimeError("type not yet supported in tmdb_get_summary")
+        raise RuntimeError("type {} not yet supported in tmdb_get_summary".format(type))

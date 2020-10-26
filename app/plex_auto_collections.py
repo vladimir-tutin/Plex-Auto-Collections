@@ -19,6 +19,7 @@ from config_tools import Config
 from config_tools import Plex
 from config_tools import Radarr
 from config_tools import TMDB
+from config_tools import Tautulli
 from config_tools import TraktClient
 from config_tools import ImageServer
 from config_tools import modify_config
@@ -61,7 +62,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             print("| Sync Mode: append")
 
         tmdb_id = None
-        methods = [m for m in collections[c] if m not in ("sync_mode","tmdb-list", "imdb-list", "trakt-list", "tmdb-poster", "details", "subfilters", "sort_title", "content_rating", "summary", "tmdb_summary", "collection_mode", "collection_sort", "poster", "tmdb_poster", "file_poster", "background", "file_background", "name_mapping")]
+        actor_id = None
+        methods = [m for m in collections[c] if m not in ("tmdb_biography", "tmdb_profile", "sync_mode", "tmdb-list", "imdb-list", "trakt-list", "tmdb-poster", "details", "subfilters", "sort_title", "content_rating", "summary", "tmdb_summary", "collection_mode", "collection_sort", "poster", "tmdb_poster", "file_poster", "background", "file_background", "name_mapping")]
         subfilters = []
         if "subfilters" in collections[c]:
             for sf in collections[c]["subfilters"]:
@@ -72,49 +74,83 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
             elif (m == "trakt_list" or ("tmdb" in m and plex.library_type == "show")) and not TraktClient.valid:
                 print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
+            elif m == "tautulli" and not Tautulli.valid:
+                print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
             elif collections[c][m]:
-                values = collections[c][m] if isinstance(collections[c][m], list) else str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
+                if m == "tautulli":
+                    values = [collections[c][m]]
+                elif isinstance(collections[c][m], list):
+                    values = collections[c][m]
+                else:
+                    values = str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
                 for v in values:
+                    add = True
                     m_print = m[:-1] if m[-1:] == "s" else m
-                    print("| \n| Processing {}: {}".format(m_print, v))
-                    if m == "actors" or m == "actor":
-                        v = get_actor_rkey(plex, v)
+                    v_print = v
+                    if m == "tmdb_id" and tmdb_id is None:
+                        try:
+                            tmdb_id = re.search('.*?(\\d+)', v).group(1)
+                        except AttributeError:
+                            print("| Config Error: TMDb ID: {} is invalid".format(v))
+                            add = False
                     try:
-                        missing, map = add_to_collection(config_path, plex, m, v, c, map, subfilters)
-                    except UnboundLocalError:
-                        missing, map = add_to_collection(config_path, plex, m, v, c, map)               # No sub-filters
-                    except (KeyError, ValueError) as e:
+                        if m == "tmdb_actor":
+                            name = tmdb_get_summary(config_path, v, "name")
+                            if actor_id is None:
+                                actor_id = v
+                            v = name
+                            m = "actors"
+                            v_print = v_print + " " + v
+                        if m == "actors" or m == "actor":
+                            v = get_actor_rkey(plex, v)
+                    except ValueError as e:
                         print(e)
-                        missing = False
-                    if missing:
-                        if libtype == "movie":
-                            method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                            if m == "trakt_list" or m == "tmdb_list" or m == "imdb_list":
-                                print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                            elif m == "tmdb_collection":
-                                print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                            else:
-                                print("| {} ID: {} missing".format(method_name, v))
-                            if Radarr.valid:
-                                radarr = Radarr(config_path)
-                                if radarr.add_movie:
-                                    print("| Adding missing movies to Radarr")
-                                    add_to_radarr(config_path, missing)
-                                elif not headless and radarr.add_movie == None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                                    add_to_radarr(config_path, missing)
-                        elif libtype == "show":
-                            method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
-                            if m == "trakt_list" or m == "tmdb_list":
-                                print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                            else:
-                                print("| {} ID: {} missing".format(method_name, v))
+                        add = False
+                    print("| \n| Processing {}: {}".format(m_print, v_print))
+                    if add:
+                        try:
+                            missing, map = add_to_collection(config_path, plex, m, v, c, map, subfilters)
+                        except UnboundLocalError:
+                            missing, map = add_to_collection(config_path, plex, m, v, c, map)               # No sub-filters
+                        except (KeyError, ValueError, SystemExit) as e:
+                            print(e)
+                            missing = False
+                        if missing:
+                            if libtype == "movie":
+                                method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
+                                if m == "trakt_list" or m == "tmdb_list" or m == "imdb_list":
+                                    print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                                elif m == "tmdb_collection":
+                                    print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                                else:
+                                    print("| {} ID: {} missing".format(method_name, v))
+                                if Radarr.valid:
+                                    radarr = Radarr(config_path)
+                                    if radarr.add_movie:
+                                        print("| Adding missing movies to Radarr")
+                                        add_to_radarr(config_path, missing)
+                                    elif not headless and radarr.add_movie is None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                                        add_to_radarr(config_path, missing)
+                            elif libtype == "show":
+                                method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
+                                if m == "trakt_list" or m == "tmdb_list":
+                                    print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                                else:
+                                    print("| {} ID: {} missing".format(method_name, v))
 
-                            # if not skip_sonarr:
-                            #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
-                            #         add_to_radarr(missing_shows)
+                                # if not skip_sonarr:
+                                #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                                #         add_to_radarr(missing_shows)
             else:
                 print("| Config Error: {} attribute is blank".format(m))
+
+        for ratingKey, item in map.items():
+            if item is not None:
+                print("| {} Collection | - | {}".format(c, item.title))
+                item.removeCollection(c)
+
         print("| ")
+
         if "tmdb-list" in collections[c]:
             print("| Config Error: Please change the attribute tmdb-list to tmdb_collection")
         if "imdb-list" in collections[c]:
@@ -138,21 +174,9 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         if not isinstance(plex_collection, Collections):
             continue       # No collections created with requested criteria
 
-        for ratingKey, item in map.items():
-            if item is not None:
-                print("| {} Collection | - | {}".format(c, item.title))
-                item.removeCollection(c)
-
-        def get_summary (config_path, data, meta, prefix):
-            for m in meta:
-                try:
-                    return prefix + tmdb_get_summary(config_path, data, m)
-                except AttributeError:
-                    pass
-
         if not no_meta:
             def edit_value (plex_collection, name, group, key=None):
-                if key == None:
+                if key is None:
                     key = name
                 if name in group:
                     if group[name]:
@@ -179,14 +203,35 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             elif "tmdb_summary" in collections[c]:
                 if TMDB.valid:
                     if collections[c]["tmdb_summary"]:
-                        summary = get_summary(config_path, collections[c]["tmdb_summary"], ["overview", "biography"], "")
+                        try:
+                            summary = tmdb_get_summary(config_path, collections[c]["tmdb_summary"], "overview")
+                        except ValueError as e:
+                            print(e)
                     else:
                         print("| Config Error: tmdb_summary attribute is blank")
                 else:
                     print("| Config Error: tmdb_summary skipped. tmdb incorrectly configured")
-
-            if not summary and "tmdb_id" in collections[c] and TMDB.valid:
-                summary = get_summary(config_path, tmdb_id, ["overview", "biography"], "")
+            elif "tmdb_biography" in collections[c]:
+                if TMDB.valid:
+                    if collections[c]["tmdb_biography"]:
+                        try:
+                            summary = tmdb_get_summary(config_path, collections[c]["tmdb_biography"], "biography")
+                        except ValueError as e:
+                            print(e)
+                    else:
+                        print("| Config Error: tmdb_biography attribute is blank")
+                else:
+                    print("| Config Error: tmdb_biography skipped. tmdb incorrectly configured")
+            elif actor_id and TMDB.valid:
+                try:
+                    summary = tmdb_get_summary(config_path, actor_id, "biography")
+                except ValueError as e:
+                    pass
+            elif tmdb_id and TMDB.valid:
+                try:
+                    summary = tmdb_get_summary(config_path, tmdb_id, "overview")
+                except ValueError as e:
+                    pass
 
             if summary:
                 edits = {"summary.value": summary, "summary.locked": 1}
@@ -222,6 +267,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 else:
                     print("| Config Error: collection_sort attribute is blank")
 
+        tmdb_url_prefix = "https://image.tmdb.org/t/p/original"
         if not no_images:
             posters_found = []
             backgrounds_found = []
@@ -234,11 +280,25 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             if "tmdb_poster" in collections[c]:
                 if TMDB.valid:
                     if collections[c]["tmdb_poster"]:
-                        posters_found.append(["url", get_summary(config_path, collections[c]["tmdb_poster"], ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original")])
+                        try:
+                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_poster"], "poster_path")])
+                        except ValueError as e:
+                            print(e)
                     else:
                         print("| Config Error: tmdb_poster attribute is blank")
                 else:
                     print("| Config Error: tmdb_poster skipped. tmdb incorrectly configured")
+            if "tmdb_profile" in collections[c]:
+                if TMDB.valid:
+                    if collections[c]["tmdb_profile"]:
+                        try:
+                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_profile"], "profile_path")])
+                        except ValueError as e:
+                            print(e)
+                    else:
+                        print("| Config Error: tmdb_profile attribute is blank")
+                else:
+                    print("| Config Error: tmdb_profile skipped. tmdb incorrectly configured")
             if "file_poster" in collections[c]:
                 if collections[c]["file_poster"]:
                     posters_found.append(["file", collections[c]["file_poster"]])
@@ -254,7 +314,10 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             if "tmdb_background" in collections[c]:
                 if TMDB.valid:
                     if collections[c]["tmdb_background"]:
-                        posters_found.append(["url", get_summary(config_path, collections[c]["tmdb_background"], ["backdrop_path"], "https://image.tmdb.org/t/p/original")])
+                        try:
+                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_background"], "backdrop_path")])
+                        except ValueError as e:
+                            print(e)
                     else:
                         print("| Config Error: tmdb_background attribute is blank")
                 else:
@@ -332,10 +395,19 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             background = choose_from_list("background", backgrounds_found, headless)
 
             # Special case fall back for tmdb_id tag if no other poster or background is found
-            if not poster and "tmdb_id" in collections[c] and TMDB.valid:
-                poster = ["url", str(get_summary(config_path, tmdb_id, ["poster_path", "profile_path"], "https://image.tmdb.org/t/p/original/"))]
-            if not background and "tmdb_id" in collections[c] and TMDB.valid:
-                background = ["url", str(get_summary(config_path, tmdb_id, ["backdrop_path"], "https://image.tmdb.org/t/p/original/"))]
+            if not poster and TMDB.valid:
+                try:
+                    if actor_id:
+                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, actor_id, "profile_path")]
+                    elif tmdb_id:
+                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "poster_path")]
+                except ValueError as e:
+                    pass
+            if not background and TMDB.valid and tmdb_id:
+                try:
+                    background = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "backdrop_path")]
+                except ValueError as e:
+                    pass
 
             # Update poster
             if poster:
@@ -439,11 +511,14 @@ def append_collection(config_path, config_update=None):
                         elif method == "a":
                             method = "actors"
                             value = input("| Enter Actor Name: ")
-                            a_rkey = get_actor_rkey(plex, value)
-                            if config_update:
-                                modify_config(config_path, collection_name, method, value)
-                            else:
-                                add_to_collection(config_path, plex, method, a_rkey, selected_collection.title)
+                            try:
+                                a_rkey = get_actor_rkey(plex, value)
+                                if config_update:
+                                    modify_config(config_path, collection_name, method, value)
+                                else:
+                                    add_to_collection(config_path, plex, method, a_rkey, selected_collection.title)
+                            except ValueError as e:
+                                print(e)
 
                         elif method == "l":
                             l_type = input("| Enter list type IMDb(i) TMDb(t) Trakt(k): ")
@@ -540,18 +615,18 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.0.0")
+print("| Version 2.1.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 if args.config_path and os.path.exists(args.config_path):
-    config_path = os.path.abspath(args.config_path)    # Set config_path from command line switch
+    config_path = os.path.abspath(args.config_path)                                         # Set config_path from command line switch
 elif args.config_path and not os.path.exists(args.config_path):
     sys.exit("| Config Error: config not found at {}".format(os.path.abspath(args.config_path)))
 elif os.path.exists(os.path.join(app_dir, "config.yml")):
-    config_path = os.path.abspath(os.path.join(app_dir, "config.yml"))    # Set config_path from app_dir
+    config_path = os.path.abspath(os.path.join(app_dir, "config.yml"))                      # Set config_path from app_dir
 elif os.path.exists(os.path.join(app_dir, "..", "config", "config.yml")):
     config_path = os.path.abspath(os.path.join(app_dir, "..", "config", "config.yml"))      # Set config_path from config_dir
 else:
@@ -595,12 +670,12 @@ while not mode == "q":
         elif mode == "a":
             print("|\n|===================================================================================================|")
             actor = input("| \n| Enter actor name: ")
-            a_rkey = get_actor_rkey(plex, actor)
-            if isinstance(a_rkey, int):
+            try:
+                a_rkey = get_actor_rkey(plex, actor)
                 c_name = input("| Enter collection name: ")
                 add_to_collection(config_path, plex, "actors", a_rkey, c_name)
-            else:
-                print("| Invalid actor")
+            except ValueError as e:
+                print(e)
 
         elif mode == "l":
             print("|\n|===================================================================================================|")
