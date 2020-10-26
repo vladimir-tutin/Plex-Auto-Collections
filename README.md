@@ -359,13 +359,11 @@ collections:
 
 Tautulli has watch analytics that can show the most watched or most popular Movies/Shows in your Library. This script can easily leverage that data into making and sync collection based on those lists using the `tautulli` attribute. Unlike other lists this one has subattribute options:
 
-```yaml
-tautulli:
-    list_type: popular    # Req - watched (For Most Watched Lists) or popular (For Most Popular Lists)
-    list_days: 30         # Opt - Number of Days to look back of the list defaults to 30
-    list_size: 10         # Opt - Number of Movies/Shows to add to this list defaults to 10
-    list_buffer: 10       # Opt - Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries defaults to 10
-```
+- list_type: popular    # Req - watched (For Most Watched Lists) or popular (For Most Popular Lists)
+- list_days: 30         # Opt - Number of Days to look back of the list defaults to 30
+- list_size: 10         # Opt - Number of Movies/Shows to add to this list defaults to 10
+- list_buffer: 10       # Opt - Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries defaults to 10
+
 
 ```yaml
 collections:
