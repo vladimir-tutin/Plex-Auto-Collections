@@ -359,10 +359,10 @@ collections:
 
 Tautulli has watch analytics that can show the most watched or most popular Movies/Shows in your Library. This script can easily leverage that data into making and sync collection based on those lists using the `tautulli` attribute. Unlike other lists this one has subattribute options:
 
-- list_type: popular    # Req - watched (For Most Watched Lists) or popular (For Most Popular Lists)
-- list_days: 30         # Opt - Number of Days to look back of the list defaults to 30
-- list_size: 10         # Opt - Number of Movies/Shows to add to this list defaults to 10
-- list_buffer: 10       # Opt - Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries defaults to 10
+- `list_type`: watched (For Most Watched Lists) or popular (For Most Popular Lists) (Required)
+- `list_days`: Number of Days to look back of the list defaults to 30 (Optional)
+- `list_size`: Number of Movies/Shows to add to this list defaults to 10 (Optional)
+- `list_buffer`: Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries defaults to 10 (Optional)
 
 
 ```yaml
@@ -384,6 +384,7 @@ collections:
       list_type: watched
       list_days: 30
       list_size: 10
+      list_buffer: 10
 ```
 
 Note that if you have multiple movie Libraries or multiple show Libraries Tautulli combines those in the popular/watched lists so there might not be 10 movies/shows from the library to make your `list_size`. In order to get around that we added a `list_buffer` attribute that defaults to 10. This will get that many more movies from Tautulli but only add to the collection until the number in `list_size`. So if your collection doesn't have as many movies/shows as your `list_size` attribute increase the number in the `list_buffer` attribute.
