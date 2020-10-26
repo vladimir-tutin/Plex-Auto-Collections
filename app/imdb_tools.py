@@ -206,9 +206,12 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
     for item in plex.Library.all():
         guid = urlparse(item.guid)
         item_type = guid.scheme.split('.')[-1]
-        if item_type == 'thetvdb':                  tvdb_id = guid.netloc
-        elif item_type == 'themoviedb':             tvdb_id = get_tvdb_id_from_tmdb_id(guid.netloc)
-        else:                                       tvdb_id = None
+        if item_type == 'thetvdb':
+            tvdb_id = guid.netloc
+        elif item_type == 'themoviedb':
+            tvdb_id = get_tvdb_id_from_tmdb_id(guid.netloc)
+        else:
+            tvdb_id = None
         p_tv_map[item] = tvdb_id
 
     matched = []
@@ -238,9 +241,12 @@ def tvdb_get_shows(config_path, plex, data, is_list=False):
     for item in plex.Library.all():
         guid = urlparse(item.guid)
         item_type = guid.scheme.split('.')[-1]
-        if item_type == 'thetvdb':                                  tvdb_id = guid.netloc
-        elif item_type == 'themoviedb' and TraktClient.valid:       tvdb_id = get_tvdb_id_from_tmdb_id(guid.netloc)
-        else:                                                       tvdb_id = None
+        if item_type == 'thetvdb':
+            tvdb_id = guid.netloc
+        elif item_type == 'themoviedb' and TraktClient.valid:
+            tvdb_id = get_tvdb_id_from_tmdb_id(guid.netloc)
+        else:
+            tvdb_id = None
         p_tv_map[item] = tvdb_id
 
     matched = []
@@ -274,14 +280,23 @@ def tmdb_get_summary(config_path, data, type):
 
     # Return object based on type
     if type == "overview":
-        try:                            return collection.details(data).overview
-        except:                         return media.details(data).overview
-    elif type == "biography":       return person.details(data).biography
+        try:
+            return collection.details(data).overview
+        except:
+            return media.details(data).overview
+    elif type == "biography":
+        return person.details(data).biography
     elif type == "poster_path":
-        try:                            return collection.details(data).poster_path
-        except:                         return media.details(data).poster_path
-    elif type == "profile_path":    return person.details(data).profile_path
+        try:
+            return collection.details(data).poster_path
+        except:
+            return media.details(data).poster_path
+    elif type == "profile_path":
+        return person.details(data).profile_path
     elif type == "backdrop_path":
-        try:                            return collection.details(data).backdrop_path
-        except:                         return media.details(data).backdrop_path
-    else: raise RuntimeError("type not yet supported in tmdb_get_summary")
+        try:
+            return collection.details(data).backdrop_path
+        except:
+            return media.details(data).backdrop_path
+    else:
+        raise RuntimeError("type not yet supported in tmdb_get_summary")
