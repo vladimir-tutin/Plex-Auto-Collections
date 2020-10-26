@@ -73,7 +73,7 @@ def get_actor_rkey(plex, data):
                 actor_id = movie_actor_id
         return int(actor_id)
     except UnboundLocalError:
-        return "Actor: " + search + " not found"
+        raise ValueError("| Config Error: Actor: {} not found".format(search))
 
 def get_all_items(plex):
     return plex.Library.all()

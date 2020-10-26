@@ -13,10 +13,14 @@ collections:
     imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
     sync_mode: sync
     collection_mode: show_items
+  Robin Williams:
+    tvdb_actor: 2157
+    collection_mode: show_items
   Dave Chappelle:
     actors: Dave Chappelle
+    tmdb_biography: 4169
+    tmdb_profile: 4169
     collection_mode: show_items
-    tmdb_summary: 4169
   Marvel:
     trakt_list: https://trakt.tv/users/movistapp/lists/marvel
     collection_mode: show_items
