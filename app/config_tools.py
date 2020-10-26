@@ -17,7 +17,7 @@ import trakt_helpers
 import trakt
 
 
-def check_for_attribute(config, attribute, parent=None, test_list=None, options="", default=None, do_print=True, default_is_none=False, type="str", throw=False, save=True):
+def check_for_attribute(config, attribute, parent=None, test_list=None, options="", default=None, do_print=True, default_is_none=False, var_type="str", throw=False, save=True):
     message = ""
     endline = ""
     text = "{} attribute".format(attribute) if parent is None else "{} sub-attribute {}".format(parent, attribute)
@@ -39,12 +39,12 @@ def check_for_attribute(config, attribute, parent=None, test_list=None, options=
             ruamel.yaml.round_trip_dump(new_config, open(Config.config_path, 'w'), indent=ind, block_seq_indent=bsi)
     elif not config[attribute] and config[attribute] != False:
         message = "| Config Error: {} is blank".format(text)
-    elif type == "bool":
+    elif var_type == "bool":
         if isinstance(config[attribute], bool):
             return config[attribute]
         else:
             message = "| Config Error: {} must be either true or false".format(text)
-    elif type == "int":
+    elif var_type == "int":
         if isinstance(config[attribute], int) and config[attribute] > 0:
             return config[attribute]
         else:
@@ -186,10 +186,10 @@ class Radarr:
             self.url = check_for_attribute(config, "url", parent="radarr")
             self.version = check_for_attribute(config, "version", parent="radarr", test_list=["v2", "v3"], default="v2", do_print=False)
             self.token = check_for_attribute(config, "token", parent="radarr")
-            self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", type="int")
+            self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", var_type="int")
             self.root_folder_path = check_for_attribute(config, "root_folder_path", parent="radarr")
-            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", type="bool", default_is_none=True, do_print=False)
-            self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", type="bool", default=False, do_print=False)
+            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", var_type="bool", default_is_none=True, do_print=False)
+            self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", var_type="bool", default=False, do_print=False)
         elif Radarr.valid is None:
             if TMDB.valid:
                 print("| Connecting to Radarr...")
@@ -208,7 +208,7 @@ class Radarr:
                 except SystemExit as e:
                     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:
-                    self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", type="int", throw=True)
+                    self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", var_type="int", throw=True)
                 except SystemExit as e:
                     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:
@@ -216,11 +216,11 @@ class Radarr:
                 except SystemExit as e:
                     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:
-                    self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", type="bool", default_is_none=True, throw=True)
+                    self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", var_type="bool", default_is_none=True, throw=True)
                 except SystemExit as e:
                     message = message + "\n" + str(e) if len(message) > 0 else str(e)
                 try:
-                    self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| \ttrue (Have Radarr seach the added movies)\n| \tfalse (Do not have Radarr seach the added movies)", type="bool", default=False, throw=True)
+                    self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| \ttrue (Have Radarr seach the added movies)\n| \tfalse (Do not have Radarr seach the added movies)", var_type="bool", default=False, throw=True)
                 except SystemExit as e:
                     message = message + "\n" + str(e) if len(message) > 0 else str(e)
                 if len(fatal_message) > 0:
@@ -291,10 +291,14 @@ class Tautulli:
         elif Tautulli.valid is None:
             print("| Connecting to tautulli...")
             message = ""
-            try:                        self.url = check_for_attribute(config, "url", parent="tautulli", throw=True)
-            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
-            try:                        self.apikey = check_for_attribute(config, "apikey", parent="tautulli", throw=True)
-            except SystemExit as e:     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            try:
+                self.url = check_for_attribute(config, "url", parent="tautulli", throw=True)
+            except SystemExit as e:
+                message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            try:
+                self.apikey = check_for_attribute(config, "apikey", parent="tautulli", throw=True)
+            except SystemExit as e:
+                message = message + "\n" + str(e) if len(message) > 0 else str(e)
             if len(message) > 0:
                 print(message)
                 Tautulli.valid = False
