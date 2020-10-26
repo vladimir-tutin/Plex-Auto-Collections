@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.0.1
+##### Version 2.1.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -34,8 +34,8 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
   3. [Image Server](#image-server)
       - [Poster and/or Background Directory](#poster-andor-background-directory)
       - [Image Directory](#image-directory)
-  4. [Tautulli](#tautulli)
-  5. [TMDb](#tmdb)
+  4. [TMDb](#tmdb)
+  5. [Tautulli](#tautulli)
   6. [Trakt](#trakt)
   7. [Radarr](#radarr)
 3. [Version 2.0.0 Changes](#version-200-changes)
@@ -122,6 +122,7 @@ There are currently six YAML mappings that can be set:
 - [`plex` (required)](#plex)
 - [`image_server` (optional)](#image-server)
 - [`tmdb` (optional, but recommended)](#tmdb)
+- [`tautulli` (optional)](#tautulli)
 - [`trakt` (optional)](#trakt)
 - [`radarr` (optional)](#radarr)
 
@@ -360,10 +361,10 @@ Tautulli has watch analytics that can show the most watched or most popular Movi
 
 ```yaml
 tautulli:
-    list_type: popular                        # Req - `watched` (For Most Watched Lists) or `popular` (For Most Popular Lists)
-    list_days: 30                             # Opt - Number of Days to look back of the list defaults to 30
-    list_size: 10                             # Opt - Number of Movies/Shows to add to this list defaults to 10
-    list_buffer: 10                           # Opt - Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries defaults to 10
+    list_type: popular    # Req - watched (For Most Watched Lists) or popular (For Most Popular Lists)
+    list_days: 30         # Opt - Number of Days to look back of the list defaults to 30
+    list_size: 10         # Opt - Number of Movies/Shows to add to this list defaults to 10
+    list_buffer: 10       # Opt - Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries defaults to 10
 ```
 
 ```yaml
@@ -682,6 +683,16 @@ image_server:                                 # Opt
 
 Note: these can be used together if you want, the script will just ask you which one you want if there are multiple matching images.
 
+## TMDb
+
+If using TMDb lists, be sure to include your TMDb API key. If you do not have an API key please refer to this [guide](https://developers.themoviedb.org/3/getting-started/introduction). Here's the full set of configurations:
+
+```yaml
+tmdb:                                         # Opt
+  apikey: #####                               # Req - User's TMDb API key
+  language: en                                # Opt - User's language
+```
+
 ## Tautulli
 
 If using Tautulli lists, be sure to include your Tautulli URL and API key.
@@ -693,16 +704,6 @@ tautulli:                                     # Opt
 ```
 
 The `apikey` can be found by going to `Tautulli > Settings > Web Interface > API > API Key`
-
-## TMDb
-
-If using TMDb lists, be sure to include your TMDb API key. If you do not have an API key please refer to this [guide](https://developers.themoviedb.org/3/getting-started/introduction). Here's the full set of configurations:
-
-```yaml
-tmdb:                                         # Opt
-  apikey: #####                               # Req - User's TMDb API key
-  language: en                                # Opt - User's language
-```
 
 ## Trakt
 
