@@ -17,13 +17,13 @@ import trakt_helpers
 import trakt
 
 
-def check_for_attribute(config, attribute, parent=None, test_list=None, options="", default=None, do_print=True, default_is_none=False, type="str", throw=False):
+def check_for_attribute(config, attribute, parent=None, test_list=None, options="", default=None, do_print=True, default_is_none=False, var_type="str", throw=False, save=True):
     message = ""
     endline = ""
-    text = "{} attribute".format(attribute) if parent == None else "{} sub-attribute {}".format(parent, attribute)
-    if config == None or attribute not in config:
+    text = "{} attribute".format(attribute) if parent is None else "{} sub-attribute {}".format(parent, attribute)
+    if config is None or attribute not in config:
         message = "| Config Error: {} not found".format(text)
-        if parent:
+        if parent and save == True:
             ruamel.yaml.YAML().allow_duplicate_keys = True
             from ruamel.yaml.util import load_yaml_guess_indent
             new_config, ind, bsi = load_yaml_guess_indent(open(Config.config_path))
@@ -39,32 +39,30 @@ def check_for_attribute(config, attribute, parent=None, test_list=None, options=
             ruamel.yaml.round_trip_dump(new_config, open(Config.config_path, 'w'), indent=ind, block_seq_indent=bsi)
     elif not config[attribute] and config[attribute] != False:
         message = "| Config Error: {} is blank".format(text)
-    elif type == "bool":
+    elif var_type == "bool":
         if isinstance(config[attribute], bool):
             return config[attribute]
         else:
             message = "| Config Error: {} must be either true or false".format(text)
-    elif type == "int":
-        if isinstance(config[attribute], int):
+    elif var_type == "int":
+        if isinstance(config[attribute], int) and config[attribute] > 0:
             return config[attribute]
         else:
-            message = "| Config Error: {} must an integer".format(text)
-    elif test_list == None:
-        return config[attribute]
-    elif config[attribute] in test_list:
+            message = "| Config Error: {} must an integer > 0".format(text)
+    elif test_list is None or config[attribute] in test_list:
         return config[attribute]
     else:
         message = "| Config Error: {}: {} is an invalid input".format(text, config[attribute])
-    if default != None or default_is_none:
+    if default is not None or default_is_none:
         message = message + " using {} as default".format(default)
     message = message + endline
-    if (default == None and not default_is_none) or throw:
+    if (default is None and not default_is_none) or throw:
         if len(options) > 0 and not throw:
             message = message + "\n" + options
         sys.exit(message)
     if do_print:
         print(message)
-        if attribute in config and config[attribute] and test_list != None and config[attribute] not in test_list:
+        if attribute in config and config[attribute] and test_list is not None and config[attribute] not in test_list:
             print(options)
     return default
 
@@ -74,7 +72,7 @@ class Config:
     headless = None
     config_path = None
     def __init__(self, config_path, headless=False):
-        if Config.headless == None:
+        if Config.headless is None:
             Config.headless = headless
         Config.config_path = config_path
         self.config_path = config_path
@@ -84,10 +82,11 @@ class Config:
             self.collections = check_for_attribute(self.data, "collections", default={}, do_print=False)
             self.plex = self.data['plex']
             self.tmdb = check_for_attribute(self.data, "tmdb", default={}, do_print=False)
+            self.tautulli = check_for_attribute(self.data, "tautulli", default={}, do_print=False)
             self.trakt = check_for_attribute(self.data, "trakt", default={}, do_print=False)
             self.radarr = check_for_attribute(self.data, "radarr", default={}, do_print=False)
             self.image_server = check_for_attribute(self.data, "image_server", default={}, do_print=False)
-        elif Config.valid == None:
+        elif Config.valid is None:
             Config.valid = True
             print("|===================================================================================================|")
             print("| Connecting to Plex...")
@@ -100,6 +99,12 @@ class Config:
             else:
                 TMDB.valid = False
                 print("| tmdb attribute not found")
+            print("|===================================================================================================|")
+            if "tautulli" in self.data:
+                Tautulli(config_path)
+            else:
+                Tautulli.valid = False
+                print("| tautulli attribute not found")
             print("|===================================================================================================|")
             if "trakt" in self.data:
                 TraktClient(config_path)
@@ -181,11 +186,11 @@ class Radarr:
             self.url = check_for_attribute(config, "url", parent="radarr")
             self.version = check_for_attribute(config, "version", parent="radarr", test_list=["v2", "v3"], default="v2", do_print=False)
             self.token = check_for_attribute(config, "token", parent="radarr")
-            self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", type="int")
+            self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", var_type="int")
             self.root_folder_path = check_for_attribute(config, "root_folder_path", parent="radarr")
-            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", type="bool", default_is_none=True, do_print=False)
-            self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", type="bool", default=False, do_print=False)
-        elif Radarr.valid == None:
+            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", var_type="bool", default_is_none=True, do_print=False)
+            self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", var_type="bool", default=False, do_print=False)
+        elif Radarr.valid is None:
             if TMDB.valid:
                 print("| Connecting to Radarr...")
                 fatal_message = ""
@@ -203,7 +208,7 @@ class Radarr:
                 except SystemExit as e:
                     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:
-                    self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", type="int", throw=True)
+                    self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", var_type="int", throw=True)
                 except SystemExit as e:
                     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:
@@ -211,11 +216,11 @@ class Radarr:
                 except SystemExit as e:
                     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:
-                    self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", type="bool", default_is_none=True, throw=True)
+                    self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", var_type="bool", default_is_none=True, throw=True)
                 except SystemExit as e:
                     message = message + "\n" + str(e) if len(message) > 0 else str(e)
                 try:
-                    self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| \ttrue (Have Radarr seach the added movies)\n| \tfalse (Do not have Radarr seach the added movies)", type="bool", default=False, throw=True)
+                    self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| \ttrue (Have Radarr seach the added movies)\n| \tfalse (Do not have Radarr seach the added movies)", var_type="bool", default=False, throw=True)
                 except SystemExit as e:
                     message = message + "\n" + str(e) if len(message) > 0 else str(e)
                 if len(fatal_message) > 0:
@@ -247,7 +252,7 @@ class TMDB:
         if TMDB.valid:
             self.apikey = check_for_attribute(config, "apikey", parent="tmdb")
             self.language = check_for_attribute(config, "language", parent="tmdb", default="en", do_print=False)
-        elif TMDB.valid == None:
+        elif TMDB.valid is None:
             print("| Connecting to TMDb...")
             fatal_message = ""
             message = ""
@@ -276,6 +281,42 @@ class TMDB:
             print("| TMDb Connection {}".format("Successful" if TMDB.valid else "Failed"))
 
 
+class Tautulli:
+    valid = None
+    def __init__(self, config_path):
+        config = Config(config_path).tautulli
+        if Tautulli.valid:
+            self.url = check_for_attribute(config, "url", parent="tautulli")
+            self.apikey = check_for_attribute(config, "apikey", parent="tautulli")
+        elif Tautulli.valid is None:
+            print("| Connecting to tautulli...")
+            message = ""
+            try:
+                self.url = check_for_attribute(config, "url", parent="tautulli", throw=True)
+            except SystemExit as e:
+                message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            try:
+                self.apikey = check_for_attribute(config, "apikey", parent="tautulli", throw=True)
+            except SystemExit as e:
+                message = message + "\n" + str(e) if len(message) > 0 else str(e)
+            if len(message) > 0:
+                print(message)
+                Tautulli.valid = False
+            else:
+                try:
+                    stats = requests.get('{}/api/v2?apikey={}&cmd=get_home_stats&time_range=7'.format(self.url, self.apikey))
+                    response = stats.json()
+                    if response['response']['result'] == "success":
+                        Tautulli.valid = True
+                    else:
+                        print("| Config Error: {}".format(response['response']['message']))
+                        Tautulli.valid = False
+                except:
+                    print("| Config Error: Invalid url")
+                    Tautulli.valid = False
+            print("| tautulli connection {}".format("scuccessful" if Tautulli.valid else "failed"))
+
+
 class TraktClient:
     valid = None
     def __init__(self, config_path):
@@ -286,7 +327,7 @@ class TraktClient:
             self.authorization = config['authorization']
             Trakt.configuration.defaults.client(self.client_id, self.client_secret)
             Trakt.configuration.defaults.oauth.from_response(self.authorization)
-        elif TraktClient.valid == None:
+        elif TraktClient.valid is None:
             print("| Connecting to Trakt...")
             fatal_message = ""
             try:
@@ -358,7 +399,7 @@ class ImageServer:
             self.background = "backgrounds" if os.path.exists(os.path.join(app_dir, "backgrounds")) else "..\\config\\backgrounds" if os.path.exists(os.path.join(app_dir, "..", "config", "backgrounds")) else None
             self.image = "images" if os.path.exists(os.path.join(app_dir, "images")) else "..\\config\\images" if os.path.exists(os.path.join(app_dir, "..", "config", "images")) else None
 
-        if ImageServer.valid == None:
+        if ImageServer.valid is None:
             print("| Locating Image Server...")
             if "poster-directory" in config:
                 print("| Config Error: Please change the poster-directory attribute to poster_directory")
