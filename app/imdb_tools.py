@@ -88,11 +88,19 @@ def imdb_get_movies(config_path, plex, data):
 
 def tmdb_parse_id(data):
     try:
-        tmdb_id = re.search('.*?(\\d+)', str(data))
+        tmdb_id = re.search('.*?(\\d+)', str(data)) # re.search requires a string
         tmdb_id = tmdb_id.group(1)
         return tmdb_id
     except AttributeError:  # Bad URL Provided
-        raise ValueError("| Config Error: TMDb: {} is invalid".format(data))
+        raise ValueError("| Config Error: TMBd ID: {} is invalid it must be a number".format(data))
+
+def tvdb_parse_id(data):
+    try:	
+        tvdb_id = re.search('(\\d+)', str(data)) # re.search requires a string
+        tvdb_id = tvdb_id.group(1)
+        return tvdb_id
+    except AttributeError:	
+        raise ValueError("| Config Error: TVDb ID: {} is invalid it must be a number".format(data))
 
 
 def tmdb_get_movies(config_path, plex, data, is_list=False):
@@ -275,7 +283,7 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
 def tvdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
     
-    id = tmdb_parse_id(data)
+    id = tvdb_parse_id(data)
 
     p_tv_map = {}
     for item in plex.Library.all():
