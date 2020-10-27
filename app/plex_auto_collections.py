@@ -89,7 +89,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     v_print = v
                     if m == "tmdb_id" and tmdb_id is None:
                         try:
-                            tmdb_id = re.search('.*?(\\d+)', v).group(1)
+                            tmdb_id = re.search('.*?(\\d+)', str(v)).group(1)
                         except AttributeError:
                             print("| Config Error: TMDb ID: {} is invalid".format(v))
                             add = False
