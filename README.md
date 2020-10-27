@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.0.0
+##### Version 2.1.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -13,12 +13,14 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
       - [List Type](#list-type-collection-attribute)
           - [Plex Collection (List Type)](#plex-collection-list-type)
           - [TMDb Collection (List Type)](#tmdb-collection-list-type)
+          - [TMDb Actor (List Type)](#tmdb-actor-list-type)
           - [TMDb List (List Type)](#tmdb-list-list-type)
           - [TMDb Movie (List Type)](#tmdb-movie-list-type)
           - [TMDb Show (List Type)](#tmdb-show-list-type)
           - [TVDb Show (List Type)](#tvdb-show-list-type)
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
+          - [Tautulli List (List Type)](#tautulli-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
       - [Sync Mode (Collection Attribute)](#sync-mode-collection-attribute)
       - [Sort Title (Collection Attribute)](#sort-title-collection-attribute)
@@ -34,8 +36,9 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
       - [Poster and/or Background Directory](#poster-andor-background-directory)
       - [Image Directory](#image-directory)
   4. [TMDb](#tmdb)
-  5. [Trakt](#trakt)
-  6. [Radarr](#radarr)
+  5. [Tautulli](#tautulli)
+  6. [Trakt](#trakt)
+  7. [Radarr](#radarr)
 3. [Version 2.0.0 Changes](#version-200-changes)
 4. [Acknowledgements](#acknowledgements)
 
@@ -120,6 +123,7 @@ There are currently six YAML mappings that can be set:
 - [`plex` (required)](#plex)
 - [`image_server` (optional)](#image-server)
 - [`tmdb` (optional, but recommended)](#tmdb)
+- [`tautulli` (optional)](#tautulli)
 - [`trakt` (optional)](#trakt)
 - [`radarr` (optional)](#radarr)
 
@@ -145,6 +149,7 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 The only required attribute for each collection is the list type. There are eight different list types to choose from:
 - [Plex Collection](#plex-collection-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
+- [TMDb Actor](#tmdb-actor-list-type)
 - [TMDb List](#tmdb-list-list-type)
 - [TMDb Movie](#tmdb-movie-list-type)
 - [TMDb Show](#tmdb-show-list-type)
@@ -217,7 +222,7 @@ collections:
       - 135416
 ```
 
-Alternatively you can specify which `tmdb_collection`, `tmdb_summary`, `tmdb_poster`, and `tmdb_background` all at once by using `tmdb_id`:
+Alternatively you can specify which [`tmdb_collection`](#tmdb-collection-list-type), [`tmdb_summary`](#summary-collection-attribute), [`tmdb_poster`](#poster-collection-attribute), and [`tmdb_background`](#background-collection-attribute) all at once by using `tmdb_id` and setting it to the collections page ID or URL:
 
 ```yaml
 collections:
@@ -236,6 +241,30 @@ Notes:
 - The `tmdb_id` can be either from a collection or an individual movie
 - You can specify more than one `tmdb_id` but it will pull the summary, poster, and background from only the first one.
 - Local posters/backgrounds are loaded over `tmdb_poster`/`tmdb_background` if they exist unless `tmdb_poster`/`tmdb_background` is also specified
+- `tmdb_summary` will load unless `summary`,`tmdb_summary`, or `tmdb_biography` is also specified
+
+#### TMDb Actor (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+Similarly to `tmdb_id`, `tmdb_actor` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the actor's TMDb page ID or URL as well as search Plex using the actor filter all with one attribute.
+
+```yaml
+collections:
+  Robin Williams:
+    tmdb_actor: 2157
+```
+
+```yaml
+collections:
+  Robin Williams:
+    tmdb_actor: https://www.themoviedb.org/person/2157-robin-williams
+```
+
+Notes:
+- You can specify more than one `tmdb_actor` but it will pull the summary and poster from only the first one.
+- Local posters are loaded over `tmdb_profile` if they exist unless `tmdb_profile` is also specified
+- `tmdb_biography` will load unless `summary`,`tmdb_summary`, or `tmdb_biography` is also specified
 
 #### TMDb List (List Type)
 
@@ -350,6 +379,42 @@ collections:
     trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
 ```
 
+#### Tautulli List (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+Tautulli has watch analytics that can show the most watched or most popular Movies/Shows in your Library. This script can easily leverage that data into making and sync collection based on those lists using the `tautulli` attribute. Unlike other lists this one has subattribute options:
+
+- `list_type`: watched (For Most Watched Lists) or popular (For Most Popular Lists) (Required)
+- `list_days`: Number of Days to look back of the list (Optional Defaults to 30)
+- `list_size`: Number of Movies/Shows to add to this list (Optional Defaults to 10)
+- `list_buffer`: Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries (Optional Defaults to 10)
+
+```yaml
+collections:
+  Most Popular Movies (30 Days):
+    sync_mode: sync
+    collection_mode: show_items
+    tautulli:
+      list_type: popular
+      list_days: 30
+      list_size: 10
+```
+```yaml
+collections:
+  Most Watched Movies (30 Days):
+    sync_mode: sync
+    collection_mode: show_items
+    tautulli:
+      list_type: watched
+      list_days: 30
+      list_size: 10
+      list_buffer: 10
+```
+
+Note that if you have multiple movie Libraries or multiple show Libraries Tautulli combines those in the popular/watched lists so there might not be 10 movies/shows from the library to make your `list_size`. In order to get around that we added a `list_buffer` attribute that defaults to 10. This will get that many more movies from Tautulli but only add to the collection until the number in `list_size`. So if your collection doesn't have as many movies/shows as your `list_size` attribute increase the number in the `list_buffer` attribute.
+
+
 ### Subfilters (Collection Attribute)
 
 ###### Works with Movie and TV Show Libraries
@@ -426,7 +491,7 @@ collections:
 
 Adding a summary to the collection is possible by either pulling the overview from TMDb or by using a custom entry.
 
-To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collections page's ID. Use the actor's page ID on TMDb if you wish to use their biography as the summary (experimental).
+To use a TMDb entry a TMDb api-key as well as language is required, the default language is set to `en`. Match the following in the configuration file, input only the TMDb collection/movie/show page ID or URL. To use the actor's biography use `tmdb_biography` with their page ID or URL on TMDb if you wish to use their biography as the summary.
 
 ```yaml
 collections:
@@ -438,7 +503,7 @@ collections:
 collections:
   Dave Chappelle:
     actors: Dave Chappelle
-    tmdb_summary: 4169
+    tmdb_biography: 4169
 ```
 If you want to use a custom summary:
 ```yaml
@@ -511,6 +576,8 @@ Local assets are supported by running the script with posters in the `poster_dir
 
 If multiple posters are found the script will ask which one you want to use or just take the first one in the list if update mode is on.
 
+Note if you want to use an actor's profile image from TMDb use `tmdb_profile` instead of `tmdb_poster`.
+
 If you want to use an image publicly available on the internet:
 ```yaml
 collections:
@@ -533,8 +600,8 @@ If you want to use the default actor image on TMDb:
 collections:
   Dave Chappelle:
     actors: Dave Chappelle
-    tmdb_summary: 4169
-    tmdb_poster: 4169
+    tmdb_biography: 4169
+    tmdb_profile: 4169
 ```
 If you want to use an image in your file system:
 ```yaml
@@ -545,6 +612,7 @@ collections:
     file_poster: C:/Users/username/Desktop/2xE0R9I.png
     file_background: /config/backgrounds/Jurassic Park.png
 ```
+
 ### Background (Collection Attribute)
 
 There are three ways to set a background image for a collection: local image, public URL, or TMDb collection.
@@ -651,6 +719,18 @@ tmdb:                                         # Opt
   apikey: #####                               # Req - User's TMDb API key
   language: en                                # Opt - User's language
 ```
+
+## Tautulli
+
+If using Tautulli lists, be sure to include your Tautulli URL and API key.
+
+```yaml
+tautulli:                                     # Opt
+    url: http://192.168.1.1:8181              # Req - URL to access Tautulli
+    apikey: #####                             # Req - User's Tautulli API key
+```
+
+The `apikey` can be found by going to `Tautulli > Settings > Web Interface > API > API Key`
 
 ## Trakt
 
