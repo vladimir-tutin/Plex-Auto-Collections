@@ -86,12 +86,25 @@ def imdb_get_movies(config_path, plex, data):
 
     return matched_imbd_movies, missing_imdb_movies
 
-def tmdb_get_movies(config_path, plex, data, is_list=False):
+def tmdb_parse_id(data):
     try:
-        tmdb_id = re.search('.*?(\\d+)', data)
+        tmdb_id = re.search('.*?(\\d+)', str(data)) # re.search requires a string
         tmdb_id = tmdb_id.group(1)
+        return tmdb_id
     except AttributeError:  # Bad URL Provided
-        raise ValueError("| Config Error: TMDb: {} is invalid".format(data))
+        raise ValueError("| Config Error: TMDb ID: {} is invalid it must be a number".format(data))
+
+def tvdb_parse_id(data):
+    try:	
+        tvdb_id = re.search('(\\d+)', str(data)) # re.search requires a string
+        tvdb_id = tvdb_id.group(1)
+        return tvdb_id
+    except AttributeError:	
+        raise ValueError("| Config Error: TVDb ID: {} is invalid it must be a number".format(data))
+
+
+def tmdb_get_movies(config_path, plex, data, is_list=False):
+    tmdb_id = tmdb_parse_id(data)
     t_movs = []
     t_movie = Movie()
     t_movie.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
@@ -212,11 +225,9 @@ def get_tvdb_id_from_tmdb_id(id):
 
 def tmdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
-    try:
-        tmdb_id = re.search('.*?(\\d+)', data)
-        tmdb_id = tmdb_id.group(1)
-    except AttributeError:  # Bad URL Provided
-        return
+    
+    tmdb_id = tmdb_parse_id(data)
+    
     t_tvs = []
     t_tv = TV()
     t_tv.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
@@ -271,11 +282,8 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
 
 def tvdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
-    try:
-        id = re.search('(\\d+)', data)
-        id = id.group(1)
-    except AttributeError:
-        raise ValueError("| Config Error: TVDb ID: {} is invalid it must be a number".format(data))
+    
+    id = tvdb_parse_id(data)
 
     p_tv_map = {}
     for item in plex.Library.all():
@@ -306,10 +314,8 @@ def tvdb_get_shows(config_path, plex, data, is_list=False):
 
 def tmdb_get_summary(config_path, data, type):
     # Instantiate TMDB objects
-    try:
-        id = re.search('.*?(\\d+)', data).group(1)
-    except AttributeError:
-        raise ValueError("| Config Error: TMBd ID: {} is invalid it must be a number".format(data))
+    id = tmdb_parse_id(data)
+
     api_key = config_tools.TMDB(config_path).apikey
     language = config_tools.TMDB(config_path).language
     is_movie = config_tools.Plex(config_path).library_type == "movie"

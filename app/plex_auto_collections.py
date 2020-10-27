@@ -1,5 +1,6 @@
 import os
 import argparse
+import re
 import sys
 import threading
 import glob
@@ -89,7 +90,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     v_print = v
                     if m == "tmdb_id" and tmdb_id is None:
                         try:
-                            tmdb_id = re.search('.*?(\\d+)', v).group(1)
+                            tmdb_id = re.search('.*?(\\d+)', str(v)).group(1)
                         except AttributeError:
                             print("| Config Error: TMDb ID: {} is invalid".format(v))
                             add = False
@@ -615,7 +616,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.1.0")
+print("| Version 2.1.1")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
