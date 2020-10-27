@@ -92,7 +92,7 @@ def tmdb_parse_id(data):
         tmdb_id = tmdb_id.group(1)
         return tmdb_id
     except AttributeError:  # Bad URL Provided
-        raise ValueError("| Config Error: TMBd ID: {} is invalid it must be a number".format(data))
+        raise ValueError("| Config Error: TMDb ID: {} is invalid it must be a number".format(data))
 
 def tvdb_parse_id(data):
     try:	
