@@ -279,14 +279,14 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             # Handle collection posters
             if "poster" in collections[c]:
                 if collections[c]["poster"]:
-                    posters_found.append(["url", collections[c]["poster"]])
+                    posters_found.append(["url", collections[c]["poster"], "poster"])
                 else:
                     print("| Config Error: poster attribute is blank")
             if "tmdb_poster" in collections[c]:
                 if TMDB.valid:
                     if collections[c]["tmdb_poster"]:
                         try:
-                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_poster"], "poster_path")])
+                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_poster"], "poster_path"), "tmdb_poster"])
                         except ValueError as e:
                             print(e)
                     else:
@@ -297,7 +297,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 if TMDB.valid:
                     if collections[c]["tmdb_profile"]:
                         try:
-                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_profile"], "profile_path")])
+                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_profile"], "profile_path"), "tmdb_profile"])
                         except ValueError as e:
                             print(e)
                     else:
@@ -306,21 +306,21 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     print("| Config Error: tmdb_profile skipped. tmdb incorrectly configured")
             if "file_poster" in collections[c]:
                 if collections[c]["file_poster"]:
-                    posters_found.append(["file", collections[c]["file_poster"]])
+                    posters_found.append(["file", collections[c]["file_poster"], "file_poster"])
                 else:
                     print("| Config Error: file_poster attribute is blank")
 
             # Handle collection backgrounds
             if "background" in collections[c]:
                 if collections[c]["background"]:
-                    backgrounds_found.append(["url", collections[c]["background"]])
+                    backgrounds_found.append(["url", collections[c]["background"], "background"])
                 else:
                     print("| Config Error: background attribute is blank")
             if "tmdb_background" in collections[c]:
                 if TMDB.valid:
                     if collections[c]["tmdb_background"]:
                         try:
-                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_background"], "backdrop_path")])
+                            backgrounds_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_background"], "backdrop_path"), "tmdb_background"])
                         except ValueError as e:
                             print(e)
                     else:
@@ -329,7 +329,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     print("| Config Error: tmdb_background skipped. tmdb incorrectly configured")
             if "file_background" in collections[c]:
                 if collections[c]["file_background"]:
-                    backgrounds_found.append(["file", collections[c]["file_background"]])
+                    backgrounds_found.append(["file", collections[c]["file_background"], "file_background"])
                 else:
                     print("| Config Error: file_background attribute is blank")
 
@@ -348,7 +348,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(posters_found) > 0:
                         for match in matches:
-                            posters_found.append(["file", os.path.abspath(match)])
+                            posters_found.append(["file", os.path.abspath(match), "poster_directory"])
                     else:
                         print("| poster not found at: {}".format(os.path.abspath(path)))
                 if image_server.background:
@@ -356,7 +356,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(backgrounds_found) > 0:
                         for match in matches:
-                            backgrounds_found.append(["file", os.path.abspath(match)])
+                            backgrounds_found.append(["file", os.path.abspath(match), "background_directory"])
                     else:
                         print("| background not found at: {}".format(os.path.abspath(path)))
                 if image_server.image:
@@ -364,14 +364,14 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(posters_found) > 0:
                         for match in matches:
-                            posters_found.append(["file", os.path.abspath(match)])
+                            posters_found.append(["file", os.path.abspath(match), "image_directory"])
                     else:
                         print("| poster not found at: {}".format(os.path.abspath(path)))
                     path = os.path.join(image_server.image, "{}".format(name_mapping), "background.*")
                     matches = glob.glob(path)
                     if len(matches) > 0 or len(backgrounds_found) > 0:
                         for match in matches:
-                            backgrounds_found.append(["file", os.path.abspath(match)])
+                            backgrounds_found.append(["file", os.path.abspath(match), "image_directory"])
                     else:
                         print("| background not found at: {}".format(os.path.abspath(path)))
 
@@ -403,14 +403,14 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             if not poster and TMDB.valid:
                 try:
                     if actor_id:
-                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, actor_id, "profile_path")]
+                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, actor_id, "profile_path"), "tmdb_actor"]
                     elif tmdb_id:
-                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "poster_path")]
+                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "poster_path"), "tmdb_id"]
                 except ValueError as e:
                     pass
             if not background and TMDB.valid and tmdb_id:
                 try:
-                    background = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "backdrop_path")]
+                    background = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "backdrop_path"), "tmdb_id"]
                 except ValueError as e:
                     pass
 
@@ -420,7 +420,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     plex_collection.uploadPoster(url=poster[1])
                 else:
                     plex_collection.uploadPoster(filepath=poster[1])
-                print("| Detail: poster updated to [{}] {}".format(poster[0], poster[1]))
+                print("| Detail: {} updated poster to [{}] {}".format(poster[2], poster[0], poster[1]))
 
             # Update background
             if background:
@@ -428,7 +428,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     plex_collection.uploadArt(url=background[1])
                 else:
                     plex_collection.uploadArt(filepath=background[1])
-                print("| Detail: background updated to [{}] {}".format(background[0], background[1]))
+                print("| Detail: {} updated background to [{}] {}".format(background[2], background[0], background[1]))
 
 def append_collection(config_path, config_update=None):
     while True:
