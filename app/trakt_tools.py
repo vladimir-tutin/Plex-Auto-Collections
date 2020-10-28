@@ -3,16 +3,21 @@ from urllib.parse import urlparse
 import plex_tools
 import trakt
 
-def trakt_get_movies(config_path, plex, data):
+def trakt_get_movies(config_path, plex, data, is_userlist=True):
     config_tools.TraktClient(config_path)
-    trakt_url = data
-    if trakt_url[-1:] == " ":
-        trakt_url = trakt_url[:-1]
-    imdb_map = {}
-    trakt_list_path = urlparse(trakt_url).path
-    trakt_list_items = trakt.Trakt[trakt_list_path].items()
+    if is_userlist:
+        trakt_url = data
+        if trakt_url[-1:] == " ":
+            trakt_url = trakt_url[:-1]
+        trakt_list_path = urlparse(trakt_url).path
+        trakt_list_items = trakt.Trakt[trakt_list_path].items()
+    else:
+        # Trending list
+        max_items = int(data)
+        trakt_list_items = trakt.Trakt['movies'].trending(per_page=max_items)
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
+    imdb_map = {}
     if title_ids:
         for item in plex.Library.all():
             guid = urlparse(item.guid)
@@ -52,14 +57,20 @@ def trakt_get_movies(config_path, plex, data):
         # No movies
         return None, None
 
-def trakt_get_shows(config_path, plex, data):
+def trakt_get_shows(config_path, plex, data, is_userlist=True):
     config_tools.TraktClient(config_path)
-    trakt_url = data
-    if trakt_url[-1:] == " ":
-        trakt_url = trakt_url[:-1]
+    if is_userlist:
+        trakt_url = data
+        if trakt_url[-1:] == " ":
+            trakt_url = trakt_url[:-1]
+        trakt_list_path = urlparse(trakt_url).path
+        trakt_list_items = trakt.Trakt[trakt_list_path].items()
+    else:
+        # Trending list
+        max_items = int(data)
+        trakt_list_items = trakt.Trakt['shows'].trending(per_page=max_items)
+
     tvdb_map = {}
-    trakt_list_path = urlparse(trakt_url).path
-    trakt_list_items = trakt.Trakt[trakt_list_path].items()
     title_ids = []
     for m in trakt_list_items:
         if isinstance(m, trakt.objects.show.Show):

@@ -118,7 +118,7 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
     shows = []
     items = []
     missing = []
-    if (method == "trakt_list" or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
+    if ("trakt" in method or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
         raise KeyError("| trakt connection required for {}",format(method))
     if ("imdb" in method or "tmdb" in method) and not TMDB.valid:
         raise KeyError("| tmdb connection required for {}",format(method))
@@ -141,6 +141,8 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
                     movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
             elif method == "trakt_list" and TraktClient.valid:
                 movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
+            elif method == "trakt_trending" and TraktClient.valid:
+                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, is_userlist=False)
             elif method == "tautulli" and Tautulli.valid:
                 movies, missing = imdb_tools.get_tautulli(config_path, plex, value)
     elif plex.library_type == "show":
@@ -161,6 +163,8 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
                 shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
             elif method == "trakt_list" and TraktClient.valid:
                 shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
+            elif method == "trakt_trending" and TraktClient.valid:
+                shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, is_userlist=False)
             elif method == "tautulli" and Tautulli.valid:
                 shows, missing = imdb_tools.get_tautulli(config_path, plex, value)
 

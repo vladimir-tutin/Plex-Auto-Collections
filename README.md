@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.1.1
+##### Version 2.2.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -20,6 +20,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
           - [TVDb Show (List Type)](#tvdb-show-list-type)
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
+          - [Trakt Trending List (List Type)](#trakt-trending-list-list-type)
           - [Tautulli List (List Type)](#tautulli-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
       - [Sync Mode (Collection Attribute)](#sync-mode-collection-attribute)
@@ -146,7 +147,7 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 
 ### List Type (Collection Attribute)
 
-The only required attribute for each collection is the list type. There are eight different list types to choose from:
+The only required attribute for the following collections is the list type. There are eight different list types to choose from:
 - [Plex Collection](#plex-collection-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb Actor](#tmdb-actor-list-type)
@@ -156,8 +157,10 @@ The only required attribute for each collection is the list type. There are eigh
 - [TVDb Show](#tvdb-show-list-type)
 - [IMDb List or Search](#imdb-list-or-search-list-type)
 - [Trakt List](#trakt-list-list-type)
+- [Trakt Trending List](#trakt-trending-list-list-type)
+- [Tautulli List (List Type)](#tautulli-list-list-type)
 
-Note that each list type supports multiple lists.
+Note that each list type supports multiple lists, with the `Trakt Trending List` as the only exception.
 
 #### Plex Collection (List Type)
 
@@ -377,6 +380,19 @@ collections:
 collections:
   Reddit Top 250:
     trakt_list: https://trakt.tv/users/jay-greene/lists/reddit-top-250-2019-edition
+```
+
+#### Trakt Trending List (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+This script can pull a number of items from the Trakt Trending List for [Movies](https://trakt.tv/movies/trending) or [Shows](https://trakt.tv/shows/trending). The `trakt_trending` attribute only supports a single integer value. The `sync_mode: sync` option is recommended since the list is continuously updated.
+
+```yaml
+collections:
+  Trending:
+    trakt_trending: 30
+    sync_mode: sync
 ```
 
 #### Tautulli List (List Type)
