@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.2.0
+##### Version 2.2.1
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -9,15 +9,15 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
     - [Local Installation](#local-installation)
     - [Docker](#docker)
 2. [Configuration](#configuration)
-  1. [Collections](#collections)
+    - [Collections](#collections)
       - [List Type](#list-type-collection-attribute)
-          - [Plex Collection (List Type)](#plex-collection-list-type)
-          - [TMDb Collection (List Type)](#tmdb-collection-list-type)
-          - [TMDb Actor (List Type)](#tmdb-actor-list-type)
-          - [TMDb List (List Type)](#tmdb-list-list-type)
-          - [TMDb Movie (List Type)](#tmdb-movie-list-type)
-          - [TMDb Show (List Type)](#tmdb-show-list-type)
-          - [TVDb Show (List Type)](#tvdb-show-list-type)
+        - [Plex Collection (List Type)](#plex-collection-list-type)
+        - [TMDb Collection (List Type)](#tmdb-collection-list-type)
+        - [TMDb Actor (List Type)](#tmdb-actor-list-type)
+        - [TMDb List (List Type)](#tmdb-list-list-type)
+        - [TMDb Movie (List Type)](#tmdb-movie-list-type)
+        - [TMDb Show (List Type)](#tmdb-show-list-type)
+        - [TVDb Show (List Type)](#tvdb-show-list-type)
           - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
           - [Trakt List (List Type)](#trakt-list-list-type)
           - [Trakt Trending List (List Type)](#trakt-trending-list-list-type)
@@ -32,16 +32,15 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
       - [Poster (Collection Attribute)](#poster-collection-attribute)
       - [Background (Collection Attribute)](#background-collection-attribute)
       - [Name Mapping (Collection Attribute)](#name-mapping-collection-attribute)
-  2. [Plex](#plex)
-  3. [Image Server](#image-server)
+    - [Plex](#plex)
+    - [Image Server](#image-server)
       - [Poster and/or Background Directory](#poster-andor-background-directory)
       - [Image Directory](#image-directory)
-  4. [TMDb](#tmdb)
-  5. [Tautulli](#tautulli)
-  6. [Trakt](#trakt)
-  7. [Radarr](#radarr)
-3. [Version 2.0.0 Changes](#version-200-changes)
-4. [Acknowledgements](#acknowledgements)
+    - [TMDb](#tmdb)
+    - [Tautulli](#tautulli)
+    - [Trakt](#trakt)
+    - [Radarr](#radarr)
+3. [Acknowledgements](#acknowledgements)
 
 # Usage
 
@@ -709,6 +708,8 @@ Lastly, if you need help finding your Plex authentication token, please see Plex
 
 An `image_server` mapping in the config is optional. There are two ways to store your posters and background. Using `poster_directory` and/or `background_directory` or by using `image_directory`.
 
+Note that attempting to upload larger images files (~10MB+) can sometimes throw errors like `[Errno 32] Broken pipe` in certain environments. Resize your images accordingly if you run into any issues.
+
 ### Poster and/or Background Directory
 By placing images in the `poster_directory` or `background_directory`, the script will attempt to match image names to collection names. For example, if there is a collection named `Jurassic Park` and the images `../config/posters/Jurassic Park.png` and `../config/backgrounds/Jurassic Park.png`, the script will upload those images to Plex.
 
@@ -775,6 +776,8 @@ trakt:                                        # Opt
 
 On the first run, the script will walk the user through the OAuth flow by producing a Trakt URL for the user to follow. Once authenticated at the Trakt URL, the user needs to return the code to the script. If the code is correct, the script will populate the `authorization` subattributes to use in subsequent runs.
 
+For docker users, please note that the docker container runs with the `--update` option and is designed for no user interaction. To authenticate Trakt the first time, you need run the container with the `-it` flags and run `plex_auto_collections.py` without the `--update` option and walk through the OAuth flow mentioned above. Once you have the Trakt authentication data saved into the YAML, you'll be able to run the container normally.
+
 ## Radarr
 
 When parsing TMDb, IMDb, or Trakt lists, the script will finds movies that are on the list but missing from Plex. If a TMDb and Radarr config are supplied, then you can add those missing movies to Radarr.
@@ -814,70 +817,6 @@ The `add_movie` key allows missing to movies to be added to Radarr. If this key 
 
 Note that Radarr support has not been tested with extensively Trakt lists and Sonarr support has not yet been implemented.
 
-# Version 2.0.0 Changes
-
-With version 2.0.0 we added many new tags, made all the tag names unified casing, removed details in favor of just having those tags as high level tags. Below is a list of all the tag changes.
-
-`old-tag` -> `new_tag`
-
-`tmdb-list` -> `tmdb_collection`
-
-`imdb-list` -> `imdb_list`
-
-`trakt-list` -> `trakt_list`
-
-`video-resolution` -> `video_resolution`
-
-`audio-language` -> `audio_language`
-
-`subtitle-language` -> `subtitle_language`
-
-`tmdb-poster` -> `tmdb_poster`
-
-`image-server` -> `image_server`
-
-`poster-directory` -> `poster_directory`
-
-### Example Version 2.0.0 Changes
-
-```yaml
-collections:
-    Jurassic Park:
-        tmdb-list: https://www.themoviedb.org/collection/328
-        details:
-          tmdb-summary: 328
-          poster: https://i.imgur.com/QMjbyCX.png
-      1080p Documentaries:
-        genres: Documentary
-        subfilters:
-          video-resolution: 1080
-        details:
-          summary: A collection of 1080p Documentaries
-      Daniel Craig only James Bonds:
-        imdb-list: https://www.imdb.com/list/ls006405458/
-        subfilters:
-          actors: Daniel Craig
-```
-
-The config above would be changed to below for Version 2.0.0
-
-```yaml
-collections:
-    Jurassic Park:
-      tmdb_collection: https://www.themoviedb.org/collection/328
-      tmdb_summary: 328
-      poster: https://i.imgur.com/QMjbyCX.png
-    1080p Documentaries:
-      genres: Documentary
-      subfilters:
-        video_resolution: 1080
-      summary: A collection of 1080p Documentaries
-    Daniel Craig only James Bonds:
-      imdb_list: https://www.imdb.com/list/ls006405458/
-      subfilters:
-        actors: Daniel Craig
-```
-
 # Acknowledgements
 - [vladimir-tutin](https://github.com/vladimir-tutin) for writing substantially all of the code in this fork
 - [deva5610](https://github.com/deva5610) for writing [IMDBList2PlexCollection](https://github.com/deva5610/IMDBList2PlexCollection) which prompted the idea for a
@@ -886,3 +825,5 @@ configuration based collection manager
 - [pkkid](https://github.com/pkkid) and all other contributors for [python-plexapi](https://github.com/pkkid/python-plexapi)
 - [AnthonyBloomer](https://github.com/AnthonyBloomer) and all other contributors for [tmdbv3api](https://github.com/AnthonyBloomer/tmdbv3api)
 - [fuzeman](https://github.com/fuzeman) and all other contributors for [trakt.py](https://github.com/fuzeman/trakt.py) (and for [Plex-Trakt-Scrobbler](https://github.com/trakt/Plex-Trakt-Scrobbler)!)
+- [bearlikelion](https://github.com/bearlikelion) for writing [popularplex](https://github.com/bearlikelion/popularplex) which prompted Tautulli support
+- [blacktwin](https://github.com/blacktwin) for writing [playlist_manager.py](https://github.com/blacktwin/JBOPS/blob/master/fun/playlist_manager.py)
