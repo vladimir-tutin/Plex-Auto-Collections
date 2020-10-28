@@ -147,7 +147,7 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 
 ### List Type (Collection Attribute)
 
-The only required attribute for the following collections is the list type. There are eight different list types to choose from:
+The only required attribute for each collection is the list type. There are eight different list types to choose from:
 - [Plex Collection](#plex-collection-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb Actor](#tmdb-actor-list-type)
