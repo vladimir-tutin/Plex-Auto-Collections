@@ -158,9 +158,11 @@ The only required attribute for each collection is the list type. There are elev
 - [IMDb List or Search](#imdb-list-or-search-list-type)
 - [Trakt List](#trakt-list-list-type)
 - [Trakt Trending List](#trakt-trending-list-list-type)
-- [Tautulli List (List Type)](#tautulli-list-list-type)
+- [Tautulli List](#tautulli-list-list-type)
 
-Note that each list type supports multiple lists, with the `Trakt Trending List` as the only exception.
+Note that most list types supports multiple lists, with the following exceptions:
+- Trakt Trending List
+- Tautulli List
 
 #### Plex Collection (List Type)
 
