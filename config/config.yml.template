@@ -24,6 +24,9 @@ collections:
   Marvel:
     trakt_list: https://trakt.tv/users/movistapp/lists/marvel
     collection_mode: show_items
+  Trakt Trending:
+    trakt_trending: 30
+    sync_mode: sync
   Pixar:
     studio: Pixar
     summary: A collection of Pixar movies

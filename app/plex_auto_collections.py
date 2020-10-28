@@ -123,6 +123,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                                     print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                                 elif m == "tmdb_collection":
                                     print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                                elif m == "trakt_trending":
+                                    print("| {} missing movie{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                                 else:
                                     print("| {} ID: {} missing".format(method_name, v))
                                 if Radarr.valid:
@@ -136,6 +138,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                                 method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
                                 if m == "trakt_list" or m == "tmdb_list":
                                     print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                                elif m == "trakt_trending":
+                                    print("| {} missing show{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                                 else:
                                     print("| {} ID: {} missing".format(method_name, v))
 
@@ -616,7 +620,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.1.1")
+print("| Version 2.2.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
