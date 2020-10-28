@@ -1,6 +1,7 @@
 import config_tools
 from urllib.parse import urlparse
 import plex_tools
+from imdb_tools import parse_int
 import trakt
 
 def trakt_get_movies(config_path, plex, data, is_userlist=True):
@@ -13,7 +14,7 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
     else:
         # Trending list
-        max_items = int(data)
+        max_items = int(parse_int(data, "Trakt Trending number"))
         trakt_list_items = trakt.Trakt['movies'].trending(per_page=max_items)
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
@@ -29,10 +30,8 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
                 # lookup can sometimes return a list
                 lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
                 if lookup:
-                    if isinstance(lookup, list):
-                        imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')[0].get_key('imdb')
-                    else:
-                        imdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie').get_key('imdb')
+                    lookup = lookup[0] if isinstance(lookup, list) else lookup
+                    imdb_id = lookup.get_key('imdb')
                 else:
                     imdb_id = None
             else:
@@ -67,7 +66,7 @@ def trakt_get_shows(config_path, plex, data, is_userlist=True):
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
     else:
         # Trending list
-        max_items = int(data)
+        max_items = int(parse_int(data, "Trakt Trending number"))
         trakt_list_items = trakt.Trakt['shows'].trending(per_page=max_items)
 
     tvdb_map = {}
@@ -94,10 +93,8 @@ def trakt_get_shows(config_path, plex, data, is_userlist=True):
                 tmdb_id = guid.netloc
                 lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')
                 if lookup:
-                    if isinstance(lookup, list):
-                        tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')[0].get_key('tvdb')
-                    else:
-                        tvdb_id = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show').get_key('tvdb')
+                    lookup = lookup[0] if isinstance(lookup, list) else lookup
+                    tvdb_id = lookup.get_key('tvdb')
                 else:
                     tvdb_id = None
             else:
