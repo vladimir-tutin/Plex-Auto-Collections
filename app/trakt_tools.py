@@ -1,7 +1,7 @@
 import config_tools
 from urllib.parse import urlparse
 import plex_tools
-from imdb_tools import parse_int
+from imdb_tools import regex_first_int
 import trakt
 
 def trakt_get_movies(config_path, plex, data, is_userlist=True):
@@ -14,7 +14,7 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
     else:
         # Trending list
-        max_items = int(parse_int(data, "Trakt Trending number"))
+        max_items = int(regex_first_int(data, "Trakt Trending number"))
         trakt_list_items = trakt.Trakt['movies'].trending(per_page=max_items)
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
@@ -42,16 +42,16 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
             else:
                 imdb_map[item.ratingKey] = item
 
-        matched_imbd_movies = []
+        matched_imdb_movies = []
         missing_imdb_movies = []
         for imdb_id in title_ids:
             movie = imdb_map.pop(imdb_id, None)
             if movie:
-                matched_imbd_movies.append(plex.Server.fetchItem(movie.ratingKey))
+                matched_imdb_movies.append(plex.Server.fetchItem(movie.ratingKey))
             else:
                 missing_imdb_movies.append(imdb_id)
 
-        return matched_imbd_movies, missing_imdb_movies
+        return matched_imdb_movies, missing_imdb_movies
     else:
         # No movies
         return None, None
@@ -66,7 +66,7 @@ def trakt_get_shows(config_path, plex, data, is_userlist=True):
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
     else:
         # Trending list
-        max_items = int(parse_int(data, "Trakt Trending number"))
+        max_items = int(regex_first_int(data, "Trakt Trending number"))
         trakt_list_items = trakt.Trakt['shows'].trending(per_page=max_items)
 
     tvdb_map = {}

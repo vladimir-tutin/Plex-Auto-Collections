@@ -53,7 +53,7 @@ def imdb_get_movies(config_path, plex, data):
         tree = html.fromstring(r.content)
         title_ids.extend(tree.xpath("//div[contains(@class, 'lister-item-image')]"
                                     "//a/img//@data-tconst"))
-    matched_imbd_movies = []
+    matched_imdb_movies = []
     missing_imdb_movies = []
     if title_ids:
         for m in plex.Library.all():
@@ -80,23 +80,23 @@ def imdb_get_movies(config_path, plex, data):
         for imdb_id in title_ids:
             movie = imdb_map.pop(imdb_id, None)
             if movie:
-                matched_imbd_movies.append(plex.Server.fetchItem(movie.ratingKey))
+                matched_imdb_movies.append(plex.Server.fetchItem(movie.ratingKey))
             else:
                 missing_imdb_movies.append(imdb_id)
 
-    return matched_imbd_movies, missing_imdb_movies
+    return matched_imdb_movies, missing_imdb_movies
 
-def parse_int(data, id_type):
+def regex_first_int(data, id_type):
     try:
-        id = re.search('(\\d+)', str(data)).group(1) # re.search requires a string
+        id = re.search('(\\d+)', str(data)).group(1)
         if len(str(id)) != len(str(data)):
             print("| Config Warning: {} can be replaced with {}".format(data, id))
         return id
-    except AttributeError:  # Bad URL Provided
+    except AttributeError:
         raise ValueError("| Config Error: Failed to parse {} from {}".format(id_type, data))
 
 def tmdb_get_movies(config_path, plex, data, is_list=False):
-    tmdb_id = parse_int(data, "TMDb ID")
+    tmdb_id = regex_first_int(data, "TMDb ID")
     t_movs = []
     t_movie = Movie()
     t_movie.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
@@ -218,7 +218,7 @@ def get_tvdb_id_from_tmdb_id(id):
 def tmdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
 
-    tmdb_id = parse_int(data, "TMDb")
+    tmdb_id = regex_first_int(data, "TMDb")
 
     t_tvs = []
     t_tv = TV()
@@ -275,7 +275,7 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
 def tvdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
 
-    id = parse_int(data, "TVDb")
+    id = regex_first_int(data, "TVDb")
 
     p_tv_map = {}
     for item in plex.Library.all():
@@ -306,7 +306,7 @@ def tvdb_get_shows(config_path, plex, data, is_list=False):
 
 def tmdb_get_summary(config_path, data, type):
     # Instantiate TMDB objects
-    id = parse_int(data, "TMDb")
+    id = regex_first_int(data, "TMDb")
 
     api_key = config_tools.TMDB(config_path).apikey
     language = config_tools.TMDB(config_path).language
