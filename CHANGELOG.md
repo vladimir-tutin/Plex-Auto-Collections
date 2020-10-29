@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2020-10-30
+### Added
+- `and_filter` to AND filters together instead of OR
+- Added additional subfilters and allow for use of `!` with subfilters
+
+### Changed
+- Filters are now listed and have been tested
+- Subfilters are now listed and have been tested
+
 ## [2.2.1] - 2020-10-28
 ### Added
 - CHANGELOG.md

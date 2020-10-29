@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.2.1
+##### Version 2.3.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -11,17 +11,17 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
 2. [Configuration](#configuration)
     - [Collections](#collections)
       - [List Type](#list-type-collection-attribute)
-        - [Plex Collection (List Type)](#plex-collection-list-type)
+        - [Plex Filters (List Type)](#plex-filters-list-type)
         - [TMDb Collection (List Type)](#tmdb-collection-list-type)
         - [TMDb Actor (List Type)](#tmdb-actor-list-type)
         - [TMDb List (List Type)](#tmdb-list-list-type)
         - [TMDb Movie (List Type)](#tmdb-movie-list-type)
         - [TMDb Show (List Type)](#tmdb-show-list-type)
         - [TVDb Show (List Type)](#tvdb-show-list-type)
-          - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
-          - [Trakt List (List Type)](#trakt-list-list-type)
-          - [Trakt Trending List (List Type)](#trakt-trending-list-list-type)
-          - [Tautulli List (List Type)](#tautulli-list-list-type)
+        - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
+        - [Trakt List (List Type)](#trakt-list-list-type)
+        - [Trakt Trending List (List Type)](#trakt-trending-list-list-type)
+        - [Tautulli List (List Type)](#tautulli-list-list-type)
       - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
       - [Sync Mode (Collection Attribute)](#sync-mode-collection-attribute)
       - [Sort Title (Collection Attribute)](#sort-title-collection-attribute)
@@ -131,7 +131,7 @@ You can find a template config file in [config/config.yml.template](config/confi
 
 ## Collections
 
-Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are three other attributes to set for each collection:
+Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are eleven attributes you can set for each collection:
 - [List Type (required)](#list-type-collection-attribute)
 - [Subfilters (optional)](#subfilters-collection-attribute)
 - [Sync Mode (optional)](#sync-mode-collection-attribute)
@@ -160,26 +160,37 @@ The only required attribute for each collection is the list type. There are elev
 - [Tautulli List](#tautulli-list-list-type)
 
 Note that most list types supports multiple lists, with the following exceptions:
-- Trakt Trending List
-- Tautulli List
+- Trakt Trending Lists
+- Tautulli Lists
 
-#### Plex Collection (List Type)
+#### Plex Filter (List Type)
 
 ###### Works with Movie and TV Show Libraries
 
-There are a number of built in Plex filters such as actors, genres, year, studio and more. For more filters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the filter.
+You can create a collection based on Plex filters using the options below.
+
+#### Filter Options
+- `all` (Gets every movie/show in Plex useful with [subfilters](#subfilters-collection-attribute))
+- `actor` (Gets every movie with the specified actor) (Movie libraries only)
+- `country` (Gets every movie with the specified country) (Movie libraries only)
+- `decade` (Gets every movie from the specified year + the 9 that follow i.e. 1990 will get you 1990-1999) (Movie libraries only)
+- `director` (Gets every movie with the specified director) (Movie libraries only)
+- `genre` (Gets every movie/show with the specified genre)
+- `studio` (Gets every movie/show with the specified studio)
+- `year` (Gets every movie/show with the specified year)
+- `writer` (Gets every movie with the specified writer) (Movie libraries only)
 
 Here's some high-level ideas:
 
 ```yaml
 collections:
   Documentaries:
-    genres: Documentary
+    genre: Documentary
 ```
 ```yaml
 collections:
   Dave Chappelle:
-    actors: Dave Chappelle
+    actor: Dave Chappelle
 ```
 ```yaml
 collections:
@@ -201,6 +212,46 @@ collections:
       - 1998
       - 1999
 ```
+```yaml
+collections:
+  90s Movies:
+    decade: 1990
+```
+
+In addition you can also use the `!` at the end of any filter except `all` to instead search for everything but what you specified.
+
+```yaml
+collections:
+  No Comedies:
+    genre!: Comedy
+```
+
+Note that the script will `OR` together any high level filters so this:
+
+```yaml
+collections:
+  Dave Chappelle:
+    actor: Dave Chappelle
+    genre: Comedy
+```
+
+will get you every movie/show with Dave Chappelle as well as every movie that has the Comedy genre tag. To get around this we added the `and_filter` collection level attribute. so the above collection would look like this:
+
+```yaml
+collections:
+  Dave Chappelle:
+    actor: Dave Chappelle
+    and_filter:
+      genre: Comedy
+```
+
+This will get you every movie/show with Dave Chappelle that is a Comedy.
+
+Notes:
+- You can use any filter listed above in `and_filters` except `all`.
+- `and_filters` requires at least one high level filter to work.
+- If you have multiple high level filters `and_filters` will `AND` all `and_filters` with each one.
+- You cannot use a filter in `and_filters` if its being used as a high level filter (Use [subfilters](#subfilters-collection-attribute) instead)
 
 #### TMDb Collection (List Type)
 
@@ -331,7 +382,7 @@ collections:
 
 ###### Works with TV Show Libraries
 
-You can also add individual shows to a collection using `tvdb_show`.
+You can also add individual shows to a collection using `tvdb_show` and the show's TVDb ID.
 
 ```yaml
 collections:
@@ -436,16 +487,35 @@ Note that if you have multiple movie Libraries or multiple show Libraries Tautul
 
 ###### Works with Movie and TV Show Libraries
 
-The next optional attribute for any collection is the `subfilters` key. Subfilters allows for a little more granular selection from a list of movies to add to a collection.
+The next optional attribute for any collection is the `subfilters` key. Subfilters allows for additional filters on any List Type not just filters when adding movies/shows to a collection. All subfilters options are listed below.
+In addition you can also use the `!` at the end of any standard subfilter to instead match everything that doesn't have the value specified.
 
-Many `subfilters` are supported such as actors, genres, year, studio and more. For more subfilters refer to the [plexapi.video.Movie](https://python-plexapi.readthedocs.io/en/latest/modules/video.html#plexapi.video.Movie) documentation. Not everything has been tested, so results may vary based off the subfilter. Additionally, subfilters for `audio_language`, `subtitle_language`, and `video_resolution` have been created.
+#### Standard Subfilter Options
+- `actor` (Matches every movie/show with the specified actor)
+- `content_rating` (Matches every movie/show with the specified content rating)
+- `country` (Matches every movie with the specified country) (Movie libraries only)
+- `director` (Matches every movie with the specified director) (Movie libraries only)
+- `genre` (Matches every movie/show with the specified genre)
+- `studio` (Matches every movie/show with the specified studio)
+- `year` (Matches every movie/show with the specified year)
+- `writer` (Matches every movie with the specified writer) (Movie libraries only)
+- `video_resolution` (Matches every movie with the specified video resolution) (Movie libraries only)
+- `audio_language` (Matches every movie with the specified audio language) (Movie libraries only)
+- `subtitle_language` (Matches every movie with the specified subtitle language) (Movie libraries only)
 
-Note that muliple subfilters are supported but a movie must match at least one value from **each** subfilter to be added to a collection. The values for each must match what Plex has including special characters in order to match.
+#### Special Subfilter options (These options can only take one value each)
+- `days_from_now` (Matches any movie/show whos Originally Available date is within the last X days where X is the number you give as the value)
+- `year.gte` (Matches any movie/show whos year is greater then or equal to the specified year)
+- `year.lte` (Matches any movie/show whos year is less then or equal to the specified year)
+- `rating.gte` (Matches any movie/show whos rating is greater then or equal to the specified rating)
+- `rating.lte` (Matches any movie/show whos rating is less then or equal to the specified rating)
+- `originally_available.gte` (Matches any movie/show whos originally_available is greater then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
+- `originally_available.lte` (Matches any movie/show whos originally_available is less then or equal to the specified originally_available)(Date must be in the 10/29/2020 Format)
 
 ```yaml
 collections:
   1080p Documentaries:
-    genres: Documentary
+    genre: Documentary
     summary: A collection of 1080p Documentaries
     subfilters:
       video_resolution: 1080
@@ -455,15 +525,49 @@ collections:
   Daniel Craig only James Bonds:
     imdb_list: https://www.imdb.com/list/ls006405458/
     subfilters:
-      actors: Daniel Craig
+      actor: Daniel Craig
 ```
 ```yaml
 collections:
-  French Romance:
+  Romantic Comedies:
     genre: Romance
     subfilters:
-      audio_language: Français
+      genre: Comedy
 ```
+```yaml
+collections:
+  9.0 Movies:
+    all: True
+    subfilters:
+      rating.gte: 9
+```
+```yaml
+collections:
+  Summer 2020 Movies:
+    all: True
+    subfilters:
+      originally_available.gte: 5/1/2020
+      originally_available.lte: 8/31/2020
+```
+```yaml
+collections:
+  Movies Released in the Last 180 Days:
+    all: True
+    subfilters:
+      days_from_now: 180
+```
+```yaml
+collections:
+  Good Adam Sandler Romantic Comedies:
+    genre: Romance
+    and_filters:
+      actor: Adam Sandler
+    subfilters:
+      genre: Comedy
+      rating.gte: 7
+```
+
+Note that multiple subfilters are supported but a movie must match at least one value from **each** subfilter to be added to a collection. The values for each must match what Plex has including special characters in order to match.
 
 ### Sync Mode (Collection Attribute)
 You can specify how collections sync using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
@@ -519,7 +623,7 @@ collections:
 ```yaml
 collections:
   Dave Chappelle:
-    actors: Dave Chappelle
+    actor: Dave Chappelle
     tmdb_biography: 4169
 ```
 If you want to use a custom summary:
@@ -616,7 +720,7 @@ If you want to use the default actor image on TMDb:
 ```yaml
 collections:
   Dave Chappelle:
-    actors: Dave Chappelle
+    actor: Dave Chappelle
     tmdb_biography: 4169
     tmdb_profile: 4169
 ```
@@ -690,7 +794,19 @@ plex:                                         # Req
   sync_mode: append                           # Opt - Global Sync Mode
 ```
 
-**This script does not currently support Plex's [new metadata agent / matching](https://forums.plex.tv/t/introducing-the-new-plex-movie-agent/615989)**. Do not "update matching" until the script's dependencies support the new agent (feel free to follow issue #33).
+**This script has limited support for Plex's [new metadata agent / matching](https://forums.plex.tv/t/introducing-the-new-plex-movie-agent/615989)**. Do not "update matching" until the script's dependencies support the new agent (feel free to follow issue #33).
+
+Attributes incompatible with Plex's new metadata agent:
+- `tmdb_collection`
+- `tmdb_id`
+- `tmdb_actor`
+- `tmdb_list`
+- `tmdb_movie`
+- `tmdb_show`
+- `tvdb_show`
+- `imdb_list`
+- `trakt_list`
+- `trakt_trending`
 
 Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
 

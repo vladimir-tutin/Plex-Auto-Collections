@@ -3,6 +3,7 @@ from plexapi.video import Show
 from plexapi import exceptions as PlexExceptions
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
+from datetime import datetime, timedelta
 import imdb_tools
 import trakt_tools
 from config_tools import Config
@@ -113,60 +114,87 @@ def get_collection(plex, data, exact=None, subtype=None):
     else:
         return "No collection found"
 
-def add_to_collection(config_path, plex, method, value, c, map, subfilters=None):
+def add_to_collection(config_path, plex, method, value, c, map, and_filters=None, subfilters=None):
     movies = []
     shows = []
     items = []
     missing = []
+    def search_plex():
+        filters = {method: value}
+        if and_filters:
+            for af in and_filters:
+                print("|        And {}: {}".format(af[0], af[1]))
+                filters[af[0]] = af[1]
+        return plex.Library.search(**filters)
+
     if ("trakt" in method or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
         raise KeyError("| trakt connection required for {}",format(method))
-    if ("imdb" in method or "tmdb" in method) and not TMDB.valid:
+    elif ("imdb" in method or "tmdb" in method) and not TMDB.valid:
         raise KeyError("| tmdb connection required for {}",format(method))
-    if plex.library_type == "movie":
-        if (method in Movie.__doc__ or hasattr(Movie, method)):
-            try:
-                movies = plex.Library.search(**{method: value})
-            except PlexExceptions.BadRequest:
-                # If last character is "s" remove it and try again
-                if method[-1:] == "s":
-                    movies = plex.Library.search(**{method[:-1]: value})
-                    movies = [m.ratingKey for m in movies if movies]
+    elif plex.library_type == "movie":
+        if method == "imdb_list" and TMDB.valid:
+            movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
+        elif method == "tmdb_list" and TMDB.valid:
+            movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, is_list=True)
+        elif method in ["tmdb_id", "tmdb_movie", "tmdb_collection"] and TMDB.valid:
+            movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
+        elif method == "trakt_list" and TraktClient.valid:
+            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
+        elif method == "trakt_trending" and TraktClient.valid:
+            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, is_userlist=False)
+        elif method == "tautulli" and Tautulli.valid:
+            movies, missing = imdb_tools.get_tautulli(config_path, plex, value)
+        elif method == "all":
+            movies = plex.Library.all()
         else:
-            if "imdb" in method or "tmdb" in method and TMDB.valid:
-                if method == "imdb_list":
-                    movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
-                elif method == "tmdb_list":
-                    movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, is_list=True)
-                elif method in ["tmdb_id", "tmdb_movie", "tmdb_collection"]:
-                    movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
-            elif method == "trakt_list" and TraktClient.valid:
-                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
-            elif method == "trakt_trending" and TraktClient.valid:
-                movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, is_userlist=False)
-            elif method == "tautulli" and Tautulli.valid:
-                movies, missing = imdb_tools.get_tautulli(config_path, plex, value)
+            movies = search_plex()
     elif plex.library_type == "show":
-        if (method in Show.__doc__ or hasattr(Show, method)):
-            try:
-                shows = plex.Library.search(**{method: value})
-            except PlexExceptions.BadRequest as e:
-                # If last character is "s" remove it and try again
-                if method[-1:] == "s":
-                    shows = plex.Library.search(**{method[:-1]: value})
-                    shows = [s.ratingKey for s in shows if shows]
+        if method == "tmdb_list" and TMDB.valid and TraktClient.valid:
+            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, is_list=True)
+        elif method in ["tmdb_id", "tmdb_show"] and TMDB.valid and TraktClient.valid:
+            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value)
+        elif method == "tvdb_show" and TraktClient.valid:
+            shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
+        elif method == "trakt_list" and TraktClient.valid:
+            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
+        elif method == "trakt_trending" and TraktClient.valid:
+            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, is_userlist=False)
+        elif method == "tautulli" and Tautulli.valid:
+            shows, missing = imdb_tools.get_tautulli(config_path, plex, value)
+        elif method == "all":
+            shows = plex.Library.all()
         else:
-            if method == "tmdb_list" and TMDB.valid and TraktClient.valid:
-                shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, is_list=True)
-            elif method in ["tmdb_id", "tmdb_show"] and TMDB.valid and TraktClient.valid:
-                shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value)
-            elif method == "tvdb_show" and TraktClient.valid:
-                shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
-            elif method == "trakt_list" and TraktClient.valid:
-                shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
-            elif method == "trakt_trending" and TraktClient.valid:
-                shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, is_userlist=False)
-            elif method == "tautulli" and Tautulli.valid:
-                shows, missing = imdb_tools.get_tautulli(config_path, plex, value)
+            shows = search_plex()
+
+    if (movies or shows) and subfilters:
+        for sf in subfilters:
+            print("|  Subfilter {}: {}".format(sf[0], sf[1]))
+
+    subfilter_alias = {
+        "actor": "actors",
+        "content_rating": "contentRating",
+        "country": "countries",
+        "director": "directors",
+        "genre": "genres",
+        "studio": "studio",
+        "year": "year",
+        "writer": "writers",
+        "rating": "rating",
+        "days_from_now": "days_from_now",
+        "originally_available": "originallyAvailableAt",
+        "video_resolution": "video_resolution",
+        "audio_language": "audio_language",
+        "subtitle_language": "subtitle_language",
+    }
+    def alias(filter, alias):
+        if filter[-1] == "!":
+            return alias[filter[:-1]] + "!"
+        elif filter[-4] == ".lte":
+            return alias[filter[:-4]] + ".lte"
+        elif filter[-4] == ".gte":
+            return alias[filter[:-4]] + ".gte"
+        else:
+            return alias[filter]
 
     if movies:
         # Check if already in collection
@@ -178,43 +206,72 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
         for rk in movies:
             current_m = get_movie(plex, rk)
             current_m.reload()
-            if current_m in fs:
-                print("| {} Collection | = | {}".format(c, current_m.title))
-                map[current_m.ratingKey] = None
-            elif subfilters:
-                match = True
+            match = True
+            if subfilters:
                 for sf in subfilters:
-                    method = sf[0]
-                    terms = str(sf[1]).split(", ")
-                    try:
-                        mv_attrs = getattr(current_m, method)
-                        # If it returns a list, get the 'tag' attribute
-                        # Otherwise, it's a string. Make it a list.
-                        if isinstance(mv_attrs, list) and "-" not in method:
-                            mv_attrs = [getattr(x, 'tag') for x in mv_attrs]
-                        else:
-                            mv_attrs = [str(mv_attrs)]
-                    except AttributeError:
-                        for media in current_m.media:
-                            if method == "video_resolution":
-                                mv_attrs = [media.videoResolution]
-                            for part in media.parts:
-                                if method == "audio_language":
-                                    mv_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
-                                if method == "subtitle_language":
-                                    mv_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
+                    method = alias(sf[0], subfilter_alias)
+                    negative = False
+                    gte = False
+                    lte = False
+                    if method[-1] == "!":
+                        negative = True
+                        method = method[:-1]
+                    elif method[-4] == ".lte":
+                        lte = True
+                        method = method[:-4]
+                    elif method[-4] == ".gte":
+                        gte = True
+                        method = method[:-4]
+                    if method == "days_from_now":
+                        threshold_date = datetime.now() - timedelta(days=sf[1])
+                        attr = getattr(current_m, "originallyAvailableAt")
+                        if attr < threshold_date:
+                            match = False
+                            break
+                    elif gte == True or lte == True:
+                        if method == "originallyAvailableAt":
+                            threshold_date = datetime.strptime(sf[1], "%m/%d/%y")
+                            attr = getattr(current_m, "originallyAvailableAt")
+                            if (lte == True and attr > threshold_date) or (gte == True and attr < threshold_date):
+                                match = False
+                                break
+                        elif method in ["year", "rating"]:
+                            attr = getattr(current_m, method)
+                            if (lte == True and attr > sf[1]) or (gte == True and attr < sf[1]):
+                                match = False
+                                break
+                    else:
+                        terms = sf[1] if isinstance(sf[1], list) else str(sf[1]).split(", ")
+                        if method in ["video_resolution", "audio_language", "subtitle_language"]:
+                            for media in current_m.media:
+                                if method == "video_resolution":
+                                    mv_attrs = [media.videoResolution]
+                                for part in media.parts:
+                                    if method == "audio_language":
+                                        mv_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
+                                    if method == "subtitle_language":
+                                        mv_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
+                        elif method in ["contentRating", "studio", "year", "rating", "originallyAvailableAt"]:                    # Otherwise, it's a string. Make it a list.
+                            mv_attrs = [str(getattr(current_m, method))]
+                        elif method in ["actors", "countries", "directors", "genres", "writers"]:
+                            mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
 
-                    # Get the intersection of the user's terms and movie's terms
-                    # If it's empty, it's not a match
-                    if not list(set(terms) & set(mv_attrs)):
-                        match = False
-                        break
-                if match:
+                        # Get the intersection of the user's terms and movie's terms
+                        # If it's empty and negitive is false, it's not a match
+                        # If it's not empty and negitive is true, it's not a match
+                        if (not list(set(terms) & set(mv_attrs)) and negative == False) or (list(set(terms) & set(mv_attrs)) and negative == True):
+                            match = False
+                            break
+            if match:
+                if current_m in fs:
+                    print("| {} Collection | = | {}".format(c, current_m.title))
+                    map[current_m.ratingKey] = None
+                else:
                     print("| {} Collection | + | {}".format(c, current_m.title))
                     current_m.addCollection(c)
-            elif not subfilters:
-                print("| {} Collection | + | {}".format(c, current_m.title))
-                current_m.addCollection(c)
+    elif plex.library_type == "movie":
+        print("| No movies found")
+
     if shows:
         # Check if already in collection
         cols = plex.Library.search(title=c, libtype="collection")
@@ -225,44 +282,72 @@ def add_to_collection(config_path, plex, method, value, c, map, subfilters=None)
         for rk in shows:
             current_s = get_item(plex, rk)
             current_s.reload()
-            if current_s in fs:
-                print("| {} Collection | = | {}".format(c, current_s.title))
-                map[current_s.ratingKey] = None
-            elif subfilters:
-                match = True
+            match = True
+            if subfilters:
                 for sf in subfilters:
-                    method = sf[0]
-                    terms = str(sf[1]).split(", ")
-                    try:
-                        show_attrs = getattr(current_s, method)
-                        # If it returns a list, get the 'tag' attribute
-                        # Otherwise, it's a string. Make it a list.
-                        if isinstance(show_attrs, list) and "-" not in method:
-                            show_attrs = [getattr(x, 'tag') for x in show_attrs]
-                        else:
-                            show_attrs = [str(show_attrs)]
-                    except AttributeError as e:
-                        print(e)
-                        # for media in current_s.media:
-                        #     if method == "video_resolution":
-                        #         show_attrs = [media.videoResolution]
-                        #     for part in media.parts:
-                        #         if method == "audio_language":
-                        #             show_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
-                        #         if method == "subtitle_language":
-                        #             show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
+                    method = alias(sf[0], subfilter_alias)
+                    negative = False
+                    gte = False
+                    lte = False
+                    if method[-1] == "!":
+                        negative = True
+                        method = method[:-1]
+                    elif method[-4] == ".lte":
+                        lte = True
+                        method = method[:-4]
+                    elif method[-4] == ".gte":
+                        gte = True
+                        method = method[:-4]
+                    if method == "days_from_now":
+                        threshold_date = datetime.now() - timedelta(days=sf[1])
+                        attr = getattr(current_m, "originallyAvailableAt")
+                        if attr < threshold_date:
+                            match = False
+                            break
+                    elif gte == True or lte == True:
+                        if method == "originallyAvailableAt":
+                            threshold_date = datetime.strptime(sf[1], "%m/%d/%y")
+                            attr = getattr(current_m, "originallyAvailableAt")
+                            if (lte == True and attr > threshold_date) or (gte == True and attr < threshold_date):
+                                match = False
+                                break
+                        elif method in ["year", "rating"]:
+                            attr = getattr(current_m, method)
+                            if (lte == True and attr > sf[1]) or (gte == True and attr < sf[1]):
+                                match = False
+                                break
+                    else:
+                        terms = sf[1] if isinstance(sf[1], list) else str(sf[1]).split(", ")
+                        # if method in ["video_resolution", "audio_language", "subtitle_language"]:
+                        #     for media in current_s.media:
+                        #         if method == "video_resolution":
+                        #             show_attrs = [media.videoResolution]
+                        #         for part in media.parts:
+                        #             if method == "audio_language":
+                        #                 show_attrs = ([audio_stream.language for audio_stream in part.audioStreams()])
+                        #             if method == "subtitle_language":
+                        #                 show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
+                        if method in ["contentRating", "studio", "year", "rating", "originallyAvailableAt"]:
+                            mv_attrs = [str(getattr(current_m, method))]
+                        elif method in ["actors", "genres"]:
+                            mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
 
-                    # Get the intersection of the user's terms and movie's terms
-                    # If it's empty, it's not a match
-                    if not list(set(terms) & set(show_attrs)):
-                        match = False
-                        break
-                if match:
+                        # Get the intersection of the user's terms and movie's terms
+                        # If it's empty and negitive is false, it's not a match
+                        # If it's not empty and negitive is true, it's not a match
+                        if (not list(set(terms) & set(show_attrs)) and negative == False) or (list(set(terms) & set(show_attrs)) and negative == True):
+                            match = False
+                            break
+            if match:
+                if current_s in fs:
+                    print("| {} Collection | = | {}".format(c, current_s.title))
+                    map[current_s.ratingKey] = None
+                else:
                     print("| {} Collection | + | {}".format(c, current_s.title))
                     current_s.addCollection(c)
-            elif not subfilters:
-                print("| {} Collection | + | {}".format(c, current_s.title))
-                current_s.addCollection(c)
+    elif plex.library_type == "show":
+        print("| No shows found")
+
     try:
         missing
     except UnboundLocalError:
