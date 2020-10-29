@@ -51,6 +51,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_collection",
         "tmdb_id",
         "tmdb_actor",
+        "tmdb_director"
         "tmdb_list",
         "tmdb_movie",
         "tmdb_show",
@@ -149,6 +150,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
         tmdb_id = None
         actor_id = None
+        actor_method = None
         methods = [m for m in collections[c] if m not in details]
         def alias(filter, alias):
             if filter[-1] == "!":
@@ -234,12 +236,13 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                                 print("| Config Error: TMDb ID: {} is invalid".format(v))
                                 add = False
                         try:
-                            if final_method == "tmdb_actor":
+                            if final_method in ["tmdb_actor", "tmdb_director"]:
                                 name = tmdb_get_summary(config_path, v, "name")
                                 if actor_id is None:
                                     actor_id = v
+                                    actor_method = final_method
                                 v = name
-                                final_method = "actor"
+                                final_method = "actor" if final_method == "tmdb_actor" else "director"
                                 v_print = v_print + " " + v
                             if final_method == "actor":
                                 v = get_actor_rkey(plex, v)
@@ -546,7 +549,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             if not poster and TMDB.valid:
                 try:
                     if actor_id:
-                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, actor_id, "profile_path"), "tmdb_actor"]
+                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, actor_id, "profile_path"), actor_method]
                     elif tmdb_id:
                         poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "poster_path"), "tmdb_id"]
                 except ValueError as e:

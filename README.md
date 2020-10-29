@@ -14,6 +14,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
         - [Plex Filters (List Type)](#plex-filters-list-type)
         - [TMDb Collection (List Type)](#tmdb-collection-list-type)
         - [TMDb Actor (List Type)](#tmdb-actor-list-type)
+        - [TMDb Director (List Type)](#tmdb-director-list-type)
         - [TMDb List (List Type)](#tmdb-list-list-type)
         - [TMDb Movie (List Type)](#tmdb-movie-list-type)
         - [TMDb Show (List Type)](#tmdb-show-list-type)
@@ -146,10 +147,11 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 
 ### List Type (Collection Attribute)
 
-The only required attribute for each collection is the list type. There are eleven different list types to choose from:
+The only required attribute for each collection is the list type. There are twelve different list types to choose from:
 - [Plex Filters](#plex-filters-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb Actor](#tmdb-actor-list-type)
+- [TMDb Director](#tmdb-director-list-type)
 - [TMDb List](#tmdb-list-list-type)
 - [TMDb Movie](#tmdb-movie-list-type)
 - [TMDb Show](#tmdb-show-list-type)
@@ -317,7 +319,30 @@ collections:
 ```
 
 Notes:
-- You can specify more than one `tmdb_actor` but it will pull the summary and poster from only the first one.
+- You can specify more than one `tmdb_actor` or `tmdb_director` but it will pull the summary and poster from only the first one.
+- Local posters are loaded over `tmdb_profile` if they exist unless `tmdb_profile` is also specified
+- `tmdb_biography` will load unless `summary`,`tmdb_summary`, or `tmdb_biography` is also specified
+
+#### TMDb Director (List Type)
+
+###### Works with Movie Libraries
+
+Exactly like `tmdb_actor`, `tmdb_director` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the director's TMDb page ID or URL as well as search Plex using the director filter all with one attribute.
+
+```yaml
+collections:
+  Steven Spielberg:
+    tmdb_actor: 488
+```
+
+```yaml
+collections:
+  Steven Spielberg:
+    tmdb_actor: https://www.themoviedb.org/person/488-steven-spielberg
+```
+
+Notes:
+- You can specify more than one `tmdb_actor` or `tmdb_director` but it will pull the summary and poster from only the first one.
 - Local posters are loaded over `tmdb_profile` if they exist unless `tmdb_profile` is also specified
 - `tmdb_biography` will load unless `summary`,`tmdb_summary`, or `tmdb_biography` is also specified
 
