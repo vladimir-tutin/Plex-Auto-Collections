@@ -147,7 +147,7 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 ### List Type (Collection Attribute)
 
 The only required attribute for each collection is the list type. There are eleven different list types to choose from:
-- [Plex Collection](#plex-collection-list-type)
+- [Plex Filters](#plex-filters-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb Actor](#tmdb-actor-list-type)
 - [TMDb List](#tmdb-list-list-type)
@@ -163,7 +163,7 @@ Note that most list types supports multiple lists, with the following exceptions
 - Trakt Trending Lists
 - Tautulli Lists
 
-#### Plex Filter (List Type)
+#### Plex Filters (List Type)
 
 ###### Works with Movie and TV Show Libraries
 

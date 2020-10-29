@@ -186,7 +186,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         print("| Config Warning: {} and_filter will run as {}".format(sf, final_sf))
                     except KeyError:
                         final_af = af
-                    method = final_af[:-1] if filter[-1] == "!" else final_af
+                    method = final_af[:-1] if final_af[-1] == "!" else final_af
                     if final_af in movie_only_filters and libtype == "show":
                         print("| Config Error: {} and_filter only works for movie libraries".format(final_af))
                     elif final_af == "all":
