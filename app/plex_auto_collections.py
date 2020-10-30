@@ -117,7 +117,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb-list", "imdb-list", "trakt-list", "tmdb-poster", "details",
         "sync_mode", "subfilters", "and_filters", "sort_title", "content_rating",
         "summary", "tmdb_summary", "tmdb_biography",
-        "collection_mode", "collection_sort",
+        "collection_mode", "collection_order",
         "poster", "tmdb_poster", "tmdb_profile", "file_poster",
         "background", "file_background",
         "name_mapping"
@@ -406,17 +406,17 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 else:
                     print("| Config Error: collection_mode attribute is blank")
 
-            # Handle collection collection_sort
-            if "collection_sort" in collections[c]:
-                if collections[c]["collection_sort"]:
-                    collection_sort = collections[c]["collection_sort"]
-                    if collection_sort in ('release', 'alpha'):
-                        plex_collection.sortUpdate(sort=collection_sort)
-                        print("| Detail: collection_sort updated to {}".format(collection_sort))
+            # Handle collection collection_order
+            if "collection_order" in collections[c]:
+                if collections[c]["collection_order"]:
+                    collection_order = collections[c]["collection_order"]
+                    if collection_order in ('release', 'alpha'):
+                        plex_collection.sortUpdate(sort=collection_order)
+                        print("| Detail: collection_order updated to {}".format(collection_order))
                     else:
-                        print("| Config Error: {} collection_sort Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collection_sort))
+                        print("| Config Error: {} collection_order Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collection_order))
                 else:
-                    print("| Config Error: collection_sort attribute is blank")
+                    print("| Config Error: collection_order attribute is blank")
 
         tmdb_url_prefix = "https://image.tmdb.org/t/p/original"
         if not no_images:
