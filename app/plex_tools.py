@@ -187,8 +187,8 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
         "subtitle_language": "subtitle_language",
     }
     def alias(filter, alias):
-        if filter[-1] == "!":
-            return alias[filter[:-1]] + "!"
+        if filter[-4] == ".not":
+            return alias[filter[:-4]] + ".not"
         elif filter[-4] == ".lte":
             return alias[filter[:-4]] + ".lte"
         elif filter[-4] == ".gte":
@@ -213,7 +213,7 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                     negative = False
                     gte = False
                     lte = False
-                    if method[-1] == "!":
+                    if method[-4] == ".not":
                         negative = True
                         method = method[:-1]
                     elif method[-4] == ".lte":
@@ -289,9 +289,9 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                     negative = False
                     gte = False
                     lte = False
-                    if method[-1] == "!":
+                    if method[-4] == ".not":
                         negative = True
-                        method = method[:-1]
+                        method = method[:-4]
                     elif method[-4] == ".lte":
                         lte = True
                         method = method[:-4]

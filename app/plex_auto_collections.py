@@ -64,14 +64,14 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     ]
     all_filters = [
         "all",
-        "actor", "actor!",
-        "country", "country!",
-        "decade", "decade!",
-        "director", "director!",
-        "genre", "genre!",
-        "studio", "studio!",
-        "year", "year!",
-        "writer", "writer!"
+        "actor", "actor.not",
+        "country", "country.not",
+        "decade", "decade.not",
+        "director", "director.not",
+        "genre", "genre.not",
+        "studio", "studio.not",
+        "year", "year.not",
+        "writer", "writer.not"
     ]
     show_only_lists = [
         "tmdb_show",
@@ -84,35 +84,35 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "imdb_list",
     ]
     movie_only_filters = [
-        "actor", "actor!",
-        "country", "country!",
-        "decade", "decade!",
-        "director", "director!",
-        "writer", "writer!"
+        "actor", "actor.not",
+        "country", "country.not",
+        "decade", "decade.not",
+        "director", "director.not",
+        "writer", "writer.not"
     ]
     all_subfilters = [
-        "actor", "actor!",
-        "content_rating", "content_rating!",
-        "country", "country!",
-        "director", "director!",
-        "genre", "genre!",
-        "studio", "studio!",
-        "year", "year!", "year.gte", "year.lte",
-        "writer", "writer!",
+        "actor", "actor.not",
+        "content_rating", "content_rating.not",
+        "country", "country.not",
+        "director", "director.not",
+        "genre", "genre.not",
+        "studio", "studio.not",
+        "year", "year.not", "year.gte", "year.lte",
+        "writer", "writer.not",
         "rating.gte", "rating.lte",
         "max_age",
         "originally_available.gte", "originally_available.lte",
-        "video_resolution", "video_resolution!",
-        "audio_language", "audio_language!",
-        "subtitle_language", "subtitle_language!"
+        "video_resolution", "video_resolution.not",
+        "audio_language", "audio_language.not",
+        "subtitle_language", "subtitle_language.not"
     ]
     movie_only_subfilters = [
-        "country", "country!",
-        "director", "director!",
-        "writer", "writer!",
-        "video_resolution", "video_resolution!",
-        "audio_language", "audio_language!",
-        "subtitle_language", "subtitle_language!"
+        "country", "country.not",
+        "director", "director.not",
+        "writer", "writer.not",
+        "video_resolution", "video_resolution.not",
+        "audio_language", "audio_language.not",
+        "subtitle_language", "subtitle_language.not"
     ]
     details = [
         "tmdb-list", "imdb-list", "trakt-list", "tmdb-poster", "details",
@@ -154,8 +154,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         actor_method = None
         methods = [m for m in collections[c] if m not in details]
         def alias(filter, alias):
-            if filter[-1] == "!":
-                return alias[filter[:-1]] + "!"
+            if filter[-4] == ".not":
+                return alias[filter[:-4]] + ".not"
             elif filter[-4] == ".lte":
                 return alias[filter[:-4]] + ".lte"
             elif filter[-4] == ".gte":
@@ -189,13 +189,13 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         print("| Config Warning: {} and_filter will run as {}".format(sf, final_sf))
                     except KeyError:
                         final_af = af
-                    method = final_af[:-1] if final_af[-1] == "!" else final_af
+                    method = final_af[:-4] if final_af[-4] == ".not" else final_af
                     if final_af in movie_only_filters and libtype == "show":
                         print("| Config Error: {} and_filter only works for movie libraries".format(final_af))
                     elif final_af == "all":
                         print("| Config Error: all cannot be an and_filter")
-                    elif method in collections[c] or method + "!" in collections[c]:
-                        print("| Config Error: {} cannot be an and_filter while {} or {}! is a filter use it as a subfilter instead".format(final_af, method, method))
+                    elif method in collections[c] or method + ".not" in collections[c]:
+                        print("| Config Error: {} cannot be an and_filter while {} or {}.not is a filter use it as a subfilter instead".format(final_af, method, method))
                     elif final_af in all_filters:
                         af_string = final_af, collections[c]["and_filters"][af]
                         and_filters.append(af_string)
@@ -212,7 +212,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
             elif collections[c][m]:
                 try:
-                    final_method = (method_alias[m[:-1]] + "!") if m[-1] == "!" else method_alias[m]
+                    final_method = (method_alias[m[:-4]] + ".not") if m[-4] == ".not" else method_alias[m]
                     print("| Config Warning: {} filter will run as {}".format(m, final_method))
                 except KeyError:
                     final_method = m

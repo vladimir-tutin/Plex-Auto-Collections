@@ -218,12 +218,12 @@ collections:
     decade: 1990
 ```
 
-In addition you can also use the `!` at the end of any filter except `all` to instead search for everything but what you specified.
+In addition you can also use the `.not` at the end of any filter except `all` to instead search for everything but what you specified.
 
 ```yaml
 collections:
   No Comedies:
-    genre!: Comedy
+    genre.not: Comedy
 ```
 
 Note that the script will `OR` together any high level filters so this:
@@ -523,7 +523,7 @@ Note that if you have multiple movie Libraries or multiple show Libraries Tautul
 ###### Works with Movie and TV Show Libraries
 
 The next optional attribute for any collection is the `subfilters` key. Subfilters allows for additional filters on any List Type not just filters when adding movies/shows to a collection. All subfilters options are listed below.
-In addition you can also use the `!` at the end of any standard subfilter to instead match everything that doesn't have the value specified.
+In addition you can also use the `.not` at the end of any standard subfilter to instead match everything that doesn't have the value specified.
 
 #### Standard Subfilter Options
 - `actor` (Matches every movie/show with the specified actor)
@@ -539,13 +539,13 @@ In addition you can also use the `!` at the end of any standard subfilter to ins
 - `subtitle_language` (Matches every movie with the specified subtitle language) (Movie libraries only)
 
 #### Special Subfilter options (These options can only take one value each)
-- `max_age` (Matches any movie/show whos Originally Available date is within the last specified number of days or years) (To specify years put a `y` at the end of the number i.e. `max_age: 1y`)
-- `year.gte` (Matches any movie/show whos year is greater then or equal to the specified year)
-- `year.lte` (Matches any movie/show whos year is less then or equal to the specified year)
-- `rating.gte` (Matches any movie/show whos rating is greater then or equal to the specified rating)
-- `rating.lte` (Matches any movie/show whos rating is less then or equal to the specified rating)
-- `originally_available.gte` (Matches any movie/show whos originally_available is greater then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
-- `originally_available.lte` (Matches any movie/show whos originally_available is less then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
+- `max_age` (Matches any movie/show whose Originally Available date is within the last specified number of days or years) (To specify years put a `y` at the end of the number i.e. `max_age: 1y`)
+- `year.gte` (Matches any movie/show whose year is greater then or equal to the specified year)
+- `year.lte` (Matches any movie/show whose year is less then or equal to the specified year)
+- `rating.gte` (Matches any movie/show whose rating is greater then or equal to the specified rating)
+- `rating.lte` (Matches any movie/show whose rating is less then or equal to the specified rating)
+- `originally_available.gte` (Matches any movie/show whose originally_available is greater then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
+- `originally_available.lte` (Matches any movie/show whose originally_available is less then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
 
 ```yaml
 collections:
