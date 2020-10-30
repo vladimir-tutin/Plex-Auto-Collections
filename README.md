@@ -352,7 +352,7 @@ collections:
 ```
 
 Notes:
-- You can specify more than one `tmdb_actor` or `tmdb_director` but it will pull the summary and poster from only the first one.
+- You can specify more than one `tmdb_actor`, `tmdb_director`, or `tmdb_writer` but it will pull the summary and poster from only the first one.
 - Local posters are loaded over `tmdb_profile` if they exist unless `tmdb_profile` is also specified
 - `tmdb_biography` will load unless `summary`,`tmdb_summary`, or `tmdb_biography` is also specified
 
