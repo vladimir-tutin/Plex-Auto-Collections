@@ -539,13 +539,13 @@ In addition you can also use the `!` at the end of any standard subfilter to ins
 - `subtitle_language` (Matches every movie with the specified subtitle language) (Movie libraries only)
 
 #### Special Subfilter options (These options can only take one value each)
-- `days_from_now` (Matches any movie/show whos Originally Available date is within the last X days where X is the number you give as the value)
+- `max_age` (Matches any movie/show whos Originally Available date is within the last specified number of days or years) (To specify years put a `y` at the end of the number i.e. `max_age: 1y`)
 - `year.gte` (Matches any movie/show whos year is greater then or equal to the specified year)
 - `year.lte` (Matches any movie/show whos year is less then or equal to the specified year)
 - `rating.gte` (Matches any movie/show whos rating is greater then or equal to the specified rating)
 - `rating.lte` (Matches any movie/show whos rating is less then or equal to the specified rating)
 - `originally_available.gte` (Matches any movie/show whos originally_available is greater then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
-- `originally_available.lte` (Matches any movie/show whos originally_available is less then or equal to the specified originally_available)(Date must be in the 10/29/2020 Format)
+- `originally_available.lte` (Matches any movie/show whos originally_available is less then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
 
 ```yaml
 collections:
@@ -589,7 +589,14 @@ collections:
   Movies Released in the Last 180 Days:
     all: True
     subfilters:
-      days_from_now: 180
+      max_age: 180
+```
+```yaml
+collections:
+  Movies Released in the Last 5 Years:
+    all: True
+    subfilters:
+      max_age: 5y
 ```
 ```yaml
 collections:

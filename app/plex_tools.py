@@ -180,7 +180,7 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
         "year": "year",
         "writer": "writers",
         "rating": "rating",
-        "days_from_now": "days_from_now",
+        "max_age": "max_age",
         "originally_available": "originallyAvailableAt",
         "video_resolution": "video_resolution",
         "audio_language": "audio_language",
@@ -222,7 +222,7 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                     elif method[-4] == ".gte":
                         gte = True
                         method = method[:-4]
-                    if method == "days_from_now":
+                    if method == "max_age":
                         threshold_date = datetime.now() - timedelta(days=sf[1])
                         attr = getattr(current_m, "originallyAvailableAt")
                         if attr < threshold_date:
@@ -257,8 +257,8 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                             mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
 
                         # Get the intersection of the user's terms and movie's terms
-                        # If it's empty and negitive is false, it's not a match
-                        # If it's not empty and negitive is true, it's not a match
+                        # If it's empty and negative is false, it's not a match
+                        # If it's not empty and negative is true, it's not a match
                         if (not list(set(terms) & set(mv_attrs)) and negative == False) or (list(set(terms) & set(mv_attrs)) and negative == True):
                             match = False
                             break
@@ -298,8 +298,11 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                     elif method[-4] == ".gte":
                         gte = True
                         method = method[:-4]
-                    if method == "days_from_now":
-                        threshold_date = datetime.now() - timedelta(days=sf[1])
+                    if method == "max_age":
+                        max_age = imdb_tools.regex_first_int(sf[1])
+                        if sf[1][-1] == "y":
+                            max_age = int(365.25 * max_age)
+                        threshold_date = datetime.now() - timedelta(days=max_age)
                         attr = getattr(current_m, "originallyAvailableAt")
                         if attr < threshold_date:
                             match = False
@@ -333,8 +336,8 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                             mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
 
                         # Get the intersection of the user's terms and movie's terms
-                        # If it's empty and negitive is false, it's not a match
-                        # If it's not empty and negitive is true, it's not a match
+                        # If it's empty and negative is false, it's not a match
+                        # If it's not empty and negative is true, it's not a match
                         if (not list(set(terms) & set(show_attrs)) and negative == False) or (list(set(terms) & set(show_attrs)) and negative == True):
                             match = False
                             break

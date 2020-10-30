@@ -100,7 +100,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "year", "year!", "year.gte", "year.lte",
         "writer", "writer!",
         "rating.gte", "rating.lte",
-        "days_from_now",
+        "max_age",
         "originally_available.gte", "originally_available.lte",
         "video_resolution", "video_resolution!",
         "audio_language", "audio_language!",
