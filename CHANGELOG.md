@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filters are now listed and have been tested
 - Subfilters are now listed and have been tested
 
+### Fixed
+- `collection_order` was in the code as `collection_sort`
+
 ## [2.2.1] - 2020-10-28
 ### Added
 - CHANGELOG.md
