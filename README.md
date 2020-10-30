@@ -301,7 +301,7 @@ Notes:
 
 #### TMDb People (List Type)
 
-Similarly to `tmdb_id`, `tmdb_actor`, `tmdb_director`, `tmdb_writer` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the actor's TMDb page ID or URL as well as search Plex using their repective Plex filters all with one attribute.
+Similarly to `tmdb_id`, `tmdb_actor`, `tmdb_director`, `tmdb_writer` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the person's TMDb page ID or URL as well as search Plex using their respective Plex filters all with one attribute.
 
 ##### TMDb Actor (List Type)
 
@@ -835,6 +835,8 @@ Attributes incompatible with Plex's new metadata agent:
 - `tmdb_collection`
 - `tmdb_id`
 - `tmdb_actor`
+- `tmdb_director`
+- `tmdb_writer`
 - `tmdb_list`
 - `tmdb_movie`
 - `tmdb_show`
