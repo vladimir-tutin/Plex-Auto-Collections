@@ -52,6 +52,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_id",
         "tmdb_actor",
         "tmdb_director"
+        "tmdb_writer"
         "tmdb_list",
         "tmdb_movie",
         "tmdb_show",
@@ -236,13 +237,18 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                                 print("| Config Error: TMDb ID: {} is invalid".format(v))
                                 add = False
                         try:
-                            if final_method in ["tmdb_actor", "tmdb_director"]:
+                            if final_method in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
                                 name = tmdb_get_summary(config_path, v, "name")
                                 if actor_id is None:
                                     actor_id = v
                                     actor_method = final_method
                                 v = name
-                                final_method = "actor" if final_method == "tmdb_actor" else "director"
+                                if final_method == "tmdb_actor":
+                                    final_method = "actor"
+                                elif final_method == "tmdb_director":
+                                    final_method =  "director"
+                                elif final_method == "tmdb_writer":
+                                    final_method =  "writer"
                                 v_print = v_print + " " + v
                             if final_method == "actor":
                                 v = get_actor_rkey(plex, v)

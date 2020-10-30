@@ -13,8 +13,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
       - [List Type](#list-type-collection-attribute)
         - [Plex Filters (List Type)](#plex-filters-list-type)
         - [TMDb Collection (List Type)](#tmdb-collection-list-type)
-        - [TMDb Actor (List Type)](#tmdb-actor-list-type)
-        - [TMDb Director (List Type)](#tmdb-director-list-type)
+        - [TMDb People (List Type)](#tmdb-people-list-type)
         - [TMDb List (List Type)](#tmdb-list-list-type)
         - [TMDb Movie (List Type)](#tmdb-movie-list-type)
         - [TMDb Show (List Type)](#tmdb-show-list-type)
@@ -132,7 +131,7 @@ You can find a template config file in [config/config.yml.template](config/confi
 
 ## Collections
 
-Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are eleven attributes you can set for each collection:
+Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are many different attributes you can set for each collection:
 - [List Type (required)](#list-type-collection-attribute)
 - [Subfilters (optional)](#subfilters-collection-attribute)
 - [Sync Mode (optional)](#sync-mode-collection-attribute)
@@ -147,11 +146,10 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 
 ### List Type (Collection Attribute)
 
-The only required attribute for each collection is the list type. There are twelve different list types to choose from:
+The only required attribute for each collection is the list type. There are many different list types to choose from:
 - [Plex Filters](#plex-filters-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
-- [TMDb Actor](#tmdb-actor-list-type)
-- [TMDb Director](#tmdb-director-list-type)
+- [TMDb People](#tmdb-people-list-type)
 - [TMDb List](#tmdb-list-list-type)
 - [TMDb Movie](#tmdb-movie-list-type)
 - [TMDb Show](#tmdb-show-list-type)
@@ -300,11 +298,14 @@ Notes:
 - Local posters/backgrounds are loaded over `tmdb_poster`/`tmdb_background` if they exist unless `tmdb_poster`/`tmdb_background` is also specified
 - `tmdb_summary` will load unless `summary`,`tmdb_summary`, or `tmdb_biography` is also specified
 
-#### TMDb Actor (List Type)
+
+#### TMDb People (List Type)
+
+Similarly to `tmdb_id`, `tmdb_actor`, `tmdb_director`, `tmdb_writer` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the actor's TMDb page ID or URL as well as search Plex using their repective Plex filters all with one attribute.
+
+##### TMDb Actor (List Type)
 
 ###### Works with Movie and TV Show Libraries
-
-Similarly to `tmdb_id`, `tmdb_actor` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the actor's TMDb page ID or URL as well as search Plex using the actor filter all with one attribute.
 
 ```yaml
 collections:
@@ -318,27 +319,36 @@ collections:
     tmdb_actor: https://www.themoviedb.org/person/2157-robin-williams
 ```
 
-Notes:
-- You can specify more than one `tmdb_actor` or `tmdb_director` but it will pull the summary and poster from only the first one.
-- Local posters are loaded over `tmdb_profile` if they exist unless `tmdb_profile` is also specified
-- `tmdb_biography` will load unless `summary`,`tmdb_summary`, or `tmdb_biography` is also specified
-
-#### TMDb Director (List Type)
+##### TMDb Director (List Type)
 
 ###### Works with Movie Libraries
-
-Exactly like `tmdb_actor`, `tmdb_director` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the director's TMDb page ID or URL as well as search Plex using the director filter all with one attribute.
 
 ```yaml
 collections:
   Steven Spielberg:
-    tmdb_actor: 488
+    tmdb_director: 488
 ```
 
 ```yaml
 collections:
   Steven Spielberg:
-    tmdb_actor: https://www.themoviedb.org/person/488-steven-spielberg
+    tmdb_director: https://www.themoviedb.org/person/488-steven-spielberg
+```
+
+##### TMDb Writer (List Type)
+
+###### Works with Movie Libraries
+
+```yaml
+collections:
+  Quentin Tarantino:
+    tmdb_writer: 138
+```
+
+```yaml
+collections:
+  Quentin Tarantino:
+    tmdb_writer: https://www.themoviedb.org/person/138-quentin-tarantino
 ```
 
 Notes:

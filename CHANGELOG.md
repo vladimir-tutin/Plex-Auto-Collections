@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `and_filter` to AND filters together instead of OR
 - Added additional subfilters and allow for use of `!` with subfilters
-- Added `tmdb_director` which functions the same as `tmdb_actor` but for directors
+- Added `tmdb_director` and `tmdb_writer` which function the same as `tmdb_actor` but for directors and writers
 
 ### Changed
 - Filters are now listed and have been tested
