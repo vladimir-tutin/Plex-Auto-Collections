@@ -119,7 +119,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "subtitle_language", "subtitle_language.not"
     ]
     details = [
-        "sync_mode", "subfilters", "and_filters", "sort_title", "content_rating",
+        "sync_mode", "and_filters", "sort_title", "content_rating",
         "summary", "tmdb_summary", "tmdb_biography",
         "collection_mode", "collection_order",
         "poster", "tmdb_poster", "tmdb_profile", "file_poster",
@@ -156,6 +156,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         actor_id = None
         actor_method = None
         methods = []
+        subfilters = []
         for m in collections[c]:
             if m == "details":
                 print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
@@ -166,28 +167,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             elif m == "tautulli" and not Tautulli.valid:
                 print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
             elif collections[c][m]:
-                if m not in details:
-                    try:
-                        final_method = (method_alias[m[:-4]] + ".not") if m[-4] == ".not" else method_alias[m]
-                        print("| Config Warning: {} filter will run as {}".format(m, final_method))
-                    except KeyError:
-                        final_method = m
-                    if final_method in show_only_lists and libtype == "movie":
-                        print("| Config Error: {} filter only works for show libraries".format(final_method))
-                    elif (final_method in movie_only_filters or final_method in movie_only_lists) and libtype == "show":
-                        print("| Config Error: {} filter only works for movie libraries".format(final_method))
-                    elif final_method in all_filters or final_method in all_lists:
-                        methods.append(m)
-                    else:
-                        print("| Config Error: {} attribute not supported".format(m))
-            else:
-                print("| Config Error: {} attribute is blank".format(m))
-        def alias(filter, alias):
-            return alias[filter[:-4]] + filter[-4] if filter[-4] in [".not", ".lte", ".gte"] else alias[filter]
-        subfilters = []
-        if "subfilters" in collections[c]:
-            if collections[c]["subfilters"]:
-                for sf in collections[c]["subfilters"]:
+                if collections[c]["subfilters"]:
                     if sf == "video-resolution":
                         print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
                     elif sf == "audio-language":
@@ -207,8 +187,22 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             subfilters.append(sf_string)
                         else:
                             print("| Config Error: {} subfilter not supported".format(sf))
+                elif m not in details:
+                    try:
+                        final_method = (method_alias[m[:-4]] + ".not") if m[-4] == ".not" else method_alias[m]
+                        print("| Config Warning: {} filter will run as {}".format(m, final_method))
+                    except KeyError:
+                        final_method = m
+                    if final_method in show_only_lists and libtype == "movie":
+                        print("| Config Error: {} filter only works for show libraries".format(final_method))
+                    elif (final_method in movie_only_filters or final_method in movie_only_lists) and libtype == "show":
+                        print("| Config Error: {} filter only works for movie libraries".format(final_method))
+                    elif final_method in all_filters or final_method in all_lists:
+                        methods.append(m)
+                    else:
+                        print("| Config Error: {} attribute not supported".format(m))
             else:
-                print("| Config Error: subfilters attribute is blank")
+                print("| Config Error: {} attribute is blank".format(m))
         and_filters = []
         if "and_filters" in collections[c]:
             if collections[c]["and_filters"]:
