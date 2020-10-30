@@ -46,6 +46,10 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "studios": "studio", "network": "studio", "networks": "studio",
         "years": "year",
         "writers": "writer",
+        "tmdb-list": "tmdb_collection",
+        "tmdb-poster": "tmdb_poster",
+        "imdb-list": "imdb_list",
+        "trakt-list": "trakt_list",
     }
     all_lists = [
         "tmdb_collection",
@@ -115,7 +119,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "subtitle_language", "subtitle_language.not"
     ]
     details = [
-        "tmdb-list", "imdb-list", "trakt-list", "tmdb-poster", "details",
         "sync_mode", "subfilters", "and_filters", "sort_title", "content_rating",
         "summary", "tmdb_summary", "tmdb_biography",
         "collection_mode", "collection_order",
@@ -152,32 +155,58 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         tmdb_id = None
         actor_id = None
         actor_method = None
-        methods = [m for m in collections[c] if m not in details]
-        def alias(filter, alias):
-            if filter[-4] == ".not":
-                return alias[filter[:-4]] + ".not"
-            elif filter[-4] == ".lte":
-                return alias[filter[:-4]] + ".lte"
-            elif filter[-4] == ".gte":
-                return alias[filter[:-4]] + ".gte"
+        methods = []
+        for m in collections[c]:
+            if m == "details":
+                print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
+            elif ("tmdb" in m or "imdb" in m) and not TMDB.valid:
+                print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
+            elif ("trakt" in m or ("tmdb" in m and plex.library_type == "show")) and not TraktClient.valid:
+                print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
+            elif m == "tautulli" and not Tautulli.valid:
+                print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
+            elif collections[c][m]:
+                if m not in details:
+                    try:
+                        final_method = (method_alias[m[:-4]] + ".not") if m[-4] == ".not" else method_alias[m]
+                        print("| Config Warning: {} filter will run as {}".format(m, final_method))
+                    except KeyError:
+                        final_method = m
+                    if final_method in show_only_lists and libtype == "movie":
+                        print("| Config Error: {} filter only works for show libraries".format(final_method))
+                    elif (final_method in movie_only_filters or final_method in movie_only_lists) and libtype == "show":
+                        print("| Config Error: {} filter only works for movie libraries".format(final_method))
+                    elif final_method in all_filters or final_method in all_lists:
+                        methods.append(m)
+                    else:
+                        print("| Config Error: {} attribute not supported".format(m))
             else:
-                return alias[filter]
+                print("| Config Error: {} attribute is blank".format(m))
+        def alias(filter, alias):
+            return alias[filter[:-4]] + filter[-4] if filter[-4] in [".not", ".lte", ".gte"] else alias[filter]
         subfilters = []
         if "subfilters" in collections[c]:
             if collections[c]["subfilters"]:
                 for sf in collections[c]["subfilters"]:
-                    try:
-                        final_sf = alias(sf, method_alias)
-                        print("| Config Warning: {} subfilter will run as {}".format(sf, final_sf))
-                    except KeyError:
-                        final_sf = sf
-                    if final_sf in movie_only_subfilters and libtype == "show":
-                        print("| Config Error: {} subfilter only works for movie libraries".format(final_sf))
-                    elif final_sf in all_subfilters:
-                        sf_string = final_sf, collections[c]["subfilters"][sf]
-                        subfilters.append(sf_string)
+                    if sf == "video-resolution":
+                        print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
+                    elif sf == "audio-language":
+                        print("| Config Error: Please change the subfilter attribute audio-language to audio_language")
+                    elif sf == "subtitle-language":
+                        print("| Config Error: Please change the subfilter attribute subtitle-language to subtitle_language")
                     else:
-                        print("| Config Error: {} subfilter not supported".format(sf))
+                        try:
+                            final_sf = method_alias[sf[:-4]] + sf[-4] if sf[-4] in [".not", ".lte", ".gte"] else method_alias[sf]
+                            print("| Config Warning: {} subfilter will run as {}".format(sf, final_sf))
+                        except KeyError:
+                            final_sf = sf
+                        if final_sf in movie_only_subfilters and libtype == "show":
+                            print("| Config Error: {} subfilter only works for movie libraries".format(final_sf))
+                        elif final_sf in all_subfilters:
+                            sf_string = final_sf, collections[c]["subfilters"][sf]
+                            subfilters.append(sf_string)
+                        else:
+                            print("| Config Error: {} subfilter not supported".format(sf))
             else:
                 print("| Config Error: subfilters attribute is blank")
         and_filters = []
@@ -185,7 +214,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             if collections[c]["and_filters"]:
                 for af in collections[c]["and_filters"]:
                     try:
-                        final_af = alias(af, method_alias)
+                        final_af = method_alias[af[:-4]] + af[-4] if af[-4] in [".not", ".lte", ".gte"] else method_alias[af]
                         print("| Config Warning: {} and_filter will run as {}".format(sf, final_sf))
                     except KeyError:
                         final_af = af
@@ -204,102 +233,81 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             else:
                 print("| Config Error: and_filters attribute is blank")
         for m in methods:
-            if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
-                print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
-            elif (m == "trakt_list" or ("tmdb" in m and plex.library_type == "show")) and not TraktClient.valid:
-                print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
-            elif m == "tautulli" and not Tautulli.valid:
-                print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
-            elif collections[c][m]:
-                try:
-                    final_method = (method_alias[m[:-4]] + ".not") if m[-4] == ".not" else method_alias[m]
-                    print("| Config Warning: {} filter will run as {}".format(m, final_method))
-                except KeyError:
-                    final_method = m
-                if final_method in show_only_lists and libtype == "movie":
-                    print("| Config Error: {} filter only works for show libraries".format(final_method))
-                elif (final_method in movie_only_filters or final_method in movie_only_lists) and libtype == "show":
-                    print("| Config Error: {} filter only works for movie libraries".format(final_method))
-                elif final_method in all_filters or final_method in all_lists:
-                    if final_method in ["tautulli", "all"]:
-                        values = [collections[c][m]]
-                    elif isinstance(collections[c][m], list):
-                        values = collections[c][m]
-                    else:
-                        values = str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
-                    for v in values:
-                        add = True
-                        v_print = v
-                        if final_method == "tmdb_id" and tmdb_id is None:
-                            try:
-                                tmdb_id = re.search('.*?(\\d+)', str(v)).group(1)
-                            except AttributeError:
-                                print("| Config Error: TMDb ID: {} is invalid".format(v))
-                                add = False
-                        try:
-                            if final_method in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
-                                name = tmdb_get_summary(config_path, v, "name")
-                                if actor_id is None:
-                                    actor_id = v
-                                    actor_method = final_method
-                                v = name
-                                if final_method == "tmdb_actor":
-                                    final_method = "actor"
-                                elif final_method == "tmdb_director":
-                                    final_method =  "director"
-                                elif final_method == "tmdb_writer":
-                                    final_method =  "writer"
-                                v_print = v_print + " " + v
-                            if final_method == "actor":
-                                v = get_actor_rkey(plex, v)
-                        except ValueError as e:
-                            print(e)
-                            add = False
-                        if add:
-                            print("| \n| Processing {}: {}".format(final_method, v_print))
-                            if final_method == "studio" and libtype == "show":
-                                final_method = "network"
-                            try:
-                                missing, map = add_to_collection(config_path, plex, final_method, v, c, map, and_filters, subfilters)
-                            #except UnboundLocalError as e:
-                            #    missing, map = add_to_collection(config_path, plex, final_method, v, c, map)               # No sub-filters
-                            except (KeyError, ValueError, SystemExit) as e:
-                                print(e)
-                                missing = False
-                            if missing:
-                                if libtype == "movie":
-                                    method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                                    if m in ["trakt_list", "tmdb_list", "imdb_list"]:
-                                        print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                                    elif m == "tmdb_collection":
-                                        print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                                    elif m == "trakt_trending":
-                                        print("| {} missing movie{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                                    else:
-                                        print("| {} ID: {} missing".format(method_name, v))
-                                    if Radarr.valid:
-                                        radarr = Radarr(config_path)
-                                        if radarr.add_movie:
-                                            print("| Adding missing movies to Radarr")
-                                            add_to_radarr(config_path, missing)
-                                        elif not headless and radarr.add_movie is None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                                            add_to_radarr(config_path, missing)
-                                elif libtype == "show":
-                                    method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
-                                    if m in ["trakt_list", "tmdb_list"]:
-                                        print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                                    elif m == "trakt_trending":
-                                        print("| {} missing show{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                                    else:
-                                        print("| {} ID: {} missing".format(method_name, v))
-
-                                    # if not skip_sonarr:
-                                    #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
-                                    #         add_to_radarr(missing_shows)
-                else:
-                    print("| Config Error: {} attribute not supported".format(m))
+            if final_method in ["tautulli", "all"]:
+                values = [collections[c][m]]
+            elif isinstance(collections[c][m], list):
+                values = collections[c][m]
             else:
-                print("| Config Error: {} attribute is blank".format(m))
+                values = str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
+            for v in values:
+                add = True
+                v_print = v
+                if final_method == "tmdb_id" and tmdb_id is None:
+                    try:
+                        tmdb_id = re.search('.*?(\\d+)', str(v)).group(1)
+                    except AttributeError:
+                        print("| Config Error: TMDb ID: {} is invalid".format(v))
+                        add = False
+                try:
+                    if final_method in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
+                        name = tmdb_get_summary(config_path, v, "name")
+                        if actor_id is None:
+                            actor_id = v
+                            actor_method = final_method
+                        v = name
+                        if final_method == "tmdb_actor":
+                            final_method = "actor"
+                        elif final_method == "tmdb_director":
+                            final_method =  "director"
+                        elif final_method == "tmdb_writer":
+                            final_method =  "writer"
+                        v_print = v_print + " " + v
+                    if final_method == "actor":
+                        v = get_actor_rkey(plex, v)
+                except ValueError as e:
+                    print(e)
+                    add = False
+                if add:
+                    print("| \n| Processing {}: {}".format(final_method, v_print))
+                    if final_method == "studio" and libtype == "show":
+                        final_method = "network"
+                    try:
+                        missing, map = add_to_collection(config_path, plex, final_method, v, c, map, and_filters, subfilters)
+                    #except UnboundLocalError as e:
+                    #    missing, map = add_to_collection(config_path, plex, final_method, v, c, map)               # No sub-filters
+                    except (KeyError, ValueError, SystemExit) as e:
+                        print(e)
+                        missing = False
+                    if missing:
+                        if libtype == "movie":
+                            method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
+                            if m in ["trakt_list", "tmdb_list", "imdb_list"]:
+                                print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            elif m == "tmdb_collection":
+                                print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            elif m == "trakt_trending":
+                                print("| {} missing movie{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            else:
+                                print("| {} ID: {} missing".format(method_name, v))
+                            if Radarr.valid:
+                                radarr = Radarr(config_path)
+                                if radarr.add_movie:
+                                    print("| Adding missing movies to Radarr")
+                                    add_to_radarr(config_path, missing)
+                                elif not headless and radarr.add_movie is None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                                    add_to_radarr(config_path, missing)
+                        elif libtype == "show":
+                            method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
+                            if m in ["trakt_list", "tmdb_list"]:
+                                print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            elif m == "trakt_trending":
+                                print("| {} missing show{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                            else:
+                                print("| {} ID: {} missing".format(method_name, v))
+
+                            # if not skip_sonarr:
+                            #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                            #         add_to_radarr(missing_shows)
 
         for ratingKey, item in map.items():
             if item is not None:
@@ -308,23 +316,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
         print("| ")
 
-        if "tmdb-list" in collections[c]:
-            print("| Config Error: Please change the attribute tmdb-list to tmdb_collection")
-        if "imdb-list" in collections[c]:
-            print("| Config Error: Please change the attribute imdb-list to imdb_list")
-        if "trakt-list" in collections[c]:
-            print("| Config Error: Please change the attribute trakt-list to trakt_list")
-        if "details" in collections[c]:
-            print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
-        if "tmdb-poster" in collections[c]:
-            print("| Config Error: Please change the attribute tmdb-poster to tmdb_poster")
-        if "subfilters" in collections[c] and collections[c]["subfilters"]:
-            if "video-resolution" in collections[c]["subfilters"]:
-                print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
-            if "audio-language" in collections[c]["subfilters"]:
-                print("| Config Error: Please change the subfilter attribute audio-language to audio_language")
-            if "subtitle-language" in collections[c]["subfilters"]:
-                print("| Config Error: Please change the subfilter attribute subtitle-language to subtitle_language")
 
         plex_collection = get_collection(plex, c, headless)
 

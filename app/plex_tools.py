@@ -124,7 +124,7 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
         if and_filters:
             for af in and_filters:
                 print("|        And {}: {}".format(af[0], af[1]))
-                filters[af[0]] = af[1]
+                filters[af[0][:-4] + "!" if af[0][-4] == ".not" else af[0]] = af[1]
         return plex.Library.search(**filters)
 
     if ("trakt" in method or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
