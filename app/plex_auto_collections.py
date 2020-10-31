@@ -24,8 +24,22 @@ from config_tools import Tautulli
 from config_tools import TraktClient
 from config_tools import ImageServer
 from config_tools import modify_config
+from config_tools import check_for_attribute
 from radarr_tools import add_to_radarr
 from urllib.parse import urlparse
+
+def regex_first_int(data, method, id_type="number", default=None):
+    try:
+        id = re.search('(\\d+)', str(data)).group(1)
+        if len(str(id)) != len(str(data)):
+            print("| Config Warning: {} can be replaced with {}".format(data, id))
+        return id
+    except AttributeError:
+        if default is None:
+            raise ValueError("| Config Error: Skipping {} failed to parse {} from {}".format(method, id_type, data))
+        else:
+            print("| Config Error: {} failed to parse {} from {} using {} as default".format(method, id_type, data, default))
+            return default
 
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
@@ -157,6 +171,10 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         actor_method = None
         methods = []
         subfilters = []
+        and_filters = []
+
+        # Loops through every method and validates to make sure that that the input is right where it can
+        # After this loop all the methods and values should be defined in methods, subfilters, and and_filters
         for m in collections[c]:
             if m == "details":
                 print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
@@ -167,94 +185,125 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             elif m == "tautulli" and not Tautulli.valid:
                 print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
             elif collections[c][m]:
-                if collections[c]["subfilters"]:
-                    if sf == "video-resolution":
-                        print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
-                    elif sf == "audio-language":
-                        print("| Config Error: Please change the subfilter attribute audio-language to audio_language")
-                    elif sf == "subtitle-language":
-                        print("| Config Error: Please change the subfilter attribute subtitle-language to subtitle_language")
+                if m == "subfilters":
+                    for sf in collections[c]["subfilters"]:
+                        if sf == "video-resolution":
+                            print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
+                        elif sf == "audio-language":
+                            print("| Config Error: Please change the subfilter attribute audio-language to audio_language")
+                        elif sf == "subtitle-language":
+                            print("| Config Error: Please change the subfilter attribute subtitle-language to subtitle_language")
+                        else:
+                            try:
+                                final_sf = method_alias[sf[:-4]] + sf[-4:] if sf.endswith((".not", ".lte", ".gte")) else method_alias[sf]
+                                print("| Config Warning: {} subfilter will run as {}".format(sf, final_sf))
+                            except KeyError:
+                                final_sf = sf
+                            if final_sf in movie_only_subfilters and libtype == "show":
+                                print("| Config Error: {} subfilter only works for movie libraries".format(final_sf))
+                            elif final_sf in all_subfilters:
+                                subfilters.append((final_sf, collections[c]["subfilters"][sf]))
+                            else:
+                                print("| Config Error: {} subfilter not supported".format(sf))
+                elif m not in details:
+                    def get_method(method, values):
+                        def parse_method(method_to_parse, values_to_parse, id_type):
+                            values_to_parse = values_to_parse if isinstance(values_to_parse, list) else str(values_to_parse).split(", ")
+                            new_values = []
+                            for v in values_to_parse:
+                                try:
+                                    new_values.append(regex_first_int(v, method_to_parse, id_type))
+                                except ValueError as e:
+                                    print(e)
+                            return (method_to_parse, new_values)
+                        if method == "tmdb_id":
+                            id = parse_method(method, values, "TMDb ID")
+                            if tmdb_id is None:
+                                tmdb_id = id[1][0]
+                            return id
+                        elif "tmdb" in method:
+                            return parse_method(method, values, "TMDb ID")
+                        elif method == "tvdb_show":
+                            return parse_method(method, values, "TVDb ID")
+                        elif method == "trakt_trending":
+                            return (method, regex_first_int(values, method, default=30))
+                        elif method == "tautulli":
+                            print(values)
+                            new_dictionary = {}
+                            new_dictionary["list_type"] = check_for_attribute(values, "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
+                            new_dictionary["list_days"] = check_for_attribute(values, "list_days", parent="tautulli", var_type="int", default=30, save=False)
+                            new_dictionary["list_size"] = check_for_attribute(values, "list_size", parent="tautulli", var_type="int", default=10, save=False)
+                            new_dictionary["list_buffer"] = check_for_attribute(values, "list_buffer", parent="tautulli", var_type="int", default=20, save=False)
+                            print(new_dictionary)
+                            return (method, [new_dictionary])
+                        elif method == "all":
+                            return (method, [""])
+                        elif method in ["decade", "decade.not"]:
+                            return parse_method(method, values, "decade")
+                        elif method in ["year", "year.not"]:
+                            return parse_method(method, values, "year")
+                        else:
+                            values = values if isinstance(values, list) else str(values).split(", ")
+                            return (method, values)
+                    def has_method(list_of_tuples, check_value):
+                        for item in list_of_tuples:
+                            if item[0] == check_value or item[0] + ".not" == check_value:
+                                return True
+                        return False
+                    if m.startswith("and."):
+                        method = m[4:]
+                        try:
+                            final_af = (method_alias[method[:-4]] + method[-4:]) if method.endswith(".not") else method_alias[method]
+                            print("| Config Warning: {} filter will run as {}".format(method, final_af))
+                        except KeyError:
+                            final_af = method
+                        if final_af in movie_only_filters and libtype == "show":
+                            print("| Config Error: {} filter only works for movie libraries".format(final_af))
+                        elif final_af == "all":
+                            print("| Config Error: all cannot have the and. prefix")
+                        elif has_method(methods, method) or has_method(and_filters, method):
+                            print("| Config Error: Only one instance of {} can be used try using it as a subfilter instead".format(final_af, method, method))
+                        elif final_af in all_filters:
+                            try:
+                                and_filters.append(get_method(final_af, collections[c][m]))
+                            except ValueError as e:
+                                print(e)
+                        else:
+                            print("| Config Error: {} attribute not supported".format(m))
                     else:
                         try:
-                            final_sf = method_alias[sf[:-4]] + sf[-4] if sf[-4] in [".not", ".lte", ".gte"] else method_alias[sf]
-                            print("| Config Warning: {} subfilter will run as {}".format(sf, final_sf))
+                            final_method = (method_alias[m[:-4]] + m[-4:]) if m.endswith(".not") else method_alias[m]
+                            print("| Config Warning: {} filter will run as {}".format(m, final_method))
                         except KeyError:
-                            final_sf = sf
-                        if final_sf in movie_only_subfilters and libtype == "show":
-                            print("| Config Error: {} subfilter only works for movie libraries".format(final_sf))
-                        elif final_sf in all_subfilters:
-                            sf_string = final_sf, collections[c]["subfilters"][sf]
-                            subfilters.append(sf_string)
+                            final_method = m
+                        if final_method in show_only_lists and libtype == "movie":
+                            print("| Config Error: {} filter only works for show libraries".format(final_method))
+                        elif (final_method in movie_only_filters or final_method in movie_only_lists) and libtype == "show":
+                            print("| Config Error: {} filter only works for movie libraries".format(final_method))
+                        elif final_method in all_filters or final_method in all_lists:
+                            try:
+                                methods.append(get_method(final_method, collections[c][m]))
+                            except ValueError as e:
+                                print(e)
                         else:
-                            print("| Config Error: {} subfilter not supported".format(sf))
-                elif m not in details:
-                    try:
-                        final_method = (method_alias[m[:-4]] + ".not") if m[-4] == ".not" else method_alias[m]
-                        print("| Config Warning: {} filter will run as {}".format(m, final_method))
-                    except KeyError:
-                        final_method = m
-                    if final_method in show_only_lists and libtype == "movie":
-                        print("| Config Error: {} filter only works for show libraries".format(final_method))
-                    elif (final_method in movie_only_filters or final_method in movie_only_lists) and libtype == "show":
-                        print("| Config Error: {} filter only works for movie libraries".format(final_method))
-                    elif final_method in all_filters or final_method in all_lists:
-                        methods.append(m)
-                    else:
-                        print("| Config Error: {} attribute not supported".format(m))
+                            print("| Config Error: {} attribute not supported".format(m))
             else:
                 print("| Config Error: {} attribute is blank".format(m))
-        and_filters = []
-        if "and_filters" in collections[c]:
-            if collections[c]["and_filters"]:
-                for af in collections[c]["and_filters"]:
-                    try:
-                        final_af = method_alias[af[:-4]] + af[-4] if af[-4] in [".not", ".lte", ".gte"] else method_alias[af]
-                        print("| Config Warning: {} and_filter will run as {}".format(sf, final_sf))
-                    except KeyError:
-                        final_af = af
-                    method = final_af[:-4] if final_af[-4] == ".not" else final_af
-                    if final_af in movie_only_filters and libtype == "show":
-                        print("| Config Error: {} and_filter only works for movie libraries".format(final_af))
-                    elif final_af == "all":
-                        print("| Config Error: all cannot be an and_filter")
-                    elif method in collections[c] or method + ".not" in collections[c]:
-                        print("| Config Error: {} cannot be an and_filter while {} or {}.not is a filter use it as a subfilter instead".format(final_af, method, method))
-                    elif final_af in all_filters:
-                        af_string = final_af, collections[c]["and_filters"][af]
-                        and_filters.append(af_string)
-                    else:
-                        print("| Config Error: {} and_filter not supported".format(sf))
-            else:
-                print("| Config Error: and_filters attribute is blank")
-        for m in methods:
-            if final_method in ["tautulli", "all"]:
-                values = [collections[c][m]]
-            elif isinstance(collections[c][m], list):
-                values = collections[c][m]
-            else:
-                values = str(collections[c][m]).split(", ")   # Support multiple imdb/tmdb/trakt lists
+
+        # Loops though and actually processes the methods
+        for m, values in methods:
             for v in values:
                 add = True
                 v_print = v
-                if final_method == "tmdb_id" and tmdb_id is None:
-                    try:
-                        tmdb_id = re.search('.*?(\\d+)', str(v)).group(1)
-                    except AttributeError:
-                        print("| Config Error: TMDb ID: {} is invalid".format(v))
-                        add = False
+                final_method = m
                 try:
-                    if final_method in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
+                    if m in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
                         name = tmdb_get_summary(config_path, v, "name")
                         if actor_id is None:
                             actor_id = v
-                            actor_method = final_method
+                            actor_method = m
                         v = name
-                        if final_method == "tmdb_actor":
-                            final_method = "actor"
-                        elif final_method == "tmdb_director":
-                            final_method =  "director"
-                        elif final_method == "tmdb_writer":
-                            final_method =  "writer"
+                        final_method = m[5:]
                         v_print = v_print + " " + v
                     if final_method == "actor":
                         v = get_actor_rkey(plex, v)
@@ -267,8 +316,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         final_method = "network"
                     try:
                         missing, map = add_to_collection(config_path, plex, final_method, v, c, map, and_filters, subfilters)
-                    #except UnboundLocalError as e:
-                    #    missing, map = add_to_collection(config_path, plex, final_method, v, c, map)               # No sub-filters
+                    except UnboundLocalError as e:
+                        missing, map = add_to_collection(config_path, plex, final_method, v, c, map, and_filters)               # No sub-filters
                     except (KeyError, ValueError, SystemExit) as e:
                         print(e)
                         missing = False
@@ -309,7 +358,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 item.removeCollection(c)
 
         print("| ")
-
 
         plex_collection = get_collection(plex, c, headless)
 

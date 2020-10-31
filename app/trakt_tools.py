@@ -1,7 +1,6 @@
 import config_tools
 from urllib.parse import urlparse
 import plex_tools
-from imdb_tools import regex_first_int
 import trakt
 
 def trakt_get_movies(config_path, plex, data, is_userlist=True):
@@ -14,7 +13,7 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
     else:
         # Trending list
-        max_items = int(regex_first_int(data, "Trakt Trending number"))
+        max_items = int(data)
         trakt_list_items = trakt.Trakt['movies'].trending(per_page=max_items)
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 

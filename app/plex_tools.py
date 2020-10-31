@@ -120,11 +120,15 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
     items = []
     missing = []
     def search_plex():
-        filters = {method: value}
+        final_method = method[:-4] + "!" if method[-4:] == ".not" else method
+        filters = {final_method: value}
         if and_filters:
             for af in and_filters:
-                print("|        And {}: {}".format(af[0], af[1]))
-                filters[af[0][:-4] + "!" if af[0][-4] == ".not" else af[0]] = af[1]
+                out = ""
+                for f in af[1]:
+                    out = ((out + " Or ") if len(out) > 0 else "") + f
+                print("|        And {}: {}".format(af[0], out))
+                filters[af[0][:-4] + "!" if af[0][-4:] == ".not" else af[0]] = af[1]
         return plex.Library.search(**filters)
 
     if ("trakt" in method or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
@@ -186,15 +190,6 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
         "audio_language": "audio_language",
         "subtitle_language": "subtitle_language",
     }
-    def alias(filter, alias):
-        if filter[-4] == ".not":
-            return alias[filter[:-4]] + ".not"
-        elif filter[-4] == ".lte":
-            return alias[filter[:-4]] + ".lte"
-        elif filter[-4] == ".gte":
-            return alias[filter[:-4]] + ".gte"
-        else:
-            return alias[filter]
 
     if movies:
         # Check if already in collection
@@ -209,35 +204,24 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
             match = True
             if subfilters:
                 for sf in subfilters:
-                    method = alias(sf[0], subfilter_alias)
-                    negative = False
-                    gte = False
-                    lte = False
-                    if method[-4] == ".not":
-                        negative = True
-                        method = method[:-1]
-                    elif method[-4] == ".lte":
-                        lte = True
-                        method = method[:-4]
-                    elif method[-4] == ".gte":
-                        gte = True
-                        method = method[:-4]
+                    modifier = sf[0][-4:]
+                    method = subfilter_alias[sf[0][:-4]] if modifier in [".not", ".lte", ".gte"] else subfilter_alias[sf[0]]
                     if method == "max_age":
                         threshold_date = datetime.now() - timedelta(days=sf[1])
                         attr = getattr(current_m, "originallyAvailableAt")
                         if attr < threshold_date:
                             match = False
                             break
-                    elif gte == True or lte == True:
+                    elif modifier in [".gte", ".lte"]:
                         if method == "originallyAvailableAt":
                             threshold_date = datetime.strptime(sf[1], "%m/%d/%y")
                             attr = getattr(current_m, "originallyAvailableAt")
-                            if (lte == True and attr > threshold_date) or (gte == True and attr < threshold_date):
+                            if (modifier == ".lte" and attr > threshold_date) or (modifier == ".gte" and attr < threshold_date):
                                 match = False
                                 break
                         elif method in ["year", "rating"]:
                             attr = getattr(current_m, method)
-                            if (lte == True and attr > sf[1]) or (gte == True and attr < sf[1]):
+                            if (modifier == ".lte" and attr > sf[1]) or (modifier == ".gte" and attr < sf[1]):
                                 match = False
                                 break
                     else:
@@ -257,9 +241,9 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                             mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
 
                         # Get the intersection of the user's terms and movie's terms
-                        # If it's empty and negative is false, it's not a match
-                        # If it's not empty and negative is true, it's not a match
-                        if (not list(set(terms) & set(mv_attrs)) and negative == False) or (list(set(terms) & set(mv_attrs)) and negative == True):
+                        # If it's empty and modifier is not .not, it's not a match
+                        # If it's not empty and modifier is .not, it's not a match
+                        if (not list(set(terms) & set(mv_attrs)) and modifier != ".not") or (list(set(terms) & set(mv_attrs)) and modifier == ".not"):
                             match = False
                             break
             if match:
@@ -285,19 +269,8 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
             match = True
             if subfilters:
                 for sf in subfilters:
-                    method = alias(sf[0], subfilter_alias)
-                    negative = False
-                    gte = False
-                    lte = False
-                    if method[-4] == ".not":
-                        negative = True
-                        method = method[:-4]
-                    elif method[-4] == ".lte":
-                        lte = True
-                        method = method[:-4]
-                    elif method[-4] == ".gte":
-                        gte = True
-                        method = method[:-4]
+                    modifier = sf[0][-4:]
+                    method = subfilter_alias[sf[0][:-4]] if modifier in [".not", ".lte", ".gte"] else subfilter_alias[sf[0]]
                     if method == "max_age":
                         max_age = imdb_tools.regex_first_int(sf[1])
                         if sf[1][-1] == "y":
@@ -307,16 +280,16 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                         if attr < threshold_date:
                             match = False
                             break
-                    elif gte == True or lte == True:
+                    elif modifier in [".gte", ".lte"]:
                         if method == "originallyAvailableAt":
                             threshold_date = datetime.strptime(sf[1], "%m/%d/%y")
                             attr = getattr(current_m, "originallyAvailableAt")
-                            if (lte == True and attr > threshold_date) or (gte == True and attr < threshold_date):
+                            if (modifier == ".lte" and attr > threshold_date) or (modifier == ".gte" and attr < threshold_date):
                                 match = False
                                 break
                         elif method in ["year", "rating"]:
                             attr = getattr(current_m, method)
-                            if (lte == True and attr > sf[1]) or (gte == True and attr < sf[1]):
+                            if (modifier == ".lte" and attr > sf[1]) or (modifier == ".gte" and attr < sf[1]):
                                 match = False
                                 break
                     else:
@@ -336,9 +309,9 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
                             mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
 
                         # Get the intersection of the user's terms and movie's terms
-                        # If it's empty and negative is false, it's not a match
-                        # If it's not empty and negative is true, it's not a match
-                        if (not list(set(terms) & set(show_attrs)) and negative == False) or (list(set(terms) & set(show_attrs)) and negative == True):
+                        # If it's empty and modifier is not .not, it's not a match
+                        # If it's not empty and modifier is .not, it's not a match
+                        if (not list(set(terms) & set(show_attrs)) and modifier != ".not") or (list(set(terms) & set(show_attrs)) and modifier == ".not"):
                             match = False
                             break
             if match:

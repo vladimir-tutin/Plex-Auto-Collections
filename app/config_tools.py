@@ -57,7 +57,7 @@ def check_for_attribute(config, attribute, parent=None, test_list=None, options=
         message = message + " using {} as default".format(default)
     message = message + endline
     if (default is None and not default_is_none) or throw:
-        if len(options) > 0 and not throw:
+        if len(options) > 0:
             message = message + "\n" + options
         sys.exit(message)
     if do_print:

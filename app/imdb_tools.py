@@ -86,17 +86,9 @@ def imdb_get_movies(config_path, plex, data):
 
     return matched_imdb_movies, missing_imdb_movies
 
-def regex_first_int(data, id_type):
-    try:
-        id = re.search('(\\d+)', str(data)).group(1)
-        if len(str(id)) != len(str(data)):
-            print("| Config Warning: {} can be replaced with {}".format(data, id))
-        return id
-    except AttributeError:
-        raise ValueError("| Config Error: Failed to parse {} from {}".format(id_type, data))
 
 def tmdb_get_movies(config_path, plex, data, is_list=False):
-    tmdb_id = regex_first_int(data, "TMDb ID")
+    tmdb_id = int(data)
     t_movs = []
     t_movie = Movie()
     t_movie.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
@@ -169,14 +161,9 @@ def tmdb_get_movies(config_path, plex, data, is_list=False):
 
 def get_tautulli(config_path, plex, data):
     tautulli = config_tools.Tautulli(config_path)
-    list_type = config_tools.check_for_attribute(data, "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
-    time_range = config_tools.check_for_attribute(data, "list_days", parent="tautulli", var_type="int", default=30, save=False)
-    max = config_tools.check_for_attribute(data, "list_size", parent="tautulli", var_type="int", default=10, save=False)
-    buffer = config_tools.check_for_attribute(data, "list_buffer", parent="tautulli", var_type="int", default=20, save=False)
-    stats_count = max + buffer
 
-    response = requests.get("{}/api/v2?apikey={}&cmd=get_home_stats&time_range={}&stats_count={}".format(tautulli.url, tautulli.apikey, time_range, stats_count)).json()
-    stat_id = ("popular" if list_type == "popular" else "top") + "_" + ("movies" if plex.library_type == "movie" else "tv")
+    response = requests.get("{}/api/v2?apikey={}&cmd=get_home_stats&time_range={}&stats_count={}".format(tautulli.url, tautulli.apikey, data["list_days"], int(data["list_size"]) + int(data["list_buffer"]))).json()
+    stat_id = ("popular" if data["list_type"] == "popular" else "top") + "_" + ("movies" if plex.library_type == "movie" else "tv")
 
     items = None
     for entry in response['response']['data']:
@@ -199,7 +186,7 @@ def get_tautulli(config_path, plex, data):
     missing = []
     count = 0
     for item in items:
-        if item['section_id'] == section_id and count < max:
+        if item['section_id'] == section_id and count < int(data["list_size"]):
             matched.append(plex.Library.fetchItem(item['rating_key']))
             count = count + 1
 
@@ -208,17 +195,15 @@ def get_tautulli(config_path, plex, data):
 def get_tvdb_id_from_tmdb_id(id):
     lookup = trakt.Trakt['search'].lookup(id, 'tmdb', 'show')
     if lookup:
-        if isinstance(lookup, list):
-            return trakt.Trakt['search'].lookup(id, 'tmdb', 'show')[0].get_key('tvdb')
-        else:
-            return trakt.Trakt['search'].lookup(id, 'tmdb', 'show').get_key('tvdb')
+        lookup = lookup[0] if isinstance(lookup, list) else lookup
+        return lookup.get_key('tvdb')
     else:
         return None
 
 def tmdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
 
-    tmdb_id = regex_first_int(data, "TMDb")
+    tmdb_id = int(data)
 
     t_tvs = []
     t_tv = TV()
@@ -275,7 +260,7 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
 def tvdb_get_shows(config_path, plex, data, is_list=False):
     config_tools.TraktClient(config_path)
 
-    id = regex_first_int(data, "TVDb")
+    id = int(data)
 
     p_tv_map = {}
     for item in plex.Library.all():
@@ -306,7 +291,7 @@ def tvdb_get_shows(config_path, plex, data, is_list=False):
 
 def tmdb_get_summary(config_path, data, type):
     # Instantiate TMDB objects
-    id = regex_first_int(data, "TMDb")
+    id = int(data)
 
     api_key = config_tools.TMDB(config_path).apikey
     language = config_tools.TMDB(config_path).language

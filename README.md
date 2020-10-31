@@ -169,7 +169,7 @@ Note that most list types supports multiple lists, with the following exceptions
 
 You can create a collection based on Plex filters using the options below.
 
-#### Filter Options
+##### Filter Options
 - `all` (Gets every movie/show in Plex useful with [subfilters](#subfilters-collection-attribute))
 - `actor` (Gets every movie with the specified actor) (Movie libraries only)
 - `country` (Gets every movie with the specified country) (Movie libraries only)
@@ -218,7 +218,9 @@ collections:
     decade: 1990
 ```
 
-In addition you can also use the `.not` at the end of any filter except `all` to instead search for everything but what you specified.
+##### Advanced Filters
+
+In addition you can also use the `.not` at the end of a filter to instead search for everything that doesn't include what you specified.
 
 ```yaml
 collections:
@@ -235,23 +237,22 @@ collections:
     genre: Comedy
 ```
 
-will get you every movie/show with Dave Chappelle as well as every movie that has the Comedy genre tag. To get around this we added the `and_filter` collection level attribute. so the above collection would look like this:
+will get you every movie/show with Dave Chappelle as well as every movie that has the Comedy genre tag. To get around this for filters you want to `AND` together add `and.` to the beginning of the filter,  so the above collection would look like this:
 
 ```yaml
 collections:
   Dave Chappelle:
     actor: Dave Chappelle
-    and_filter:
-      genre: Comedy
+    and.genre: Comedy
 ```
 
 This will get you every movie/show with Dave Chappelle that is a Comedy.
 
 Notes:
-- You can use any filter listed above in `and_filters` except `all`.
-- `and_filters` requires at least one high level filter to work.
-- If you have multiple high level filters `and_filters` will `AND` all `and_filters` with each one.
-- You cannot use a filter in `and_filters` if its being used as a high level filter (Use [subfilters](#subfilters-collection-attribute) instead)
+- You can only use each filter once per collection whether it has `.not`,  `and.`, or neither. (Try [subfilters](#subfilters-collection-attribute) instead)
+- You can add `.not` or `and.` to any filter listed above under [Options](#filter-options) except `all`.
+- Filters with `and.` require at least one other filter without `and.` to work.
+- If you have multiple filters every filter with `and.` will `AND` with every filter without it.
 
 #### TMDb Collection (List Type)
 
@@ -525,7 +526,7 @@ Note that if you have multiple movie Libraries or multiple show Libraries Tautul
 The next optional attribute for any collection is the `subfilters` key. Subfilters allows for additional filters on any List Type not just filters when adding movies/shows to a collection. All subfilters options are listed below.
 In addition you can also use the `.not` at the end of any standard subfilter to instead match everything that doesn't have the value specified.
 
-#### Standard Subfilter Options
+##### Standard Subfilter Options
 - `actor` (Matches every movie/show with the specified actor)
 - `content_rating` (Matches every movie/show with the specified content rating)
 - `country` (Matches every movie with the specified country) (Movie libraries only)
@@ -538,7 +539,7 @@ In addition you can also use the `.not` at the end of any standard subfilter to 
 - `audio_language` (Matches every movie with the specified audio language) (Movie libraries only)
 - `subtitle_language` (Matches every movie with the specified subtitle language) (Movie libraries only)
 
-#### Special Subfilter options (These options can only take one value each)
+##### Special Subfilter Options (These options can only take one value each)
 - `max_age` (Matches any movie/show whose Originally Available date is within the last specified number of days or years) (To specify years put a `y` at the end of the number i.e. `max_age: 1y`)
 - `year.gte` (Matches any movie/show whose year is greater then or equal to the specified year)
 - `year.lte` (Matches any movie/show whose year is less then or equal to the specified year)
@@ -602,8 +603,7 @@ collections:
 collections:
   Good Adam Sandler Romantic Comedies:
     genre: Romance
-    and_filters:
-      actor: Adam Sandler
+    and.actor: Adam Sandler
     subfilters:
       genre: Comedy
       rating.gte: 7
@@ -614,7 +614,7 @@ Note that multiple subfilters are supported but a movie must match at least one 
 ### Sync Mode (Collection Attribute)
 You can specify how collections sync using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
 
-#### Options
+##### Options
 - `append` (Only Add Items to the Collection)
 - `sync` (Add & Remove Items from the Collection)
 
@@ -698,7 +698,7 @@ collections:
 
 Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hide_items`, `show_items`, and `hide`.
 
-#### Options
+##### Options
 - `default` (Library default)
 - `hide` (Hide Collection)
 - `hide_items` (Hide Items in this Collection)
@@ -718,8 +718,8 @@ collections:
 
 Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
 
-#### Options
-- `release` (Order Collection by release dates)
+##### Options
+- `release` (Order Collection by Release Dates)
 - `alpha` (Order Collection Alphabetically)
 
 ```yaml
@@ -858,7 +858,7 @@ This script can be run on a remote Plex server, but be sure that the `url` provi
 
 You can set the global default [Sync Mode](#sync-mode-collection-attribute) here by using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
 
-#### Options
+##### Options
 - `append` (Only Add Items to the Collection)
 - `sync` (Add & Remove Items from the Collection)
 
