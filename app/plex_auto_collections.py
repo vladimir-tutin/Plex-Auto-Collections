@@ -64,6 +64,9 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb-poster": "tmdb_poster",
         "imdb-list": "imdb_list",
         "trakt-list": "trakt_list",
+        "video-resolution": "video_resolution",
+        "audio-language": "audio_language",
+        "subtitle-language": "subtitle_language",
     }
     all_lists = [
         "tmdb_collection",
@@ -177,7 +180,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         # After this loop all the methods and values should be defined in methods, subfilters, and and_filters
         for m in collections[c]:
             if m == "details":
-                print("| Config Error: Please remove the attribute details attribute all its old sub-attributes should be one level higher")
+                print("| Config Error: Please remove the details attribute all its old sub-attributes should be one level higher")
             elif ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
             elif ("trakt" in m or ("tmdb" in m and plex.library_type == "show")) and not TraktClient.valid:
@@ -187,24 +190,17 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             elif collections[c][m]:
                 if m == "subfilters":
                     for sf in collections[c]["subfilters"]:
-                        if sf == "video-resolution":
-                            print("| Config Error: Please change the subfilter attribute video-resolution to video_resolution")
-                        elif sf == "audio-language":
-                            print("| Config Error: Please change the subfilter attribute audio-language to audio_language")
-                        elif sf == "subtitle-language":
-                            print("| Config Error: Please change the subfilter attribute subtitle-language to subtitle_language")
+                        try:
+                            final_sf = method_alias[sf[:-4]] + sf[-4:] if sf.endswith((".not", ".lte", ".gte")) else method_alias[sf]
+                            print("| Config Warning: {} subfilter will run as {}".format(sf, final_sf))
+                        except KeyError:
+                            final_sf = sf
+                        if final_sf in movie_only_subfilters and libtype == "show":
+                            print("| Config Error: {} subfilter only works for movie libraries".format(final_sf))
+                        elif final_sf in all_subfilters:
+                            subfilters.append((final_sf, collections[c]["subfilters"][sf]))
                         else:
-                            try:
-                                final_sf = method_alias[sf[:-4]] + sf[-4:] if sf.endswith((".not", ".lte", ".gte")) else method_alias[sf]
-                                print("| Config Warning: {} subfilter will run as {}".format(sf, final_sf))
-                            except KeyError:
-                                final_sf = sf
-                            if final_sf in movie_only_subfilters and libtype == "show":
-                                print("| Config Error: {} subfilter only works for movie libraries".format(final_sf))
-                            elif final_sf in all_subfilters:
-                                subfilters.append((final_sf, collections[c]["subfilters"][sf]))
-                            else:
-                                print("| Config Error: {} subfilter not supported".format(sf))
+                            print("| Config Error: {} subfilter not supported".format(sf))
                 elif m not in details:
                     def get_method(method, values):
                         def parse_method(method_to_parse, values_to_parse, id_type):
