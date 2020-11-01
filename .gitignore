@@ -6,3 +6,5 @@ config.yml
 /.vscode
 app/images
 app/config.yml
+config/config-*
+config/*.pickle

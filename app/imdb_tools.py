@@ -11,6 +11,7 @@ from tmdbv3api import TV
 from tmdbv3api import Collection
 from tmdbv3api import Person
 import config_tools
+import plex_tools
 import trakt
 
 
@@ -55,10 +56,24 @@ def imdb_get_movies(config_path, plex, data):
                                     "//a/img//@data-tconst"))
     matched_imbd_movies = []
     missing_imdb_movies = []
+    guid_map = plex_tools.get_guid_map(config_path)
     if title_ids:
         for m in plex.Library.all():
             try:
-                if 'themoviedb://' in m.guid:
+                if 'plex://' in m.guid:
+                    guid = m.guid
+                    item = m
+                    if guid in guid_map:
+                        # Check cache first
+                        imdb_id = guid_map[guid]
+                        # print("| GUID map cache | = | {}".format(item.title))
+                    else:
+                        imdb_id = plex_tools.imdb_lookup(plex, item)
+                        guid_map[guid] = imdb_id
+                        print("| GUID map cache | + | {}".format(item.title))
+                        plex_tools.save_guid_map(config_path, guid_map)
+                        imdb_id = guid_map[guid]
+                elif 'themoviedb://' in m.guid:
                     if not tmdb.api_key == "None":
                         tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
                         tmdbapi = movie.details(tmdb_id)

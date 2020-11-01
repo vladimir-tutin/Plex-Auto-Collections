@@ -9,6 +9,12 @@ from config_tools import Config
 from config_tools import TMDB
 from config_tools import TraktClient
 from config_tools import Tautulli
+from bs4 import BeautifulSoup
+from urllib.request import Request
+from urllib.request import urlopen
+from urllib.parse import urlparse
+import pickle
+import os
 
 
 def get_movie(plex, data):
@@ -275,3 +281,32 @@ def delete_collection(data):
     if confirm == "y":
         data.delete()
         print("| Collection deleted")
+
+def imdb_lookup(plex, value):
+    req = Request('{}{}'.format(plex.url, value.key))
+    req.add_header('X-Plex-Token', plex.token)
+    with urlopen(req) as response:
+        contents = response.read()
+    bs = BeautifulSoup(contents, 'lxml')
+    for guid_tag in bs.find_all('guid'):
+        agent = urlparse(guid_tag['id']).scheme
+        guid = urlparse(guid_tag['id']).netloc
+        if agent == 'imdb':
+            return guid
+
+def get_guid_map(config_path):
+    guid_map_file = os.path.join(os.path.dirname(config_path), 'guid_map.pickle')
+    try:
+        with open(guid_map_file, 'rb') as f:
+            guid_map = pickle.load(f)
+    except FileNotFoundError:
+        # Initialize
+        print("| GUID map cache {} not found. Initializing.".format(guid_map_file))
+        guid_map = {}
+        save_guid_map(config_path, guid_map)
+    return guid_map
+
+def save_guid_map(config_path, guid_map):
+    guid_map_file = os.path.join(os.path.dirname(config_path), 'guid_map.pickle')
+    with open(guid_map_file, 'wb') as f:
+        pickle.dump(guid_map, f)
