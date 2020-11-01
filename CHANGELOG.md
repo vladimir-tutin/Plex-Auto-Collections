@@ -4,15 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.0] - 2020-10-30
+## [2.3.0] - 2020-11-01
 ### Added
-- Added `and.` to AND filters together instead of OR
-- Added additional subfilters and allow for use of `.not` with subfilters
+- Added `and.` to AND searches together instead of OR
+- Added additional `collection_filters` and allow for use of `.not` with `collection_filters`
 - Added `tmdb_director` and `tmdb_writer` which function the same as `tmdb_actor` but for directors and writers
 
 ### Changed
-- Filters are now listed and have been tested
-- Subfilters are now listed and have been tested
+- `Filters` are now listed and have been tested and have been changed to `Searches`
+- `Subfilters` are now listed and have been tested and have been changed to `collection_filters`
 
 ### Fixed
 - `collection_order` was in the code as `collection_sort`

@@ -136,7 +136,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "subtitle_language", "subtitle_language.not"
     ]
     details = [
-        "sync_mode", "and_filters", "sort_title", "content_rating",
+        "sync_mode", "sort_title", "content_rating",
         "summary", "tmdb_summary", "tmdb_biography",
         "collection_mode", "collection_order",
         "poster", "tmdb_poster", "tmdb_profile", "file_poster",
@@ -188,19 +188,21 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             elif m == "tautulli" and not Tautulli.valid:
                 print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
             elif collections[c][m]:
-                if m == "subfilters":
-                    for sf in collections[c]["subfilters"]:
+                if m == "subfilters" or m == "collection_filters":
+                    if m =="subfilters":
+                        print("| Config Warning: subfilters will run as collection_filters")
+                    for sf in collections[c][m]:
                         try:
                             final_sf = method_alias[sf[:-4]] + sf[-4:] if sf.endswith((".not", ".lte", ".gte")) else method_alias[sf]
-                            print("| Config Warning: {} subfilter will run as {}".format(sf, final_sf))
+                            print("| Config Warning: {} collection_filter will run as {}".format(sf, final_sf))
                         except KeyError:
                             final_sf = sf
                         if final_sf in movie_only_subfilters and libtype == "show":
-                            print("| Config Error: {} subfilter only works for movie libraries".format(final_sf))
+                            print("| Config Error: {} collection_filter only works for movie libraries".format(final_sf))
                         elif final_sf in all_subfilters:
                             subfilters.append((final_sf, collections[c]["subfilters"][sf]))
                         else:
-                            print("| Config Error: {} subfilter not supported".format(sf))
+                            print("| Config Error: {} collection_filter not supported".format(sf))
                 elif m not in details:
                     def get_method(method, values):
                         def parse_method(method_to_parse, values_to_parse, id_type):
@@ -269,13 +271,13 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     else:
                         try:
                             final_method = (method_alias[m[:-4]] + m[-4:]) if m.endswith(".not") else method_alias[m]
-                            print("| Config Warning: {} filter will run as {}".format(m, final_method))
+                            print("| Config Warning: {} search will run as {}".format(m, final_method))
                         except KeyError:
                             final_method = m
                         if final_method in show_only_lists and libtype == "movie":
-                            print("| Config Error: {} filter only works for show libraries".format(final_method))
+                            print("| Config Error: {} search only works for show libraries".format(final_method))
                         elif (final_method in movie_only_filters or final_method in movie_only_lists) and libtype == "show":
-                            print("| Config Error: {} filter only works for movie libraries".format(final_method))
+                            print("| Config Error: {} search only works for movie libraries".format(final_method))
                         elif final_method in all_filters or final_method in all_lists:
                             try:
                                 methods.append(get_method(final_method, collections[c][m]))
@@ -737,12 +739,12 @@ def append_collection(config_path, config_update=None):
                                 print("| Bad {} List URL".format(l_type))
 
                         elif method == "c":
-                            print("| Please read the below link to see valid filter types. "
+                            print("| Please read the below link to see valid search types. "
                                   "Please note not all have been tested")
                             print(
                                 "| https://python-plexapi.readthedocs.io/en/latest/modules/video.html?highlight=plexapi.video.Movie#plexapi.video.Movie")
                             while True:
-                                method = input("| Enter filter method (q to quit): ")
+                                method = input("| Enter Search method (q to quit): ")
                                 if method in "quit":
                                     break
                                 m_search = "  " + method + " "
@@ -758,7 +760,7 @@ def append_collection(config_path, config_update=None):
                                         add_to_collection(config_path, plex, method, value, selected_collection.title)
                                     break
                                 else:
-                                    print("| Filter method did not match an attribute for plexapi.video.Movie")
+                                    print("| Search method did not match an attribute for plexapi.video.Movie")
                     except TypeError:
                         print("| Bad {} URL".format(l_type))
                     except KeyError as e:

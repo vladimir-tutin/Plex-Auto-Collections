@@ -1,6 +1,6 @@
 # Plex Auto Collections
 ##### Version 2.3.0
-Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex filters such as actors, genres, year, studio and more.
+Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searchs using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
 
@@ -11,7 +11,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
 2. [Configuration](#configuration)
     - [Collections](#collections)
       - [List Type](#list-type-collection-attribute)
-        - [Plex Filters (List Type)](#plex-filters-list-type)
+        - [Plex Search (List Type)](#plex-search-list-type)
         - [TMDb Collection (List Type)](#tmdb-collection-list-type)
         - [TMDb People (List Type)](#tmdb-people-list-type)
         - [TMDb List (List Type)](#tmdb-list-list-type)
@@ -22,7 +22,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
         - [Trakt List (List Type)](#trakt-list-list-type)
         - [Trakt Trending List (List Type)](#trakt-trending-list-list-type)
         - [Tautulli List (List Type)](#tautulli-list-list-type)
-      - [Subfilters (Collection Attribute)](#subfilters-collection-attribute)
+      - [Collection Filters (Collection Attribute)](#collection-filters-collection-attribute)
       - [Sync Mode (Collection Attribute)](#sync-mode-collection-attribute)
       - [Sort Title (Collection Attribute)](#sort-title-collection-attribute)
       - [Content Rating (Collection Attribute)](#content-rating-collection-attribute)
@@ -46,7 +46,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
 
 This script can be used as an interactive Python shell script as well as a headless, configuration-driven script.
 
-The interactive shell script has some limited abilities including the ability to add new collections based off filters, delete collections, search for collections and manage existing collections. The bulk of the feature-set is focused on configuration-driven updates.
+The interactive shell script has some limited abilities including the ability to add new collections based off searches, delete collections, search for collections and manage existing collections. The bulk of the feature-set is focused on configuration-driven updates.
 
 ## Local Installation
 Some limited testing has been done only on Python 3.7 and 3.8 on Linux and Windows. Dependencies must be installed by running:
@@ -133,7 +133,7 @@ You can find a template config file in [config/config.yml.template](config/confi
 
 Each collection is defined by the mapping name which becomes the name of the Plex collection. Additionally, there are many different attributes you can set for each collection:
 - [List Type (required)](#list-type-collection-attribute)
-- [Subfilters (optional)](#subfilters-collection-attribute)
+- [Collection Filters (optional)](#collection-filters-collection-attribute)
 - [Sync Mode (optional)](#sync-mode-collection-attribute)
 - [Sort Title (optional)](#sort-title-collection-attribute)
 - [Content Rating (optional)](#content-rating-collection-attribute)
@@ -147,7 +147,7 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 ### List Type (Collection Attribute)
 
 The only required attribute for each collection is the list type. There are many different list types to choose from:
-- [Plex Filters](#plex-filters-list-type)
+- [Plex Search](#plex-search-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb People](#tmdb-people-list-type)
 - [TMDb List](#tmdb-list-list-type)
@@ -163,14 +163,14 @@ Note that most list types supports multiple lists, with the following exceptions
 - Trakt Trending Lists
 - Tautulli Lists
 
-#### Plex Filters (List Type)
+#### Plex Search (List Type)
 
 ###### Works with Movie and TV Show Libraries
 
-You can create a collection based on Plex filters using the options below.
+You can create a collection based on the Plex search options below.
 
-##### Filter Options
-- `all` (Gets every movie/show in Plex useful with [subfilters](#subfilters-collection-attribute))
+##### Search Options
+- `all` (Gets every movie/show in Plex useful with [`collection_filters`](#collection-filters-collection-attribute))
 - `actor` (Gets every movie with the specified actor) (Movie libraries only)
 - `country` (Gets every movie with the specified country) (Movie libraries only)
 - `decade` (Gets every movie from the specified year + the 9 that follow i.e. 1990 will get you 1990-1999) (Movie libraries only)
@@ -218,41 +218,7 @@ collections:
     decade: 1990
 ```
 
-##### Advanced Filters
-
-In addition you can also use the `.not` at the end of a filter to instead search for everything that doesn't include what you specified.
-
-```yaml
-collections:
-  No Comedies:
-    genre.not: Comedy
-```
-
-Note that the script will `OR` together any high level filters so this:
-
-```yaml
-collections:
-  Dave Chappelle:
-    actor: Dave Chappelle
-    genre: Comedy
-```
-
-will get you every movie/show with Dave Chappelle as well as every movie that has the Comedy genre tag. To get around this for filters you want to `AND` together add `and.` to the beginning of the filter,  so the above collection would look like this:
-
-```yaml
-collections:
-  Dave Chappelle:
-    actor: Dave Chappelle
-    and.genre: Comedy
-```
-
-This will get you every movie/show with Dave Chappelle that is a Comedy.
-
-Notes:
-- You can only use each filter once per collection whether it has `.not`,  `and.`, or neither. (Try [subfilters](#subfilters-collection-attribute) instead)
-- You can add `.not` or `and.` to any filter listed above under [Options](#filter-options) except `all`.
-- Filters with `and.` require at least one other filter without `and.` to work.
-- If you have multiple filters every filter with `and.` will `AND` with every filter without it.
+Notes you can only use each search option once per collection but you can give the search multiple values.
 
 #### TMDb Collection (List Type)
 
@@ -302,7 +268,7 @@ Notes:
 
 #### TMDb People (List Type)
 
-Similarly to `tmdb_id`, `tmdb_actor`, `tmdb_director`, `tmdb_writer` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the person's TMDb page ID or URL as well as search Plex using their respective Plex filters all with one attribute.
+Similarly to `tmdb_id`, `tmdb_actor`, `tmdb_director`, `tmdb_writer` can specify [`tmdb_biography`](#summary-collection-attribute) and [`tmdb_profile`](#poster-collection-attribute) of the person's TMDb page ID or URL as well as search Plex using their respective [Plex Search](#plex-search-list-type) all with one attribute.
 
 ##### TMDb Actor (List Type)
 
@@ -519,14 +485,14 @@ collections:
 Note that if you have multiple movie Libraries or multiple show Libraries Tautulli combines those in the popular/watched lists so there might not be 10 movies/shows from the library to make your `list_size`. In order to get around that we added a `list_buffer` attribute that defaults to 10. This will get that many more movies from Tautulli but only add to the collection until the number in `list_size`. So if your collection doesn't have as many movies/shows as your `list_size` attribute increase the number in the `list_buffer` attribute.
 
 
-### Subfilters (Collection Attribute)
+### Collection Filters (Collection Attribute)
 
 ###### Works with Movie and TV Show Libraries
 
-The next optional attribute for any collection is the `subfilters` key. Subfilters allows for additional filters on any List Type not just filters when adding movies/shows to a collection. All subfilters options are listed below.
-In addition you can also use the `.not` at the end of any standard subfilter to instead match everything that doesn't have the value specified.
+The next optional attribute for any collection is the `collection_filters` key. Collection filters allows for you to filter every movie/show added to the collection from every List Type. All collection filter options are listed below.
+In addition you can also use the `.not` at the end of any standard collection filter to do an inverse search matching everything that doesn't have the value specified.
 
-##### Standard Subfilter Options
+##### Standard Collection Filters Options
 - `actor` (Matches every movie/show with the specified actor)
 - `content_rating` (Matches every movie/show with the specified content rating)
 - `country` (Matches every movie with the specified country) (Movie libraries only)
@@ -539,14 +505,14 @@ In addition you can also use the `.not` at the end of any standard subfilter to 
 - `audio_language` (Matches every movie with the specified audio language) (Movie libraries only)
 - `subtitle_language` (Matches every movie with the specified subtitle language) (Movie libraries only)
 
-##### Special Subfilter Options (These options can only take one value each)
+##### Special Collection Filters Options (These options can only take one value each)
 - `max_age` (Matches any movie/show whose Originally Available date is within the last specified number of days or years) (To specify years put a `y` at the end of the number i.e. `max_age: 1y`)
 - `year.gte` (Matches any movie/show whose year is greater then or equal to the specified year)
 - `year.lte` (Matches any movie/show whose year is less then or equal to the specified year)
 - `rating.gte` (Matches any movie/show whose rating is greater then or equal to the specified rating)
 - `rating.lte` (Matches any movie/show whose rating is less then or equal to the specified rating)
-- `originally_available.gte` (Matches any movie/show whose originally_available is greater then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
-- `originally_available.lte` (Matches any movie/show whose originally_available is less then or equal to the specified originally_available) (Date must be in the 10/29/2020 Format)
+- `originally_available.gte` (Matches any movie/show whose originally_available is greater then or equal to the specified originally_available) (Date must be in the MM/DD/YYYY Format)
+- `originally_available.lte` (Matches any movie/show whose originally_available is less then or equal to the specified originally_available) (Date must be in the MM/DD/YYYY Format)
 
 ```yaml
 collections:
@@ -609,7 +575,7 @@ collections:
       rating.gte: 7
 ```
 
-Note that multiple subfilters are supported but a movie must match at least one value from **each** subfilter to be added to a collection. The values for each must match what Plex has including special characters in order to match.
+Note that multiple collection filters are supported but a movie must match at least one value from **each** collection filter to be added to a collection. The values for each must match what Plex has including special characters in order to match.
 
 ### Sync Mode (Collection Attribute)
 You can specify how collections sync using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
