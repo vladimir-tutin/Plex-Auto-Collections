@@ -13,8 +13,8 @@ from bs4 import BeautifulSoup
 from urllib.request import Request
 from urllib.request import urlopen
 from urllib.parse import urlparse
-import pickle
 import os
+import sqlite3
 
 
 def get_movie(plex, data):
@@ -294,19 +294,37 @@ def imdb_lookup(plex, value):
         if agent == 'imdb':
             return guid
 
-def get_guid_map(config_path):
-    guid_map_file = os.path.join(os.path.dirname(config_path), 'guid_map.pickle')
-    try:
-        with open(guid_map_file, 'rb') as f:
-            guid_map = pickle.load(f)
-    except FileNotFoundError:
-        # Initialize
-        print("| GUID map cache {} not found. Initializing.".format(guid_map_file))
-        guid_map = {}
-        save_guid_map(config_path, guid_map)
-    return guid_map
+def create_cache(config_path):
+    cache = os.path.join(os.path.dirname(config_path), 'cache.db')
+    connection = sqlite3.connect(cache)
+    with sqlite3.connect(cache) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        cursor.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='guids' ''')
+        if cursor.fetchone()[0] != 1:
+            print("| Initializing cache database.".format(cache))
+            cursor.execute('CREATE TABLE IF NOT EXISTS guids (plex_guid TEXT PRIMARY KEY, imdb_id TEXT, tmdb_id TEXT)')
+    # cursor.close()
+    # connection.commit()
 
-def save_guid_map(config_path, guid_map):
-    guid_map_file = os.path.join(os.path.dirname(config_path), 'guid_map.pickle')
-    with open(guid_map_file, 'wb') as f:
-        pickle.dump(guid_map, f)
+def query_cache(config_path, key, column):
+    cache = os.path.join(os.path.dirname(config_path), 'cache.db')
+    connection = sqlite3.connect(cache)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM guids WHERE plex_guid = ?", (key, ))
+    row = cursor.fetchone()
+    # cursor.close()
+    # connection.commit()
+    if row:
+        return row[column]
+
+def update_cache(config_path, key, column, value):
+    cache = os.path.join(os.path.dirname(config_path), 'cache.db')
+    connection = sqlite3.connect(cache)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+    # print(plex_guid, imdb_id, tmdb_id)
+    # cursor.execute('CREATE TABLE IF NOT EXISTS guids (plex_guid TEXT PRIMARY KEY, imdb_id TEXT, tmdb_id TEXT)')
+    cursor.execute('INSERT INTO guids(plex_guid, {}) VALUES(?, ?)'.format(column), (key, value, ))
+    connection.commit()

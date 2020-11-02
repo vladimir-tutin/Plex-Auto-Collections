@@ -20,22 +20,18 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     imdb_map = {}
-    guid_map = plex_tools.get_guid_map(config_path)
+    plex_tools.create_cache(config_path)
     if title_ids:
         for item in plex.Library.all():
-            guid = urlparse(item.guid)
-            item_type = guid.scheme.split('.')[-1]
+            guid = item.guid
+            item_type = urlparse(item.guid).scheme.split('.')[-1]
             if item_type == 'plex':
-                # Get imdb id
-                if guid in guid_map:
-                    # Check cache first
-                    imdb_id = guid_map[guid]
-                    # print("| GUID map cache | = | {}".format(item.title))
-                else:
+                # Check cache for imdb_id
+                imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
+                if not imdb_id:
                     imdb_id = plex_tools.imdb_lookup(plex, item)
-                    guid_map[guid] = imdb_id
-                    print("| GUID map cache | + | {}".format(item.title))
-                    plex_tools.save_guid_map(config_path, guid_map)
+                    print("| Cache | + | {} | {} | {}".format(item.guid, imdb_id, item.title))
+                    plex_tools.update_cache(config_path, item.guid, 'imdb_id', imdb_id)
             elif item_type == 'imdb':
                 imdb_id = guid.netloc
             elif item_type == 'themoviedb':
