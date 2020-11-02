@@ -22,7 +22,6 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
     plex_tools.create_cache(config_path)
     if title_ids:
         for item in plex.Library.all():
-            guid = item.guid
             item_type = urlparse(item.guid).scheme.split('.')[-1]
             if item_type == 'plex':
                 # Check cache for imdb_id
@@ -32,9 +31,9 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
                     print("| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title))
                     plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
             elif item_type == 'imdb':
-                imdb_id = guid.netloc
+                imdb_id = urlparse(item.guid).netloc
             elif item_type == 'themoviedb':
-                tmdb_id = guid.netloc
+                tmdb_id = urlparse(item.guid).netloc
                 # lookup can sometimes return a list
                 lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
                 if lookup:
