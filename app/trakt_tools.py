@@ -3,7 +3,6 @@ from urllib.parse import urlparse
 import plex_tools
 import trakt
 import os
-import pickle
 
 def trakt_get_movies(config_path, plex, data, is_userlist=True):
     config_tools.TraktClient(config_path)
@@ -29,9 +28,9 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
                 # Check cache for imdb_id
                 imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
                 if not imdb_id:
-                    imdb_id = plex_tools.imdb_lookup(plex, item)
-                    print("| Cache | + | {} | {} | {}".format(item.guid, imdb_id, item.title))
-                    plex_tools.update_cache(config_path, item.guid, 'imdb_id', imdb_id)
+                    imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
+                    print("| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title))
+                    plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
             elif item_type == 'imdb':
                 imdb_id = guid.netloc
             elif item_type == 'themoviedb':
