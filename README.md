@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.3.0
+##### Version 2.4.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -99,17 +99,17 @@ python plex_auto_collections.py --update --no_meta --no_images
 
 ## Docker
 
-A simple `Dockerfile` is available in this repo if you'd like to build it yourself. The official build is also available from dockerhub here: https://hub.docker.com/r/burkasaurusrex/plex-auto-collections
+A simple `Dockerfile` is available in this repo if you'd like to build it yourself. The official build is also available from dockerhub here: https://hub.docker.com/r/mza921/plex-auto-collections
 
 The docker implementation today is limited but will improve over time. To use, try the following:
 
 ```shell
-docker run -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'burkasaurusrex/plex-auto-collections'
+docker run -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'mza921/plex-auto-collections' -u
 ```
 
 The `-v '/mnt/user/plex-auto-collections/':'/config'` mounts a persistent volume to store your config file. Today, the docker image defaults to running the config named `config.yml` in your persistent volume (eventually, the docker will support an environment variable to change the config path).
 
-Lastly, you may need to run the docker with `-it` in order to interact with the script. For example, if you'd like to use Trakt lists, you need to go through the OAuth flow and interact with the script at first-run. After that, you should be able to run it without the `-it` flag.
+Lastly, you may need to run the docker with `-it` and without `-u` in order to interact with the script. For example, if you'd like to use Trakt lists, you need to go through the OAuth flow and interact with the script at first-run. After that, you should be able to run it without the `-it` flag.
 
 # Configuration
 
@@ -832,22 +832,6 @@ plex:                                         # Req
   url: http://192.168.1.1:32400               # Req - URL to access Plex
   sync_mode: append                           # Opt - Global Sync Mode
 ```
-
-**This script has limited support for Plex's [new metadata agent / matching](https://forums.plex.tv/t/introducing-the-new-plex-movie-agent/615989)**. Do not "update matching" until the script's dependencies support the new agent (feel free to follow issue #33).
-
-Attributes incompatible with Plex's new metadata agent:
-- `tmdb_collection`
-- `tmdb_id`
-- `tmdb_actor`
-- `tmdb_director`
-- `tmdb_writer`
-- `tmdb_list`
-- `tmdb_movie`
-- `tmdb_show`
-- `tvdb_show`
-- `imdb_list`
-- `trakt_list`
-- `trakt_trending`
 
 Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
 

@@ -11,6 +11,7 @@ from tmdbv3api import TV
 from tmdbv3api import Collection
 from tmdbv3api import Person
 import config_tools
+import plex_tools
 import trakt
 
 
@@ -55,10 +56,19 @@ def imdb_get_movies(config_path, plex, data):
                                     "//a/img//@data-tconst"))
     matched_imdb_movies = []
     missing_imdb_movies = []
+    plex_tools.create_cache(config_path)
     if title_ids:
         for m in plex.Library.all():
             try:
-                if 'themoviedb://' in m.guid:
+                if 'plex://' in m.guid:
+                    item = m
+                    # Check cache for imdb_id
+                    imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
+                    if not imdb_id:
+                        imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
+                        print("| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title))
+                        plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
+                elif 'themoviedb://' in m.guid:
                     if not tmdb.api_key == "None":
                         tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
                         tmdbapi = movie.details(tmdb_id)
@@ -128,29 +138,46 @@ def tmdb_get_movies(config_path, plex, data, is_list=False):
             guid = guid.split('themoviedb://')[1].split('?')[0]
         elif "imdb://" in guid:
             guid = guid.split('imdb://')[1].split('?')[0]
+        elif "plex://" in guid:
+            guid = guid.split('plex://')[1].split('?')[0]
         else:
             guid = "None"
         p_m_map[m] = guid
 
     matched = []
     missing = []
+    plex_tools.create_cache(config_path)
     # We want to search for a match first to limit TMDb API calls
     # Too many rapid calls can cause a momentary block
     # If needed in future maybe add a delay after x calls to let the limit reset
     for mid in t_movs:  # For each TMBd ID in TMBd Collection
         match = False
         for m in p_m_map:  # For each movie in Plex
-            if "tt" not in p_m_map[m] != "None":  # If the Plex movie's guid does not start with tt
+            item = m
+            agent_type = urlparse(m.guid).scheme.split('.')[-1]
+            # Plex movie agent
+            if agent_type == 'plex':
+                # Check cache for tmdb_id
+                tmdb_id = plex_tools.query_cache(config_path, item.guid, 'tmdb_id')
+                imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
+                if not tmdb_id:
+                    imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
+                    print("| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title))
+                    plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
+                if int(tmdb_id) == int(mid):
+                    match = True
+                    break
+            elif agent_type == 'themoviedb':
                 if int(p_m_map[m]) == int(mid):
                     match = True
                     break
-        if not match:
-            imdb_id = t_movie.details(mid).imdb_id
-            for m in p_m_map:
-                if "tt" in p_m_map[m]:
-                    if p_m_map[m] == imdb_id:
-                        match = True
-                        break
+            elif agent_type == 'imdb':
+                imdb_id = t_movie.details(mid).imdb_id
+                for m in p_m_map:
+                    if "tt" in p_m_map[m]:
+                        if p_m_map[m] == imdb_id:
+                            match = True
+                            break
         if match:
             matched.append(m)
         else:

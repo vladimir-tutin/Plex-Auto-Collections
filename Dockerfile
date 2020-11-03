@@ -19,4 +19,4 @@ RUN \
 			/var/tmp/* \
 			/var/lib/apt/lists/*
 WORKDIR /app
-ENTRYPOINT ["python3", "plex_auto_collections.py", "--update"]
+ENTRYPOINT ["python3", "plex_auto_collections.py"]

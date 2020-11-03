@@ -10,6 +10,12 @@ from config_tools import Config
 from config_tools import TMDB
 from config_tools import TraktClient
 from config_tools import Tautulli
+from bs4 import BeautifulSoup
+from urllib.request import Request
+from urllib.request import urlopen
+from urllib.parse import urlparse
+import os
+import sqlite3
 
 
 def get_movie(plex, data):
@@ -342,3 +348,53 @@ def delete_collection(data):
     if confirm == "y":
         data.delete()
         print("| Collection deleted")
+
+def alt_id_lookup(plex, value):
+    req = Request('{}{}'.format(plex.url, value.key))
+    req.add_header('X-Plex-Token', plex.token)
+    with urlopen(req) as response:
+        contents = response.read()
+    bs = BeautifulSoup(contents, 'lxml')
+    for guid_tag in bs.find_all('guid'):
+        agent = urlparse(guid_tag['id']).scheme
+        guid = urlparse(guid_tag['id']).netloc
+        if agent == 'imdb':
+            imdb_id = guid
+        elif agent == 'tmdb':
+            tmdb_id = guid
+    return imdb_id, tmdb_id
+
+def create_cache(config_path):
+    cache = os.path.join(os.path.dirname(config_path), 'cache.db')
+    connection = sqlite3.connect(cache)
+    with sqlite3.connect(cache) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        cursor.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='guids' ''')
+        if cursor.fetchone()[0] != 1:
+            print("| Initializing cache database.".format(cache))
+            cursor.execute('CREATE TABLE IF NOT EXISTS guids (plex_guid TEXT PRIMARY KEY, imdb_id TEXT, tmdb_id TEXT)')
+
+def query_cache(config_path, key, column):
+    cache = os.path.join(os.path.dirname(config_path), 'cache.db')
+    with sqlite3.connect(cache) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM guids WHERE plex_guid = ?", (key, ))
+        row = cursor.fetchone()
+        if row:
+            return row[column]
+
+def update_cache(config_path, plex_guid, **kwargs):
+    cache = os.path.join(os.path.dirname(config_path), 'cache.db')
+    with sqlite3.connect(cache) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        if 'imdb_id' in kwargs:
+            imdb_id = kwargs['imdb_id']
+            cursor.execute('INSERT OR IGNORE INTO guids(plex_guid, imdb_id) VALUES(?, ?)', (plex_guid, imdb_id, ))
+            cursor.execute('UPDATE guids SET imdb_id = ? WHERE plex_guid = ?', (imdb_id, plex_guid))
+        if 'tmdb_id' in kwargs:
+            tmdb_id = kwargs['tmdb_id']
+            cursor.execute('INSERT OR IGNORE INTO guids(plex_guid, tmdb_id) VALUES(?, ?)', (plex_guid, tmdb_id, ))
+            cursor.execute('UPDATE guids SET tmdb_id = ? WHERE plex_guid = ?', (tmdb_id, plex_guid))

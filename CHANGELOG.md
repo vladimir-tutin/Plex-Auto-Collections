@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.0] - 2020-11-03
+## [2.4.0] - 2020-11-03
 ### Added
 - Added `plex_search` to AND searches together
 - Added additional `filters` and allow for use of `.not` for inverse `filters`
@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `collection_order` was in the code as `collection_sort`
 - Upgrade PlexAPI dependency to 4.2.0
+
+## [2.3.0] - 2020-11-03
+### Added
+- Support for the new Plex Movie agent
+- Cache database for IMDB/TMDB id lookups
+
+### Changed
+- Dockerfile no longer passes the update flag by default
 
 ## [2.2.1] - 2020-10-28
 ### Added
