@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More compatibility  with previous config files.
 
 ### Changed
-- `Filters` are now listed and have been tested and have been changed to `Searches`
+- `Plex Filters` are now listed and have been tested and have been changed to `Plex Searches`
 - `subfilters` are now listed and have been tested and have been changed to `filters`
 
 ### Fixed

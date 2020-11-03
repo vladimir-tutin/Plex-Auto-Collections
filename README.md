@@ -529,8 +529,8 @@ In addition you can also use the `.not` at the end of any standard collection fi
 - `year.lte` (Matches any movie/show whose year is less then or equal to the specified year)
 - `rating.gte` (Matches any movie/show whose rating is greater then or equal to the specified rating)
 - `rating.lte` (Matches any movie/show whose rating is less then or equal to the specified rating)
-- `originally_available.gte` (Matches any movie/show whose originally_available is greater then or equal to the specified originally_available) (Date must be in the MM/DD/YYYY Format)
-- `originally_available.lte` (Matches any movie/show whose originally_available is less then or equal to the specified originally_available) (Date must be in the MM/DD/YYYY Format)
+- `originally_available.gte` (Matches any movie/show whose originally_available date is greater then or equal to the specified originally_available date) (Date must be in the MM/DD/YYYY Format)
+- `originally_available.lte` (Matches any movie/show whose originally_available date is less then or equal to the specified originally_available date) (Date must be in the MM/DD/YYYY Format)
 
 ```yaml
 collections:
@@ -546,6 +546,13 @@ collections:
     imdb_list: https://www.imdb.com/list/ls006405458/
     filters:
       actor: Daniel Craig
+```
+```yaml
+collections:
+  French Romance:
+    genre: Romance
+    filters:
+      audio_language: Français
 ```
 ```yaml
 collections:
