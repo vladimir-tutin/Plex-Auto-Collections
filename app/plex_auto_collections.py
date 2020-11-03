@@ -4,6 +4,7 @@ import re
 import sys
 import threading
 import glob
+import datetime
 from plexapi.server import PlexServer
 from plexapi.video import Movie
 from plexapi.video import Show
@@ -58,16 +59,46 @@ def get_method_pair_int(method_to_parse, values_to_parse, id_type):
     return (method_to_parse, get_int_attribute_list(method_to_parse, values_to_parse, id_type))
 
 def get_method_pair_tmdb(method_to_parse, values_to_parse, id_type):
-    ids = get_int_attribute_list(method_to_parse, values_to_parse, id_type)
+    values = get_attribute_list(values_to_parse)
     new_ids = []
-    for id in ids:
+    for v in values:
         try:
+            id = regex_first_int(v, method_to_parse, id_type)
             tmdb_get_metadata(config_path, id, "overview")
             new_ids.append(id)
         except ValueError as e:
             print(e)
+    return (method_to_parse, new_ids)
 
-
+def get_method_pair_year(method_to_parse, values_to_parse):
+    years = get_attribute_list(values_to_parse)
+    final_years = []
+    current_year = datetime.datetime.now().year
+    for year in years:
+        try:
+            year_range = re.search('(\\d{4})-(\\d{4}|NOW)', str(year))
+            start = year_range.group(1)
+            end = year_range.group(2)
+            if end == "NOW":
+                end = current_year
+            if int(start) < 1800 or int(start) > current_year:
+                print("| Config Error: Skipping {} starting year {} must be between 1800 and {}".format(method_to_parse, start, current_year))
+            elif int(end) < 1800 or int(end) > current_year:
+                print("| Config Error: Skipping {} ending year {} must be between 1800 and {}".format(method_to_parse, end, current_year))
+            elif int(start) > int(end):
+                print("| Config Error: Skipping {} starting year {} cannot be greater then ending year {}".format(method_to_parse, start, end))
+            else:
+                for i in range(int(start), int(end) + 1):
+                    final_years.append(i)
+        except AttributeError:
+            try:
+                id = re.search('(\\d+)', str(year)).group(1)
+                if len(str(id)) != len(str(year)):
+                    print("| Config Warning: {} can be replaced with {}".format(year, id))
+                final_years.append(id)
+            except AttributeError:
+                print("| Config Error: Skipping {} failed to parse year from {}".format(method_to_parse, year))
+    return (method_to_parse, final_years)
 
 
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
@@ -83,7 +114,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "actors": "actor", "role": "actor", "roles": "actor",
         "content_ratings": "content_rating", "contentRating": "content_rating", "contentRatings": "content_rating",
         "countries": "country",
-        "decades": "decade",
         "directors": "director",
         "genres": "genre",
         "studios": "studio", "network": "studio", "networks": "studio",
@@ -118,7 +148,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     plex_searches = [
         "actor", #"actor.not", # Waiting on PlexAPI to fix issue
         "country", #"country.not",
-        "decade", #"decade.not",
         "director", #"director.not",
         "genre", #"genre.not",
         "studio", #"studio.not",
@@ -142,7 +171,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     movie_only_searches = [
         "actor", #"actor.not", # Waiting on PlexAPI to fix issue
         "country", #"country.not",
-        "decade", #"decade.not",
         "director", #"director.not",
         "writer", #"writer.not",
         "tmdb_actor", "tmdb_director", "tmdb_writer"
@@ -325,9 +353,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             print("| Config Error: {} plex search attribute only works for movie libraries".format(final_attr))
                         elif (final_attr[:-4] if final_attr.endswith(".not") else final_attr) in searches_used:
                             print("| Config Error: Only one instance of {} can be used try using it as a filter instead".format(final_attr))
-                        elif final_attr in ["decade", "decade.not", "year", "year.not"]:
-                            searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
-                            search.append(get_method_pair_int(final_attr, collections[c][m][search_attr], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
+                        elif final_attr in ["year", "year.not"]:
+                            year_pair = get_method_pair_year(final_attr, collections[c][m][search_attr])
+                            if len(year_pair[1]) > 0:
+                                searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
+                                search.append(get_method_pair_int(final_attr, collections[c][m][search_attr], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
                         elif final_attr in plex_searches:
                             if final_attr.startswith("tmdb_"):
                                 final_attr = final_attr[5:]
@@ -335,11 +365,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             search.append((final_attr, get_attribute_list(collections[c][m][search_attr])))
                         else:
                             print("| Config Error: {} plex search attribute not supported".format(search_attr))
-                    methods.append((method_name, search))
+                    methods.append((method_name, [search]))
                 elif method_name in movie_only_searches and libtype == "show":
                     print("| Config Error: {} plex search only works for movie libraries".format(method_name))
-                elif method_name in ["decade", "decade.not", "year", "year.not"]:
-                    methods.append(("plex_search", [get_method_pair_int(method_name, collections[c][m], method_name[:-4] if method_name.endswith(".not") else method_name)]))
+                elif method_name in ["year", "year.not"]:
+                    methods.append(("plex_search", [[get_method_pair_year(method_name, collections[c][m])]]))
                 elif method_name in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
                     ids = get_int_attribute_list(method_name, collections[c][m], "TMDb Person ID")
                     new_ids = []
@@ -359,7 +389,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             print(e)
                     methods.append(("plex_search", [(method_name[5:], new_ids)]))
                 elif method_name in plex_searches:
-                    methods.append(("plex_search", [(method_name, get_attribute_list(collections[c][m]))]))
+                    methods.append(("plex_search", [[(method_name, get_attribute_list(collections[c][m]))]]))
                 elif method_name == "tmdb_collection":
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Collection ID"))
                 elif method_name == "tmdb_id":
@@ -399,17 +429,17 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     print("| Config Error: {} attribute not supported".format(method_name))
             else:
                 print("| Config Error: {} attribute is blank".format(m))
+        print("| ")
 
         #TODO: Display Filters Better
         for filter in filters:
             print("|  Collection Filter {}: {}".format(filter[0], filter[1]))
+        print("| ")
 
         # Loops though and actually processes the methods
         for m, values in methods:
             for v in values:
-                if method_name == "plex_search":
-                    print("| \n| Processing {}:".format(m))
-                else:
+                if m != "plex_search":
                     print("| \n| Processing {}: {}".format(m, v))
                 try:
                     missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)
@@ -783,7 +813,6 @@ if args.update:
     plex = Plex(config_path)
     update_from_config(config_path, plex, True, args.no_meta, args.no_images)
     sys.exit(0)
-
 
 config = Config(config_path)
 plex = Plex(config_path)

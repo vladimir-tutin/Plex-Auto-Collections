@@ -173,12 +173,11 @@ You can create a collection based on the Plex search feature using the `plex_sea
 - `actor` (Gets every movie with the specified actor) (Movie libraries only)
 - `tmdb_actor` (Gets every movie with the specified actor as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 - `country` (Gets every movie with the specified country) (Movie libraries only)
-- `decade` (Gets every movie from the specified year + the 9 that follow i.e. 1990 will get you 1990-1999) (Movie libraries only)
 - `director` (Gets every movie with the specified director) (Movie libraries only)
 - `tmdb_director` (Gets every movie with the specified director as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 - `genre` (Gets every movie/show with the specified genre)
 - `studio` (Gets every movie/show with the specified studio)
-- `year` (Gets every movie/show with the specified year)
+- `year` (Gets every movie/show with the specified year) (Put a `-` between two years for a range i.e. `year: 1990-1999` or end with `NOW` to go till current i.e. `year: 2000-NOW`)
 - `writer` (Gets every movie with the specified writer) (Movie libraries only)
 - `tmdb_writer` (Gets every movie with the specified writer as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 
@@ -223,7 +222,13 @@ collections:
 collections:
   90s Movies:
     plex_search:
-      decade: 1990
+      year: 1990-1999
+```
+```yaml
+collections:
+  2010+ Movies:
+    plex_search:
+      year: 2010-NOW
 ```
 
 Note if you only want to search using a single attribute you can do so without `plex_search`.
@@ -231,7 +236,7 @@ Note if you only want to search using a single attribute you can do so without `
 ```yaml
 collections:
   90s Movies:
-    decade: 1990
+    year: 1990-1999
 ```
 
 Notes:

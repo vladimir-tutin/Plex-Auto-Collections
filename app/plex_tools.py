@@ -133,7 +133,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             ors = ""
             for param in attr_pair[1]:
                 ors = ors + (" OR " if len(ors) > 0 else attr_pair[0] + "(") + str(param)
-            output = output + ("\n|\tAND " if len(output) > 0 else "|\t    ") + ors + ")"
+            output = output + ("\n|\t\t      AND " if len(output) > 0 else "| Processing Plex Search: ") + ors + ")"
         print(output)
         return plex.Library.search(**search_terms)
 
