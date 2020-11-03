@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `collection_order` was in the code as `collection_sort`
+- Upgrade PlexAPI dependency to 4.2.0
 
 ## [2.2.1] - 2020-10-28
 ### Added
