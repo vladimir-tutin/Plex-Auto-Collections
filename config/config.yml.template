@@ -34,7 +34,7 @@ collections:
     content_rating: G
     collection_mode: show_items
     collection_order: alpha
-  90s Comedys:
+  90s Comedies:
     plex_search:
       year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
       genre: Comedy
