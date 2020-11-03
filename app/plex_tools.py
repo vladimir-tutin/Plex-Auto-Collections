@@ -77,9 +77,6 @@ def get_actor_rkey(plex, data):
     except UnboundLocalError:
         raise ValueError("| Config Error: Actor: {} not found".format(search))
 
-def get_all_items(plex):
-    return plex.Library.all()
-
 # subtype can be 'movie', 'show', or None (movie/tv combined)
 def get_collection(plex, data, exact=None, subtype=None):
     collection_list = plex.Library.search(title=data, libtype="collection")
@@ -114,22 +111,31 @@ def get_collection(plex, data, exact=None, subtype=None):
     else:
         return "No collection found"
 
-def add_to_collection(config_path, plex, method, value, c, map, and_filters=None, subfilters=None):
+def add_to_collection(config_path, plex, method, value, c, map, filters=None):
     movies = []
     shows = []
     items = []
     missing = []
     def search_plex():
-        final_method = method[:-4] + "!" if method[-4:] == ".not" else method
-        filters = {final_method: value}
-        if and_filters:
-            for af in and_filters:
-                out = ""
-                for f in af[1]:
-                    out = ((out + " Or ") if len(out) > 0 else "") + f
-                print("|        And {}: {}".format(af[0], out))
-                filters[af[0][:-4] + "!" if af[0][-4:] == ".not" else af[0]] = af[1]
-        return plex.Library.search(**filters)
+        search_terms = {}
+        output = ""
+        for attr_pair in value:
+            if attr_pair[0] == "actor":
+                search_list = []
+                for actor in attr_pair[1]:
+                    search_list.append(get_actor_rkey(plex, actor))
+            else:
+                search_list = attr_pair[1]
+            final_method = attr_pair[0][:-4] + "!" if attr_pair[0][-4:] == ".not" else attr_pair[0]
+            if plex.library_type == "show":
+                final_method = "show." + final_method
+            search_terms[final_method] = search_list
+            ors = ""
+            for param in attr_pair[1]:
+                ors = ors + (" OR " if len(ors) > 0 else attr_pair[0] + "(") + str(param)
+            output = output + ("\n|\tAND " if len(output) > 0 else "|\t    ") + ors + ")"
+        print(output)
+        return plex.Library.search(**search_terms)
 
     if ("trakt" in method or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
         raise KeyError("| trakt connection required for {}",format(method))
@@ -150,8 +156,10 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
             movies, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":
             movies = plex.Library.all()
-        else:
+        elif method == "plex_search":
             movies = search_plex()
+        else:
+            print("| Config Error: {} method not supported".format(method))
     elif plex.library_type == "show":
         if method == "tmdb_list" and TMDB.valid and TraktClient.valid:
             shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, is_list=True)
@@ -167,12 +175,10 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
             shows, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":
             shows = plex.Library.all()
-        else:
+        elif method == "plex_search":
             shows = search_plex()
-
-    if (movies or shows) and subfilters:
-        for sf in subfilters:
-            print("|  Subfilter {}: {}".format(sf[0], sf[1]))
+        else:
+            print("| Config Error: {} method not supported".format(method))
 
     subfilter_alias = {
         "actor": "actors",
@@ -202,8 +208,8 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
             current_m = get_movie(plex, rk)
             current_m.reload()
             match = True
-            if subfilters:
-                for sf in subfilters:
+            if filters:
+                for sf in filters:
                     modifier = sf[0][-4:]
                     method = subfilter_alias[sf[0][:-4]] if modifier in [".not", ".lte", ".gte"] else subfilter_alias[sf[0]]
                     if method == "max_age":
@@ -267,8 +273,8 @@ def add_to_collection(config_path, plex, method, value, c, map, and_filters=None
             current_s = get_item(plex, rk)
             current_s.reload()
             match = True
-            if subfilters:
-                for sf in subfilters:
+            if filters:
+                for sf in filters:
                     modifier = sf[0][-4:]
                     method = subfilter_alias[sf[0][:-4]] if modifier in [".not", ".lte", ".gte"] else subfilter_alias[sf[0]]
                     if method == "max_age":

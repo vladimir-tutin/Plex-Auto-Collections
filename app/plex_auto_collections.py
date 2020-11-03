@@ -15,7 +15,7 @@ from plex_tools import delete_collection
 from plex_tools import get_actor_rkey
 from plex_tools import get_collection
 from plex_tools import get_movie
-from imdb_tools import tmdb_get_summary
+from imdb_tools import tmdb_get_metadata
 from config_tools import Config
 from config_tools import Plex
 from config_tools import Radarr
@@ -41,6 +41,35 @@ def regex_first_int(data, method, id_type="number", default=None):
             print("| Config Error: {} failed to parse {} from {} using {} as default".format(method, id_type, data, default))
             return default
 
+def get_attribute_list(values_to_parse):
+    return values_to_parse if isinstance(values_to_parse, list) else str(values_to_parse).split(", ")
+
+def get_int_attribute_list(method_to_parse, values_to_parse, id_type):
+    values_to_parse = get_attribute_list(values_to_parse)
+    new_values = []
+    for v in values_to_parse:
+        try:
+            new_values.append(regex_first_int(v, method_to_parse, id_type))
+        except ValueError as e:
+            print(e)
+    return new_values
+
+def get_method_pair_int(method_to_parse, values_to_parse, id_type):
+    return (method_to_parse, get_int_attribute_list(method_to_parse, values_to_parse, id_type))
+
+def get_method_pair_tmdb(method_to_parse, values_to_parse, id_type):
+    ids = get_int_attribute_list(method_to_parse, values_to_parse, id_type)
+    new_ids = []
+    for id in ids:
+        try:
+            tmdb_get_metadata(config_path, id, "overview")
+            new_ids.append(id)
+        except ValueError as e:
+            print(e)
+
+
+
+
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
     collections = config.collections
@@ -50,7 +79,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         libtype = "show"
     if not headless:
         print("|\n|===================================================================================================|")
-    method_alias = {
+    alias = {
         "actors": "actor", "role": "actor", "roles": "actor",
         "content_ratings": "content_rating", "contentRating": "content_rating", "contentRatings": "content_rating",
         "countries": "country",
@@ -67,8 +96,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "video-resolution": "video_resolution",
         "audio-language": "audio_language",
         "subtitle-language": "subtitle_language",
+        "subfilters": "filters",
+        "collection_sort": "collection_order"
     }
     all_lists = [
+        "plex_search"
         "tmdb_collection",
         "tmdb_id",
         "tmdb_actor",
@@ -83,16 +115,16 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "trakt_trending",
         "tautulli"
     ]
-    all_filters = [
-        "all",
-        "actor", "actor.not",
-        "country", "country.not",
-        "decade", "decade.not",
-        "director", "director.not",
-        "genre", "genre.not",
-        "studio", "studio.not",
-        "year", "year.not",
-        "writer", "writer.not"
+    plex_searches = [
+        "actor", #"actor.not", # Waiting on PlexAPI to fix issue
+        "country", #"country.not",
+        "decade", #"decade.not",
+        "director", #"director.not",
+        "genre", #"genre.not",
+        "studio", #"studio.not",
+        "year", #"year.not",
+        "writer", #"writer.not",
+        "tmdb_actor", "tmdb_director", "tmdb_writer"
     ]
     show_only_lists = [
         "tmdb_show",
@@ -101,17 +133,21 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     movie_only_lists = [
         "tmdb_collection",
         "tmdb_id",
+        "tmdb_actor",
+        "tmdb_director",
+        "tmdb_writer",
         "tmdb_movie",
         "imdb_list",
     ]
-    movie_only_filters = [
-        "actor", "actor.not",
-        "country", "country.not",
-        "decade", "decade.not",
-        "director", "director.not",
-        "writer", "writer.not"
+    movie_only_searches = [
+        "actor", #"actor.not", # Waiting on PlexAPI to fix issue
+        "country", #"country.not",
+        "decade", #"decade.not",
+        "director", #"director.not",
+        "writer", #"writer.not",
+        "tmdb_actor", "tmdb_director", "tmdb_writer"
     ]
-    all_subfilters = [
+    all_filters = [
         "actor", "actor.not",
         "content_rating", "content_rating.not",
         "country", "country.not",
@@ -127,7 +163,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "audio_language", "audio_language.not",
         "subtitle_language", "subtitle_language.not"
     ]
-    movie_only_subfilters = [
+    movie_only_filters = [
         "country", "country.not",
         "director", "director.not",
         "writer", "writer.not",
@@ -135,8 +171,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "audio_language", "audio_language.not",
         "subtitle_language", "subtitle_language.not"
     ]
-    details = [
-        "sync_mode", "sort_title", "content_rating",
+    all_details = [
+        "sort_title", "content_rating",
         "summary", "tmdb_summary", "tmdb_biography",
         "collection_mode", "collection_order",
         "poster", "tmdb_poster", "tmdb_profile", "file_poster",
@@ -170,185 +206,248 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             print("| Sync Mode: append")
 
         tmdb_id = None
-        actor_id = None
-        actor_method = None
+        person_id = None
+        person_method = None
+        details = {}
         methods = []
-        subfilters = []
-        and_filters = []
+        filters = []
+        posters_found = []
+        backgrounds_found = []
 
         # Loops through every method and validates to make sure that that the input is right where it can
-        # After this loop all the methods and values should be defined in methods, subfilters, and and_filters
+        # After this loop all the methods and values should be defined in methods, filters, and details
         for m in collections[c]:
-            if m == "details":
-                print("| Config Error: Please remove the details attribute all its old sub-attributes should be one level higher")
-            elif ("tmdb" in m or "imdb" in m) and not TMDB.valid:
+            if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
             elif ("trakt" in m or ("tmdb" in m and plex.library_type == "show")) and not TraktClient.valid:
                 print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
             elif m == "tautulli" and not Tautulli.valid:
                 print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
             elif collections[c][m]:
-                if m == "subfilters" or m == "collection_filters":
-                    if m =="subfilters":
-                        print("| Config Warning: subfilters will run as collection_filters")
-                    for sf in collections[c][m]:
+                if m in alias:
+                    method_name = alias[m]
+                    print("| Config Warning: {} attribute will run as {}".format(m, method_name))
+                else:
+                    method_name = m
+                def check_details(check_name, check_value):
+                    if check_name in ["tmdb_summary", "tmdb_biography"]:
+                        if check_name == "tmdb_summary":
+                            tmdb_type = "overview"
+                        elif check_name == "tmdb_biography":
+                            tmdb_type = "biography"
                         try:
-                            final_sf = method_alias[sf[:-4]] + sf[-4:] if sf.endswith((".not", ".lte", ".gte")) else method_alias[sf]
-                            print("| Config Warning: {} collection_filter will run as {}".format(sf, final_sf))
-                        except KeyError:
-                            final_sf = sf
-                        if final_sf in movie_only_subfilters and libtype == "show":
-                            print("| Config Error: {} collection_filter only works for movie libraries".format(final_sf))
-                        elif final_sf in all_subfilters:
-                            subfilters.append((final_sf, collections[c]["subfilters"][sf]))
+                            details["summary"] = tmdb_get_metadata(config_path, check_value, tmdb_type)
+                        except ValueError as e:
+                            print(e)
+                    elif check_name == "collection_mode":
+                        if check_value in ('default', 'hide', 'hide_items', 'show_items', 'hideItems', 'showItems'):
+                            if check_value == 'hide_items':
+                                details[check_name] = 'hideItems'
+                            elif check_value == 'show_items':
+                                details[check_name] = 'showItems'
+                            else:
+                                details[check_name] = check_value
                         else:
-                            print("| Config Error: {} collection_filter not supported".format(sf))
-                elif m not in details:
-                    def get_method(method, values):
-                        def parse_method(method_to_parse, values_to_parse, id_type):
-                            values_to_parse = values_to_parse if isinstance(values_to_parse, list) else str(values_to_parse).split(", ")
-                            new_values = []
-                            for v in values_to_parse:
-                                try:
-                                    new_values.append(regex_first_int(v, method_to_parse, id_type))
-                                except ValueError as e:
-                                    print(e)
-                            return (method_to_parse, new_values)
-                        if method == "tmdb_id":
-                            id = parse_method(method, values, "TMDb ID")
-                            if tmdb_id is None:
-                                tmdb_id = id[1][0]
-                            return id
-                        elif "tmdb" in method:
-                            return parse_method(method, values, "TMDb ID")
-                        elif method == "tvdb_show":
-                            return parse_method(method, values, "TVDb ID")
-                        elif method == "trakt_trending":
-                            return (method, regex_first_int(values, method, default=30))
-                        elif method == "tautulli":
-                            print(values)
-                            new_dictionary = {}
-                            new_dictionary["list_type"] = check_for_attribute(values, "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
-                            new_dictionary["list_days"] = check_for_attribute(values, "list_days", parent="tautulli", var_type="int", default=30, save=False)
-                            new_dictionary["list_size"] = check_for_attribute(values, "list_size", parent="tautulli", var_type="int", default=10, save=False)
-                            new_dictionary["list_buffer"] = check_for_attribute(values, "list_buffer", parent="tautulli", var_type="int", default=20, save=False)
-                            print(new_dictionary)
-                            return (method, [new_dictionary])
-                        elif method == "all":
-                            return (method, [""])
-                        elif method in ["decade", "decade.not"]:
-                            return parse_method(method, values, "decade")
-                        elif method in ["year", "year.not"]:
-                            return parse_method(method, values, "year")
+                            print("| Config Error: {} collection_mode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thide_items (Hide Items in this Collection)\n| \tshow_items (Show this Collection and its Items)".format(check_value))
+                    elif check_name == "collection_order":
+                        if check_value in ('release', 'alpha'):
+                            details[check_name] = check_value
                         else:
-                            values = values if isinstance(values, list) else str(values).split(", ")
-                            return (method, values)
-                    def has_method(list_of_tuples, check_value):
-                        for item in list_of_tuples:
-                            if item[0] == check_value or item[0] + ".not" == check_value:
-                                return True
-                        return False
-                    if m.startswith("and."):
-                        method = m[4:]
+                            print("| Config Error: {} collection_order Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(check_value))
+                    elif check_name == "poster":
+                        posters_found.append(["url", check_value, check_name])
+                    elif check_name == "tmdb_poster":
                         try:
-                            final_af = (method_alias[method[:-4]] + method[-4:]) if method.endswith(".not") else method_alias[method]
-                            print("| Config Warning: {} filter will run as {}".format(method, final_af))
-                        except KeyError:
-                            final_af = method
-                        if final_af in movie_only_filters and libtype == "show":
-                            print("| Config Error: {} filter only works for movie libraries".format(final_af))
-                        elif final_af == "all":
-                            print("| Config Error: all cannot have the and. prefix")
-                        elif has_method(methods, method) or has_method(and_filters, method):
-                            print("| Config Error: Only one instance of {} can be used try using it as a subfilter instead".format(final_af, method, method))
-                        elif final_af in all_filters:
-                            try:
-                                and_filters.append(get_method(final_af, collections[c][m]))
-                            except ValueError as e:
-                                print(e)
+                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "poster_path"), check_name])
+                        except ValueError as e:
+                            print(e)
+                    elif check_name == "tmdb_profile":
+                        try:
+                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "profile_path"), check_name])
+                        except ValueError as e:
+                            print(e)
+                    elif check_name == "file_poster":
+                        if os.path.exists(check_value):
+                            posters_found.append(["file", os.path.abspath(check_value), check_name])
                         else:
-                            print("| Config Error: {} attribute not supported".format(m))
+                            print("| Config Error: Poster Path Does Not Exist: {}".format(os.path.abspath(check_value)))
+                    elif check_name == "background":
+                        backgrounds_found.append(["url", check_value, check_name])
+                    elif check_name == "tmdb_background":
+                        try:
+                            backgrounds_found.append(["url", tmdb_get_metadata(config_path, check_value, "backdrop_path"), check_name])
+                        except ValueError as e:
+                            print(e)
+                    elif check_name == "file_background":
+                        if os.path.exists(check_value):
+                            backgrounds_found.append(["file", os.path.abspath(check_value), check_name])
+                        else:
+                            print("| Config Error: Background Path Does Not Exist: {}".format(os.path.abspath(check_value)))
                     else:
-                        try:
-                            final_method = (method_alias[m[:-4]] + m[-4:]) if m.endswith(".not") else method_alias[m]
-                            print("| Config Warning: {} search will run as {}".format(m, final_method))
-                        except KeyError:
-                            final_method = m
-                        if final_method in show_only_lists and libtype == "movie":
-                            print("| Config Error: {} search only works for show libraries".format(final_method))
-                        elif (final_method in movie_only_filters or final_method in movie_only_lists) and libtype == "show":
-                            print("| Config Error: {} search only works for movie libraries".format(final_method))
-                        elif final_method in all_filters or final_method in all_lists:
-                            try:
-                                methods.append(get_method(final_method, collections[c][m]))
-                            except ValueError as e:
-                                print(e)
+                        details[check_name] = check_value
+                if method_name == "details":
+                    print("| Config Error: Please remove the details attribute all its old sub-attributes should be one level higher")
+                    for detail_m in collections[c][m]:
+                        if detail_m in alias:
+                            detail_name = alias[detail_m]
+                            print("| Config Warning: {} attribute will run as {}".format(detail_m, detail_name))
                         else:
-                            print("| Config Error: {} attribute not supported".format(m))
+                            detail_name = detail_m
+                        if detail_name in all_details:
+                            check_details(detail_name, collections[c][m][detail_m])
+                        else:
+                            print("| Config Error: {} attribute not supported".format(detail_name))
+                elif method_name in all_details:
+                    check_details(method_name, collections[c][m])
+                elif method_name == "filters":
+                    for filter in collections[c][m]:
+                        if filter in alias or (filter.endswith(".not") and filter[:-4] in alias):
+                            final_filter = (alias[filter[:-4]] + filter[-4:]) if filter.endswith(".not") else alias[filter]
+                            print("| Config Warning: {} filter will run as {}".format(filter, final_filter))
+                        else:
+                            final_filter = filter
+                        if final_filter in movie_only_filters and libtype == "show":
+                            print("| Config Error: {} filter only works for movie libraries".format(final_filter))
+                        elif final_filter in all_filters:
+                            filters.append((final_filter, collections[c][m][filter])) #TODO: validate filters contents
+                        else:
+                            print("| Config Error: {} filter not supported".format(filter))
+                elif method_name == "plex_search":
+                    search = []
+                    searches_used = []
+                    for search_attr in collections[c][m]:
+                        if search_attr in alias or (search_attr.endswith(".not") and search_attr[:-4] in alias):
+                            final_attr = (alias[search_attr[:-4]] + search_attr[-4:]) if search_attr.endswith(".not") else alias[search_attr]
+                            print("| Config Warning: {} plex search attribute will run as {}".format(search_attr, final_attr))
+                        else:
+                            final_attr = search_attr
+                        if final_attr in movie_only_searches and libtype == "show":
+                            print("| Config Error: {} plex search attribute only works for movie libraries".format(final_attr))
+                        elif (final_attr[:-4] if final_attr.endswith(".not") else final_attr) in searches_used:
+                            print("| Config Error: Only one instance of {} can be used try using it as a filter instead".format(final_attr))
+                        elif final_attr in ["decade", "decade.not", "year", "year.not"]:
+                            searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
+                            search.append(get_method_pair_int(final_attr, collections[c][m][search_attr], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
+                        elif final_attr in plex_searches:
+                            if final_attr.startswith("tmdb_"):
+                                final_attr = final_attr[5:]
+                            searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
+                            search.append((final_attr, get_attribute_list(collections[c][m][search_attr])))
+                        else:
+                            print("| Config Error: {} plex search attribute not supported".format(search_attr))
+                    methods.append((method_name, search))
+                elif method_name in movie_only_searches and libtype == "show":
+                    print("| Config Error: {} plex search only works for movie libraries".format(method_name))
+                elif method_name in ["decade", "decade.not", "year", "year.not"]:
+                    methods.append(("plex_search", [get_method_pair_int(method_name, collections[c][m], method_name[:-4] if method_name.endswith(".not") else method_name)]))
+                elif method_name in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
+                    ids = get_int_attribute_list(method_name, collections[c][m], "TMDb Person ID")
+                    new_ids = []
+                    for id in ids:
+                        try:
+                            name = tmdb_get_metadata(config_path, id, "name")
+                            if person_id is None:
+                                if "summary" not in details:
+                                    details["summary"] = tmdb_get_metadata(config_path, id, "biography")
+                                details["poster"] = ["url", tmdb_get_metadata(config_path, id, "profile_path"), method_name]
+                                person_id = id
+                                person_method = method_name
+                            if method_name == "tmdb_actor":
+                                get_actor_rkey(plex, name)
+                            new_ids.append(name)
+                        except ValueError as e:
+                            print(e)
+                    methods.append(("plex_search", [(method_name[5:], new_ids)]))
+                elif method_name in plex_searches:
+                    methods.append(("plex_search", [(method_name, get_attribute_list(collections[c][m]))]))
+                elif method_name == "tmdb_collection":
+                    methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Collection ID"))
+                elif method_name == "tmdb_id":
+                    id = get_method_pair_tmdb(method_name, collections[c][m], "TMDb ID")
+                    if tmdb_id is None:
+                        if "summary" not in details:
+                            details["summary"] = tmdb_get_metadata(config_path, id[1][0], "overview")
+                        details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "poster_path"), method_name]
+                        details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "backdrop_path"), method_name]
+                        tmdb_id = id[1][0]
+                    methods.append(id)
+                elif method_name == "tmdb_list": #TODO: validate
+                    methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb List ID"))
+                elif method_name == "tmdb_movie":
+                    methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Movie ID"))
+                elif method_name == "tmdb_show":
+                    methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Show ID"))
+                elif method_name == "tvdb_show":
+                    methods.append(get_method_pair_int(method_name, collections[c][m], "TVDb Show ID"))
+                elif method_name in ["imdb_list", "trakt_list"]: #TODO: validate
+                    methods.append((method_name, get_attribute_list(collections[c][m])))
+                elif method_name == "trakt_trending":
+                    methods.append((method_name, regex_first_int(collections[c][m], method_name, default=30)))
+                elif method_name == "tautulli": #TODO:test
+                    try:
+                        new_dictionary = {}
+                        new_dictionary["list_type"] = check_for_attribute(collections[c][m], "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
+                        new_dictionary["list_days"] = check_for_attribute(collections[c][m], "list_days", parent="tautulli", var_type="int", default=30, save=False)
+                        new_dictionary["list_size"] = check_for_attribute(collections[c][m], "list_size", parent="tautulli", var_type="int", default=10, save=False)
+                        new_dictionary["list_buffer"] = check_for_attribute(collections[c][m], "list_buffer", parent="tautulli", var_type="int", default=20, save=False)
+                        methods.append((method_name, [new_dictionary]))
+                    except SystemExit as e:
+                        print(e)
+                elif method_name == "all":
+                    methods.append((method_name, [""]))
+                elif method_name != "sync_mode":
+                    print("| Config Error: {} attribute not supported".format(method_name))
             else:
                 print("| Config Error: {} attribute is blank".format(m))
+
+        #TODO: Display Filters Better
+        for filter in filters:
+            print("|  Collection Filter {}: {}".format(filter[0], filter[1]))
 
         # Loops though and actually processes the methods
         for m, values in methods:
             for v in values:
-                add = True
-                v_print = v
-                final_method = m
+                if method_name == "plex_search":
+                    print("| \n| Processing {}:".format(m))
+                else:
+                    print("| \n| Processing {}: {}".format(m, v))
                 try:
-                    if m in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
-                        name = tmdb_get_summary(config_path, v, "name")
-                        if actor_id is None:
-                            actor_id = v
-                            actor_method = m
-                        v = name
-                        final_method = m[5:]
-                        v_print = v_print + " " + v
-                    if final_method == "actor":
-                        v = get_actor_rkey(plex, v)
-                except ValueError as e:
+                    missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)
+                except UnboundLocalError as e:
+                    missing, map = add_to_collection(config_path, plex, m, v, c, map)               # No filters
+                except (KeyError, ValueError, SystemExit) as e:
                     print(e)
-                    add = False
-                if add:
-                    print("| \n| Processing {}: {}".format(final_method, v_print))
-                    if final_method == "studio" and libtype == "show":
-                        final_method = "network"
-                    try:
-                        missing, map = add_to_collection(config_path, plex, final_method, v, c, map, and_filters, subfilters)
-                    except UnboundLocalError as e:
-                        missing, map = add_to_collection(config_path, plex, final_method, v, c, map, and_filters)               # No sub-filters
-                    except (KeyError, ValueError, SystemExit) as e:
-                        print(e)
-                        missing = False
-                    if missing:
-                        if libtype == "movie":
-                            method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                            if m in ["trakt_list", "tmdb_list", "imdb_list"]:
-                                print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                            elif m == "tmdb_collection":
-                                print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                            elif m == "trakt_trending":
-                                print("| {} missing movie{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                            else:
-                                print("| {} ID: {} missing".format(method_name, v))
-                            if Radarr.valid:
-                                radarr = Radarr(config_path)
-                                if radarr.add_movie:
-                                    print("| Adding missing movies to Radarr")
-                                    add_to_radarr(config_path, missing)
-                                elif not headless and radarr.add_movie is None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                                    add_to_radarr(config_path, missing)
-                        elif libtype == "show":
-                            method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
-                            if m in ["trakt_list", "tmdb_list"]:
-                                print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                            elif m == "trakt_trending":
-                                print("| {} missing show{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                            else:
-                                print("| {} ID: {} missing".format(method_name, v))
+                    missing = False
+                if missing:
+                    if libtype == "movie":
+                        method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
+                        if m in ["trakt_list", "tmdb_list", "imdb_list"]:
+                            print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        elif m == "tmdb_collection":
+                            print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        elif m == "trakt_trending":
+                            print("| {} missing movie{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        else:
+                            print("| {} ID: {} missing".format(method_name, v))
+                        if Radarr.valid:
+                            radarr = Radarr(config_path)
+                            if radarr.add_movie:
+                                print("| Adding missing movies to Radarr")
+                                add_to_radarr(config_path, missing)
+                            elif not headless and radarr.add_movie is None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                                add_to_radarr(config_path, missing)
+                    elif libtype == "show":
+                        method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
+                        if m in ["trakt_list", "tmdb_list"]:
+                            print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        elif m == "trakt_trending":
+                            print("| {} missing show{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        else:
+                            print("| {} ID: {} missing".format(method_name, v))
 
-                            # if not skip_sonarr:
-                            #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
-                            #         add_to_radarr(missing_shows)
+                        # if not skip_sonarr:
+                        #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
+                        #         add_to_radarr(missing_shows)
 
         for ratingKey, item in map.items():
             if item is not None:
@@ -363,160 +462,27 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             continue       # No collections created with requested criteria
 
         if not no_meta:
-            def edit_value (plex_collection, name, group, key=None):
+            def edit_details (name, key=None):
                 if key is None:
                     key = name
-                if name in group:
-                    if group[name]:
-                        edits = {"{}.value".format(key): group[name], "{}.locked".format(key): 1}
+                if name in details:
+                    if name == "collection_mode":
+                        plex_collection.modeUpdate(mode=details[name])
+                    elif name == "collection_order":
+                        plex_collection.sortUpdate(sort=details[name])
+                    else:
+                        edits = {"{}.value".format(key): details[name], "{}.locked".format(key): 1}
                         plex_collection.edit(**edits)
                         plex_collection.reload()
-                        print("| Detail: {} updated to {}".format(name, group[name]))
-                    else:
-                        print("| Config Error: {} attribute is blank".format(name))
+                    print("| Detail: {} updated to {}".format(name, details[name]))
 
-            # Handle collection sort_title
-            edit_value(plex_collection, "sort_title", collections[c], key="titleSort")
+            edit_details("sort_title", "titleSort")
+            edit_details("content_rating", "contentRating")
+            edit_details("summary")
+            edit_details("collection_mode")
+            edit_details("collection_order")
 
-            # Handle collection content_rating
-            edit_value(plex_collection, "content_rating", collections[c], key="contentRating")
-
-            # Handle collection summary
-            summary = None
-            if "summary" in collections[c]:
-                if collections[c]["summary"]:
-                    summary = collections[c]["summary"]
-                else:
-                    print("| Config Error: summary attribute is blank")
-            elif "tmdb_summary" in collections[c]:
-                if TMDB.valid:
-                    if collections[c]["tmdb_summary"]:
-                        try:
-                            summary = tmdb_get_summary(config_path, collections[c]["tmdb_summary"], "overview")
-                        except ValueError as e:
-                            print(e)
-                    else:
-                        print("| Config Error: tmdb_summary attribute is blank")
-                else:
-                    print("| Config Error: tmdb_summary skipped. tmdb incorrectly configured")
-            elif "tmdb_biography" in collections[c]:
-                if TMDB.valid:
-                    if collections[c]["tmdb_biography"]:
-                        try:
-                            summary = tmdb_get_summary(config_path, collections[c]["tmdb_biography"], "biography")
-                        except ValueError as e:
-                            print(e)
-                    else:
-                        print("| Config Error: tmdb_biography attribute is blank")
-                else:
-                    print("| Config Error: tmdb_biography skipped. tmdb incorrectly configured")
-            elif actor_id and TMDB.valid:
-                try:
-                    summary = tmdb_get_summary(config_path, actor_id, "biography")
-                except ValueError as e:
-                    pass
-            elif tmdb_id and TMDB.valid:
-                try:
-                    summary = tmdb_get_summary(config_path, tmdb_id, "overview")
-                except ValueError as e:
-                    pass
-
-            if summary:
-                edits = {"summary.value": summary, "summary.locked": 1}
-                plex_collection.edit(**edits)
-                plex_collection.reload()
-                print('| Detail: summary updated to "{}"'.format(summary))
-
-            # Handle collection collection_mode
-            if "collection_mode" in collections[c]:
-                if collections[c]["collection_mode"]:
-                    collection_mode = collections[c]["collection_mode"]
-                    if collection_mode in ('default', 'hide', 'hide_items', 'show_items'):
-                        if collection_mode == 'hide_items':
-                            collection_mode = 'hideItems'
-                        if collection_mode == 'show_items':
-                            collection_mode = 'showItems'
-                        plex_collection.modeUpdate(mode=collection_mode)
-                        print("| Detail: collection_mode updated to {}".format(collection_mode))
-                    else:
-                        print("| Config Error: {} collection_mode Invalid\n| \tdefault (Library default)\n| \thide (Hide Collection)\n| \thide_items (Hide Items in this Collection)\n| \tshow_items (Show this Collection and its Items)".format(collection_mode))
-                else:
-                    print("| Config Error: collection_mode attribute is blank")
-
-            # Handle collection collection_order
-            if "collection_order" in collections[c]:
-                if collections[c]["collection_order"]:
-                    collection_order = collections[c]["collection_order"]
-                    if collection_order in ('release', 'alpha'):
-                        plex_collection.sortUpdate(sort=collection_order)
-                        print("| Detail: collection_order updated to {}".format(collection_order))
-                    else:
-                        print("| Config Error: {} collection_order Invalid\n| \trelease (Order Collection by release dates)\n| \talpha (Order Collection Alphabetically)".format(collection_order))
-                else:
-                    print("| Config Error: collection_order attribute is blank")
-
-        tmdb_url_prefix = "https://image.tmdb.org/t/p/original"
         if not no_images:
-            posters_found = []
-            backgrounds_found = []
-            # Handle collection posters
-            if "poster" in collections[c]:
-                if collections[c]["poster"]:
-                    posters_found.append(["url", collections[c]["poster"], "poster"])
-                else:
-                    print("| Config Error: poster attribute is blank")
-            if "tmdb_poster" in collections[c]:
-                if TMDB.valid:
-                    if collections[c]["tmdb_poster"]:
-                        try:
-                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_poster"], "poster_path"), "tmdb_poster"])
-                        except ValueError as e:
-                            print(e)
-                    else:
-                        print("| Config Error: tmdb_poster attribute is blank")
-                else:
-                    print("| Config Error: tmdb_poster skipped. tmdb incorrectly configured")
-            if "tmdb_profile" in collections[c]:
-                if TMDB.valid:
-                    if collections[c]["tmdb_profile"]:
-                        try:
-                            posters_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_profile"], "profile_path"), "tmdb_profile"])
-                        except ValueError as e:
-                            print(e)
-                    else:
-                        print("| Config Error: tmdb_profile attribute is blank")
-                else:
-                    print("| Config Error: tmdb_profile skipped. tmdb incorrectly configured")
-            if "file_poster" in collections[c]:
-                if collections[c]["file_poster"]:
-                    posters_found.append(["file", collections[c]["file_poster"], "file_poster"])
-                else:
-                    print("| Config Error: file_poster attribute is blank")
-
-            # Handle collection backgrounds
-            if "background" in collections[c]:
-                if collections[c]["background"]:
-                    backgrounds_found.append(["url", collections[c]["background"], "background"])
-                else:
-                    print("| Config Error: background attribute is blank")
-            if "tmdb_background" in collections[c]:
-                if TMDB.valid:
-                    if collections[c]["tmdb_background"]:
-                        try:
-                            backgrounds_found.append(["url", tmdb_url_prefix + tmdb_get_summary(config_path, collections[c]["tmdb_background"], "backdrop_path"), "tmdb_background"])
-                        except ValueError as e:
-                            print(e)
-                    else:
-                        print("| Config Error: tmdb_background attribute is blank")
-                else:
-                    print("| Config Error: tmdb_background skipped. tmdb incorrectly configured")
-            if "file_background" in collections[c]:
-                if collections[c]["file_background"]:
-                    backgrounds_found.append(["file", collections[c]["file_background"], "file_background"])
-                else:
-                    print("| Config Error: file_background attribute is blank")
-
-
             # Handle Image Server
             image_server = ImageServer(config_path)
             if image_server.valid:
@@ -582,20 +548,10 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             poster = choose_from_list("poster", posters_found, headless)
             background = choose_from_list("background", backgrounds_found, headless)
 
-            # Special case fall back for tmdb_id tag if no other poster or background is found
-            if not poster and TMDB.valid:
-                try:
-                    if actor_id:
-                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, actor_id, "profile_path"), actor_method]
-                    elif tmdb_id:
-                        poster = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "poster_path"), "tmdb_id"]
-                except ValueError as e:
-                    pass
-            if not background and TMDB.valid and tmdb_id:
-                try:
-                    background = ["url", tmdb_url_prefix + tmdb_get_summary(config_path, tmdb_id, "backdrop_path"), "tmdb_id"]
-                except ValueError as e:
-                    pass
+            if not poster and "poster" in details:
+                poster = details["poster"]
+            if not background and "background" in details:
+                background = details["background"]
 
             # Update poster
             if poster:
@@ -821,7 +777,6 @@ else:
     sys.exit("| Config Error: No config found, exiting")
 
 print("| Using {} as config".format(config_path))
-
 
 if args.update:
     config = Config(config_path, headless=True)

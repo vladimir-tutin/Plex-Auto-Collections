@@ -167,58 +167,76 @@ Note that most list types supports multiple lists, with the following exceptions
 
 ###### Works with Movie and TV Show Libraries
 
-You can create a collection based on the Plex search options below.
+You can create a collection based on the Plex search feature using the `plex_search` attribute. The search will return any movie/show that matches at least one term from each search attribute. You can run multiple searches. The search Attributes are listed below.
 
-##### Search Options
-- `all` (Gets every movie/show in Plex useful with [`collection_filters`](#collection-filters-collection-attribute))
+##### Search Attributes
 - `actor` (Gets every movie with the specified actor) (Movie libraries only)
+- `tmdb_actor` (Gets every movie with the specified actor as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 - `country` (Gets every movie with the specified country) (Movie libraries only)
 - `decade` (Gets every movie from the specified year + the 9 that follow i.e. 1990 will get you 1990-1999) (Movie libraries only)
 - `director` (Gets every movie with the specified director) (Movie libraries only)
+- `tmdb_director` (Gets every movie with the specified director as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 - `genre` (Gets every movie/show with the specified genre)
 - `studio` (Gets every movie/show with the specified studio)
 - `year` (Gets every movie/show with the specified year)
 - `writer` (Gets every movie with the specified writer) (Movie libraries only)
+- `tmdb_writer` (Gets every movie with the specified writer as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 
 Here's some high-level ideas:
 
 ```yaml
 collections:
   Documentaries:
-    genre: Documentary
+    plex_search:
+      genre: Documentary
 ```
 ```yaml
 collections:
-  Dave Chappelle:
-    actor: Dave Chappelle
+  Dave Chappelle Comedy:
+    plex_search:
+      actor: Dave Chappelle
+      genre: Comedy
 ```
 ```yaml
 collections:
   Pixar:
-    studio: Pixar
+    plex_search:
+      studio: Pixar
 ```
 ```yaml
 collections:
   90s Movies:
-    year:
-      - 1990
-      - 1991
-      - 1992
-      - 1993
-      - 1994
-      - 1995
-      - 1996
-      - 1997
-      - 1998
-      - 1999
+    plex_search:
+      year:
+        - 1990
+        - 1991
+        - 1992
+        - 1993
+        - 1994
+        - 1995
+        - 1996
+        - 1997
+        - 1998
+        - 1999
 ```
+```yaml
+collections:
+  90s Movies:
+    plex_search:
+      decade: 1990
+```
+
+Note if you only want to search using a single attribute you can do so without `plex_search`.
+
 ```yaml
 collections:
   90s Movies:
     decade: 1990
 ```
 
-Notes you can only use each search option once per collection but you can give the search multiple values.
+Notes:
+- You can only use each search option once per `plex_search` but you can give the search multiple values.
+- If you want to restrict by multiples of the same attribute try using [filters](#collection-filters-collection-attribute).
 
 #### TMDb Collection (List Type)
 
@@ -489,8 +507,8 @@ Note that if you have multiple movie Libraries or multiple show Libraries Tautul
 
 ###### Works with Movie and TV Show Libraries
 
-The next optional attribute for any collection is the `collection_filters` key. Collection filters allows for you to filter every movie/show added to the collection from every List Type. All collection filter options are listed below.
-In addition you can also use the `.not` at the end of any standard collection filter to do an inverse search matching everything that doesn't have the value specified.
+The next optional attribute for any collection is the `filters` attribute. Collection filters allows for you to filter every movie/show added to the collection from every List Type. All collection filter options are listed below.
+In addition you can also use the `.not` at the end of any standard collection filter to do an inverse search matching everything that doesn't have the value specified. You can use `all: true` to start you filter from your entire library.
 
 ##### Standard Collection Filters Options
 - `actor` (Matches every movie/show with the specified actor)
@@ -519,58 +537,59 @@ collections:
   1080p Documentaries:
     genre: Documentary
     summary: A collection of 1080p Documentaries
-    subfilters:
+    filters:
       video_resolution: 1080
 ```
 ```yaml
 collections:
   Daniel Craig only James Bonds:
     imdb_list: https://www.imdb.com/list/ls006405458/
-    subfilters:
+    filters:
       actor: Daniel Craig
 ```
 ```yaml
 collections:
   Romantic Comedies:
     genre: Romance
-    subfilters:
+    filters:
       genre: Comedy
 ```
 ```yaml
 collections:
   9.0 Movies:
-    all: True
-    subfilters:
+    all: true
+    filters:
       rating.gte: 9
 ```
 ```yaml
 collections:
   Summer 2020 Movies:
-    all: True
-    subfilters:
+    all: true
+    filters:
       originally_available.gte: 5/1/2020
       originally_available.lte: 8/31/2020
 ```
 ```yaml
 collections:
   Movies Released in the Last 180 Days:
-    all: True
-    subfilters:
+    all: true
+    filters:
       max_age: 180
 ```
 ```yaml
 collections:
   Movies Released in the Last 5 Years:
     all: True
-    subfilters:
+    filters:
       max_age: 5y
 ```
 ```yaml
 collections:
   Good Adam Sandler Romantic Comedies:
-    genre: Romance
-    and.actor: Adam Sandler
-    subfilters:
+    plex_search:
+      genre: Romance
+      actor: Adam Sandler
+    filters:
       genre: Comedy
       rating.gte: 7
 ```
