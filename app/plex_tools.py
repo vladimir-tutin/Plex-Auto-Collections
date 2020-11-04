@@ -293,7 +293,7 @@ def alt_id_lookup(plex, value):
         guid = urlparse(guid_tag['id']).netloc
         if agent == 'imdb':
             imdb_id = guid
-        if agent == 'tmdb':
+        elif agent == 'tmdb':
             tmdb_id = guid
     return imdb_id, tmdb_id
 
