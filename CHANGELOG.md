@@ -25,11 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.0] - 2020-11-03 - #81
 ### Added
-- Support for the new Plex Movie agent
+- #33 - Support for the new Plex Movie agent
 - Cache database for IMDB/TMDB id lookups
 
 ### Changed
-- Dockerfile no longer passes the update flag by default
+- #73 - Dockerfile no longer passes the update flag by default
 
 ## [2.2.1] - 2020-10-28 - #71
 ### Added
