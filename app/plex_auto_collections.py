@@ -375,7 +375,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append(("plex_search", [[get_method_pair_year(method_name, collections[c][m])]]))
                 elif method_name in ["decade", "decade.not"]:
                     methods.append(("plex_search", [[get_method_pair_int(method_name, collections[c][m], method_name[:-4] if method_name.endswith(".not") else method_name)]]))
-               elif method_name in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
+                elif method_name in ["tmdb_actor", "tmdb_director", "tmdb_writer"]:
                     ids = get_int_attribute_list(method_name, collections[c][m], "TMDb Person ID")
                     new_ids = []
                     for id in ids:
