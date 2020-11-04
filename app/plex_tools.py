@@ -355,6 +355,8 @@ def alt_id_lookup(plex, value):
     with urlopen(req) as response:
         contents = response.read()
     bs = BeautifulSoup(contents, 'lxml')
+    imdb_id = None
+    tmdb_id = None
     for guid_tag in bs.find_all('guid'):
         agent = urlparse(guid_tag['id']).scheme
         guid = urlparse(guid_tag['id']).netloc
