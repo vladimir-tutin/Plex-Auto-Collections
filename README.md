@@ -167,12 +167,13 @@ Note that most list types supports multiple lists, with the following exceptions
 
 ###### Works with Movie and TV Show Libraries
 
-You can create a collection based on the Plex search feature using the `plex_search` attribute. The search will return any movie/show that matches at least one term from each search attribute. You can run multiple searches. The search Attributes are listed below.
+You can create a collection based on the Plex search feature using the `plex_search` attribute. The search will return any movie/show that matches at least one term from each search option. You can run multiple searches. The search options are listed below.
 
-##### Search Attributes
+##### Search Options
 - `actor` (Gets every movie with the specified actor) (Movie libraries only)
 - `tmdb_actor` (Gets every movie with the specified actor as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 - `country` (Gets every movie with the specified country) (Movie libraries only)
+- `decade` (Gets every movie from the specified year + the 9 that follow i.e. 1990 will get you 1990-1999) (Movie libraries only)
 - `director` (Gets every movie with the specified director) (Movie libraries only)
 - `tmdb_director` (Gets every movie with the specified director as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 - `genre` (Gets every movie/show with the specified genre)
@@ -230,6 +231,12 @@ collections:
     plex_search:
       year: 2010-NOW
 ```
+```yaml
+collections:
+  90s Movies:
+    plex_search:
+      decade: 1990
+```
 
 Note if you only want to search using a single attribute you can do so without `plex_search`.
 
@@ -241,7 +248,7 @@ collections:
 
 Notes:
 - You can only use each search option once per `plex_search` but you can give the search multiple values.
-- If you want to restrict by multiples of the same attribute try using [filters](#collection-filters-collection-attribute).
+- If you want to restrict the search by multiples of the same attribute (i.e. You want every movie that is a Romance and Comedy) try using [filters](#collection-filters-collection-attribute).
 
 #### TMDb Collection (List Type)
 
