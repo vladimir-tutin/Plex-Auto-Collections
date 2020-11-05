@@ -38,10 +38,10 @@ def imdb_get_movies(config_path, plex, data):
                            "//a/img//@data-tconst")
     if "/search/" in imdb_url:
         results = re.search('<span>\\d+-\\d+ of \\d+ titles.</span>', str(r.content))
-        total = 100 if results is None else re.findall('(\\d+)', results.group(0))[2]
+        total = 100 if results is None else re.findall('(\\d+)', results.group(0).replace(',', ''))[2]
     else:
         results = re.search('(?<=<div class="desc lister-total-num-results">).*?(?=</div>)', str(r.content))
-        total = 100 if results is None else re.search('.*?(\\d+)', results.group(0)).group(1)
+        total = 100 if results is None else re.search('(\\d+)', results.group(0).replace(',', '')).group(1)
 
     for i in range(1, math.ceil(int(total) / 100)):
         try:
