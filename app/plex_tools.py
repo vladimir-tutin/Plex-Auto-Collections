@@ -17,6 +17,18 @@ from urllib.parse import urlparse
 import os
 import sqlite3
 
+def regex_first_int(data, method, id_type="number", default=None):
+    try:
+        id = re.search('(\\d+)', str(data)).group(1)
+        if len(str(id)) != len(str(data)):
+            print("| Config Warning: {} can be replaced with {}".format(data, id))
+        return id
+    except AttributeError:
+        if default is None:
+            raise ValueError("| Config Error: Skipping {} failed to parse {} from {}".format(method, id_type, data))
+        else:
+            print("| Config Error: {} failed to parse {} from {} using {} as default".format(method, id_type, data, default))
+            return default
 
 def get_movie(plex, data):
     # If an int is passed as data, assume it is a movie's rating key
@@ -284,7 +296,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     modifier = sf[0][-4:]
                     method = subfilter_alias[sf[0][:-4]] if modifier in [".not", ".lte", ".gte"] else subfilter_alias[sf[0]]
                     if method == "max_age":
-                        max_age = imdb_tools.regex_first_int(sf[1])
+                        max_age = regex_first_int(sf[1])
                         if sf[1][-1] == "y":
                             max_age = int(365.25 * max_age)
                         threshold_date = datetime.now() - timedelta(days=max_age)
