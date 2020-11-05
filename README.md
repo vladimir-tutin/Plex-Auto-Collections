@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.4.1
+##### Version 2.4.2
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
