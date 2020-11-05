@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - actually fixed max_age
 
-## [2.4.4] - 2020-11-05 - [#96](https://github.com/mza921/Plex-Auto-Collections/pull/96)
+## [2.4.4] - 2020-11-05 - [commit](https://github.com/mza921/Plex-Auto-Collections/commit/eb9f3ed2ebfcb3ba9fbdfb07ff0ec56da6ccd4be)
 ### Fixed
 - [#94](https://github.com/mza921/Plex-Auto-Collections/issues/94) - Fixed Trakt Trending (again)
 
