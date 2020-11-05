@@ -73,7 +73,7 @@ def trakt_get_shows(config_path, plex, data, is_userlist=True):
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
     else:
         # Trending list
-        max_items = int(regex_first_int(data, "Trakt Trending number"))
+        max_items = int(data)
         trakt_list_items = trakt.Trakt['shows'].trending(per_page=max_items)
 
     tvdb_map = {}

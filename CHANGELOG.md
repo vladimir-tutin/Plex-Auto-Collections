@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.4] - 2020-11-05 - [#96](https://github.com/mza921/Plex-Auto-Collections/pull/96)
+### Fixed
+- [#94](https://github.com/mza921/Plex-Auto-Collections/issues/94) - Fixed Trakt Trending (again)
+
 ## [2.4.3] - 2020-11-05 - [#96](https://github.com/mza921/Plex-Auto-Collections/pull/96)
 ### Fixed
 - [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - fixed max_age
