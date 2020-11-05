@@ -417,7 +417,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 elif method_name in ["imdb_list", "trakt_list"]: #TODO: validate
                     methods.append((method_name, get_attribute_list(collections[c][m])))
                 elif method_name == "trakt_trending":
-                    methods.append((method_name, regex_first_int(collections[c][m], method_name, default=30)))
+                    methods.append((method_name, [regex_first_int(collections[c][m], method_name, default=30)]))
                 elif method_name == "tautulli": #TODO:test
                     try:
                         new_dictionary = {}
