@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 import os
 import sqlite3
 
+#this will be taken out soon
 def regex_first_int(data, method, id_type="number", default=None):
     try:
         id = re.search('(\\d+)', str(data)).group(1)
@@ -155,22 +156,22 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         print(output)
         return plex.Library.search(**search_terms)
 
-    if ("trakt" in method or ("tmdb" in method and plex.library_type == "show")) and not TraktClient.valid:
+    if ("trakt" in method or (("tmdb" in method or "tvdb" in method) and plex.library_type == "show")) and not TraktClient.valid:
         raise KeyError("| trakt connection required for {}",format(method))
     elif ("imdb" in method or "tmdb" in method) and not TMDB.valid:
         raise KeyError("| tmdb connection required for {}",format(method))
+    elif method == "tautulli" and not Tautulli.valid:
+        raise KeyError("| tautulli connection required for {}",format(method))
     elif plex.library_type == "movie":
-        if method == "imdb_list" and TMDB.valid:
+        if method == "imdb_list":
             movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
-        elif method == "tmdb_list" and TMDB.valid:
-            movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, is_list=True)
-        elif method in ["tmdb_id", "tmdb_movie", "tmdb_collection"] and TMDB.valid:
-            movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value)
-        elif method == "trakt_list" and TraktClient.valid:
+        elif method in ["tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company"]:
+            movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, method)
+        elif method == "trakt_list":
             movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
-        elif method == "trakt_trending" and TraktClient.valid:
+        elif method == "trakt_trending":
             movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, is_userlist=False)
-        elif method == "tautulli" and Tautulli.valid:
+        elif method == "tautulli":
             movies, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":
             movies = plex.Library.all()
@@ -179,17 +180,17 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         else:
             print("| Config Error: {} method not supported".format(method))
     elif plex.library_type == "show":
-        if method == "tmdb_list" and TMDB.valid and TraktClient.valid:
+        if method == "tmdb_list":
             shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, is_list=True)
-        elif method in ["tmdb_id", "tmdb_show"] and TMDB.valid and TraktClient.valid:
+        elif method in ["tmdb_id", "tmdb_show"]:
             shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value)
-        elif method == "tvdb_show" and TraktClient.valid:
+        elif method == "tvdb_show":
             shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
-        elif method == "trakt_list" and TraktClient.valid:
+        elif method == "trakt_list":
             shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
-        elif method == "trakt_trending" and TraktClient.valid:
+        elif method == "trakt_trending":
             shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, is_userlist=False)
-        elif method == "tautulli" and Tautulli.valid:
+        elif method == "tautulli":
             shows, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":
             shows = plex.Library.all()
