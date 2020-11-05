@@ -38,10 +38,10 @@ def imdb_get_movies(config_path, plex, data):
                            "//a/img//@data-tconst")
     if "/search/" in imdb_url:
         results = re.search('<span>\\d+-\\d+ of \\d+ titles.</span>', str(r.content))
-        total = 100 if results is None else re.findall('(\\d+)', results.group(0))[2]
+        total = 100 if results is None else re.findall('(\\d+)', results.group(0).replace(',', ''))[2]
     else:
         results = re.search('(?<=<div class="desc lister-total-num-results">).*?(?=</div>)', str(r.content))
-        total = 100 if results is None else re.search('.*?(\\d+)', results.group(0)).group(1)
+        total = 100 if results is None else re.search('(\\d+)', results.group(0).replace(',', '')).group(1)
 
     for i in range(1, math.ceil(int(total) / 100)):
         try:
@@ -272,11 +272,14 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
     for mid in t_tvs:
         match = False
         tvdb_id = get_tvdb_id_from_tmdb_id(mid)
-        for t in p_tv_map:
-            if p_tv_map[t] and "tt" not in p_tv_map[t] != "None":
-                if int(p_tv_map[t]) == int(tvdb_id):
-                    match = True
-                    break
+        if tvdb_id is None:
+            print("| Trakt Error: tmbd_id: {} could not converted to tvdb_id try just using tvdb_id instead".format(mid))
+        else:
+            for t in p_tv_map:
+                if p_tv_map[t] and "tt" not in p_tv_map[t] != "None":
+                    if p_tv_map[t] is not None and int(p_tv_map[t]) == int(tvdb_id):
+                        match = True
+                        break
         if match:
             matched.append(t)
         else:
@@ -306,7 +309,7 @@ def tvdb_get_shows(config_path, plex, data, is_list=False):
     match = False
     for t in p_tv_map:
         if p_tv_map[t] and "tt" not in p_tv_map[t] != "None":
-            if int(p_tv_map[t]) == int(id):
+            if p_tv_map[t] is not None and int(p_tv_map[t]) == int(id):
                 match = True
                 break
     if match:
