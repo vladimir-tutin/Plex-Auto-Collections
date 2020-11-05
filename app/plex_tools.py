@@ -232,11 +232,17 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     modifier = sf[0][-4:]
                     method = subfilter_alias[sf[0][:-4]] if modifier in [".not", ".lte", ".gte"] else subfilter_alias[sf[0]]
                     if method == "max_age":
-                        threshold_date = datetime.now() - timedelta(days=sf[1])
-                        attr = getattr(current_m, "originallyAvailableAt")
-                        if attr < threshold_date:
-                            match = False
-                            break
+                        try:
+                            max_age = regex_first_int(sf[1], "max_age")
+                            if sf[1][-1] == "y":
+                                max_age = int(365.25 * max_age)
+                            threshold_date = datetime.now() - timedelta(days=max_age)
+                            attr = getattr(current_m, "originallyAvailableAt")
+                            if attr < threshold_date:
+                                match = False
+                                break
+                        except ValueError as e:
+                            print(e)
                     elif modifier in [".gte", ".lte"]:
                         if method == "originallyAvailableAt":
                             threshold_date = datetime.strptime(sf[1], "%m/%d/%y")
