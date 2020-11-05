@@ -417,7 +417,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 elif method_name in ["imdb_list", "trakt_list"]: #TODO: validate
                     methods.append((method_name, get_attribute_list(collections[c][m])))
                 elif method_name == "trakt_trending":
-                    methods.append((method_name, regex_first_int(collections[c][m], method_name, default=30)))
+                    methods.append((method_name, [regex_first_int(collections[c][m], method_name, default=30)]))
                 elif method_name == "tautulli": #TODO:test
                     try:
                         new_dictionary = {}
@@ -794,7 +794,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.4.2")
+print("| Version 2.4.3")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
