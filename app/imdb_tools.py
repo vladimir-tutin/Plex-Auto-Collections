@@ -273,7 +273,7 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
         match = False
         tvdb_id = get_tvdb_id_from_tmdb_id(mid)
         if tvdb_id is None:
-            print("| Trakt Error: tmbd ID: {} could not converted to tvdb ID".format(mid))
+            print("| Trakt Error: tmbd_id: {} could not converted to tvdb_id try just using tvdb_id instead".format(mid))
         else:
             for t in p_tv_map:
                 if p_tv_map[t] and "tt" not in p_tv_map[t] != "None":
