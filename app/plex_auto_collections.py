@@ -448,8 +448,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     print("| \n| Processing {}: {}".format(m, v))
                 try:
                     missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)
-                except UnboundLocalError as e:
-                    missing, map = add_to_collection(config_path, plex, m, v, c, map)               # No filters
                 except (KeyError, ValueError, SystemExit) as e:
                     print(e)
                     missing = False

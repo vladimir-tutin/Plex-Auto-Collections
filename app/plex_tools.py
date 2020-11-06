@@ -214,6 +214,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             current_m = get_movie(plex, rk)
             current_m.reload()
             match = True
+            print(f'\r| Filtering {current_m.title}                                                                ', end = "\r")
             if filters:
                 for f in filters:
                     modifier = f[0][-4:]
@@ -221,7 +222,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     if method == "max_age":
                         threshold_date = datetime.now() - timedelta(days=f[1])
                         attr = getattr(current_m, "originallyAvailableAt")
-                        if attr < threshold_date:
+                        if attr is None or attr < threshold_date:
                             match = False
                             break
                     elif modifier in [".gte", ".lte"]:
@@ -260,11 +261,12 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                             break
             if match:
                 if current_m in fs:
-                    print("| {} Collection | = | {}".format(c, current_m.title))
+                    print(f'\r| {c} Collection | = | {current_m.title}                                                                ', end = "\r")
                     map[current_m.ratingKey] = None
                 else:
-                    print("| {} Collection | + | {}".format(c, current_m.title))
+                    print(f'\r| {c} Collection | + | {current_m.title}                                                                ', end = "\r")
                     current_m.addCollection(c)
+                print()
     elif plex.library_type == "movie":
         print("| No movies found")
 
@@ -279,25 +281,26 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             current_s = get_item(plex, rk)
             current_s.reload()
             match = True
+            print(f'\r| Filtering {current_s.title}                                                                ', end = "\r")
             if filters:
                 for f in filters:
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
                         threshold_date = datetime.now() - timedelta(days=f[1])
-                        attr = getattr(current_m, "originallyAvailableAt")
-                        if attr < threshold_date:
+                        attr = getattr(current_s, "originallyAvailableAt")
+                        if attr is None or attr < threshold_date:
                             match = False
                             break
                     elif modifier in [".gte", ".lte"]:
                         if method == "originallyAvailableAt":
                             threshold_date = datetime.strptime(f[1], "%m/%d/%y")
-                            attr = getattr(current_m, "originallyAvailableAt")
+                            attr = getattr(current_s, "originallyAvailableAt")
                             if (modifier == ".lte" and attr > threshold_date) or (modifier == ".gte" and attr < threshold_date):
                                 match = False
                                 break
                         elif method in ["year", "rating"]:
-                            attr = getattr(current_m, method)
+                            attr = getattr(current_s, method)
                             if (modifier == ".lte" and attr > f[1]) or (modifier == ".gte" and attr < f[1]):
                                 match = False
                                 break
@@ -313,9 +316,9 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                         #             if method == "subtitle_language":
                         #                 show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
                         if method in ["contentRating", "studio", "year", "rating", "originallyAvailableAt"]:
-                            mv_attrs = [str(getattr(current_m, method))]
+                            mv_attrs = [str(getattr(current_s, method))]
                         elif method in ["actors", "genres"]:
-                            mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
+                            mv_attrs = [getattr(x, 'tag') for x in getattr(current_s, method)]
 
                         # Get the intersection of the user's terms and movie's terms
                         # If it's empty and modifier is not .not, it's not a match
@@ -325,11 +328,12 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                             break
             if match:
                 if current_s in fs:
-                    print("| {} Collection | = | {}".format(c, current_s.title))
+                    print(f'\r| {c} Collection | = | {current_s.title}                                                                ', end = "\r")
                     map[current_s.ratingKey] = None
                 else:
-                    print("| {} Collection | + | {}".format(c, current_s.title))
+                    print(f'\r| {c} Collection | + | {current_s.title}                                                                ', end = "\r")
                     current_s.addCollection(c)
+                print()
     elif plex.library_type == "show":
         print("| No shows found")
 
