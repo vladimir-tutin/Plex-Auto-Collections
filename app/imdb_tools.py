@@ -15,6 +15,12 @@ import plex_tools
 import trakt
 
 
+def adjust_space(old_length, display_title):
+    space_length = old_length - len(display_title)
+    if space_length > 0:
+        display_title += " " * space_length
+    return display_title
+
 def imdb_get_movies(config_path, plex, data):
     tmdb = TMDb()
     movie = Movie()
@@ -54,11 +60,20 @@ def imdb_get_movies(config_path, plex, data):
         tree = html.fromstring(r.content)
         title_ids.extend(tree.xpath("//div[contains(@class, 'lister-item-image')]"
                                     "//a/img//@data-tconst"))
+
     matched_imdb_movies = []
     missing_imdb_movies = []
     plex_tools.create_cache(config_path)
     if title_ids:
-        for m in plex.Library.all():
+        print("| {} Movies found on IMDb".format(len(title_ids)))
+        current_length = 0
+        plex_movies = plex.Library.all()
+        current_count = 0
+        for m in plex_movies:
+            current_count += 1
+            print_display = "| Processing: {}/{} {}".format(current_count, len(plex_movies), m.title)
+            print(adjust_space(current_length, print_display), end="\r")
+            current_length = len(print_display)
             try:
                 if 'plex://' in m.guid:
                     item = m
@@ -66,7 +81,7 @@ def imdb_get_movies(config_path, plex, data):
                     imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
                     if not imdb_id:
                         imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
-                        print("| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title))
+                        print(adjust_space(current_length, "| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title)))
                         plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
                 elif 'themoviedb://' in m.guid:
                     if not tmdb.api_key == "None":
@@ -86,7 +101,7 @@ def imdb_get_movies(config_path, plex, data):
                 imdb_map[imdb_id] = m
             else:
                 imdb_map[m.ratingKey] = m
-
+        print(adjust_space(current_length, "| Processed {} Movies".format(len(plex_movies))))
         for imdb_id in title_ids:
             movie = imdb_map.pop(imdb_id, None)
             if movie:

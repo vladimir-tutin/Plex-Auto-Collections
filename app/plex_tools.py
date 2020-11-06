@@ -203,12 +203,6 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         "subtitle_language": "subtitle_language",
     }
 
-    def adjust_space(old_length, display_title):
-        space_length = old_length - len(display_title)
-        if space_length > 0:
-            display_title += " " * space_length
-        return display_title
-
     if movies:
         # Check if already in collection
         cols = plex.Library.search(title=c, libtype="collection")
@@ -230,7 +224,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             if filters:
                 for f in filters:
                     print_display = "| Filtering {}/{} {}".format(display_count, movie_max, current_m.title)
-                    print(adjust_space(current_length, print_display), end = "\r")
+                    print(imdb_tools.adjust_space(current_length, print_display), end = "\r")
                     current_length = len(print_display)
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
@@ -279,8 +273,8 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     map[current_m.ratingKey] = None
                 else:
                     current_m.addCollection(c)
-                print(adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_m in fs else "+", current_m.title)))
-        print(adjust_space(current_length, "| Processed {} Movies".format(movie_max)))
+                print(imdb_tools.adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_m in fs else "+", current_m.title)))
+        print(imdb_tools.adjust_space(current_length, "| Processed {} Movies".format(movie_max)))
     elif plex.library_type == "movie":
         print("| No movies found")
 
@@ -302,7 +296,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             if filters:
                 for f in filters:
                     print_display = "| Filtering {}/{} {}".format(show_count, show_max, current_s.title)
-                    print(adjust_space(current_length, print_display), end = "\r")
+                    print(imdb_tools.adjust_space(current_length, print_display), end = "\r")
                     current_length = len(print_display)
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
@@ -351,8 +345,8 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     map[current_s.ratingKey] = None
                 else:
                     current_s.addCollection(c)
-                print(adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_s in fs else "+", current_s.title)))
-        print(adjust_space(current_length, "| Processed {} Shows".format(show_max)))
+                print(imdb_tools.adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_s in fs else "+", current_s.title)))
+        print(imdb_tools.adjust_space(current_length, "| Processed {} Shows".format(show_max)))
     elif plex.library_type == "show":
         print("| No shows found")
 
