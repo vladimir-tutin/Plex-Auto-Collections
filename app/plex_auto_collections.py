@@ -135,6 +135,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_collection",
         "tmdb_id",
         "tmdb_actor",
+        "tmdb_company",
         "tmdb_director"
         "tmdb_writer"
         "tmdb_list",
@@ -166,6 +167,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_collection",
         "tmdb_id",
         "tmdb_actor",
+        "tmdb_company",
         "tmdb_director",
         "tmdb_writer",
         "tmdb_movie",
@@ -398,6 +400,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append(("plex_search", [[(method_name, get_attribute_list(collections[c][m]))]]))
                 elif method_name == "tmdb_collection":
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Collection ID"))
+                elif method_name == "tmdb_company":
+                    methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb Company ID"))
                 elif method_name == "tmdb_id":
                     id = get_method_pair_tmdb(method_name, collections[c][m], "TMDb ID")
                     if tmdb_id is None:
@@ -458,7 +462,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             for v in values:
                 if m == "imdb_list":
                     print("| \n| Processing {}: {}".format(m, v[0]))
-                elif m != "plex_search":
+                if m not in ["plex_search", "tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company", "tmdb_show"]:
                     print("| \n| Processing {}: {}".format(m, v))
                 try:
                     missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)

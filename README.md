@@ -14,6 +14,8 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
         - [Plex Search (List Type)](#plex-search-list-type)
         - [TMDb Collection (List Type)](#tmdb-collection-list-type)
         - [TMDb People (List Type)](#tmdb-people-list-type)
+        - [TMDb Company (List Type)](#tmdb-company-list-type)
+        - [TMDb Network (List Type)](#tmdb-network-list-type)
         - [TMDb List (List Type)](#tmdb-list-list-type)
         - [TMDb Movie (List Type)](#tmdb-movie-list-type)
         - [TMDb Show (List Type)](#tmdb-show-list-type)
@@ -151,6 +153,8 @@ The only required attribute for each collection is the list type. There are many
 - [Plex Search](#plex-search-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb People](#tmdb-people-list-type)
+- [TMDb Company](#tmdb-company-list-type)
+- [TMDb Network](#tmdb-network-list-type)
 - [TMDb List](#tmdb-list-list-type)
 - [TMDb Movie](#tmdb-movie-list-type)
 - [TMDb Show](#tmdb-show-list-type)
@@ -354,6 +358,42 @@ Notes:
 - You can specify more than one `tmdb_actor`, `tmdb_director`, or `tmdb_writer` but it will pull the summary and poster from only the first one.
 - Local posters are loaded over `tmdb_profile` if they exist unless `tmdb_profile` is also specified
 - `tmdb_biography` will load unless `summary`,`tmdb_summary`, or `tmdb_biography` is also specified
+
+#### TMDb Company (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+You can use a TMDb Company to build a collection based on all it's movies/shows by using `tmdb_company`. You can use the full url or just type in the TMDb ID for the collection:
+
+```yaml
+collections:
+  Studio Ghibli:
+    tmdb_company: 10342
+```
+
+```yaml
+collections:
+  Studio Ghibli:
+    tmdb_company: https://www.themoviedb.org/company/10342
+```
+
+#### TMDb Network (List Type)
+
+###### Works with Show Libraries
+
+Similarly to using a TMDb Company, you can also use a TMDb Network to build a collection based on all it's shows by using `tmdb_network`. You can use the full url or just type in the TMDb ID for the collection:
+
+```yaml
+collections:
+  CBS:
+    tmdb_network: 16
+```
+
+```yaml
+collections:
+  CBS:
+    tmdb_network: https://www.themoviedb.org/network/16
+```
 
 #### TMDb List (List Type)
 

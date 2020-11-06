@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2020-11-## - [#76](https://github.com/mza921/Plex-Auto-Collections/pull/76)
+### Added
+- [#86](https://github.com/mza921/Plex-Auto-Collections/issues/86) - Added `tmdb_company` and `tmdb_network`
+- [#41](https://github.com/mza921/Plex-Auto-Collections/issues/41) - Added `tmdb_discover`
+
+### Changed
+
+### Fixed
+
 ## [2.5.0] - 2020-11-11 - [#112](https://github.com/mza921/Plex-Auto-Collections/pull/112)
 ### Added
 - [#72](https://github.com/mza921/Plex-Auto-Collections/issues/72) - `trakt_watchlist` support
@@ -11,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [#50](https://github.com/mza921/Plex-Auto-Collections/issues/50) - Trakt access_token refresh
+
 
 ## [2.4.7] - 2020-11-09 - [#103](https://github.com/mza921/Plex-Auto-Collections/pull/103)
 ### Fixed
@@ -24,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - actually fixed `max_age`
+
+
 
 ## [2.4.5] - 2020-11-05 - [#97](https://github.com/mza921/Plex-Auto-Collections/pull/97)
 ### Changed

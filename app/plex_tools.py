@@ -169,10 +169,8 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         else:
             print("| Config Error: {} method not supported".format(method))
     elif plex.library_type == "show":
-        if method == "tmdb_list":
-            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, is_list=True)
-        elif method in ["tmdb_id", "tmdb_show"]:
-            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value)
+        if method in ["tmdb_list", "tmdb_id", "tmdb_show"]:
+            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, method)
         elif method == "tvdb_show":
             shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
         elif method == "trakt_list":
