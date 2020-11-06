@@ -536,7 +536,7 @@ In addition you can also use the `.not` at the end of any standard collection fi
 - `subtitle_language` (Matches every movie with the specified subtitle language) (Movie libraries only)
 
 ##### Special Collection Filters Options (These options can only take one value each)
-- `max_age` (Matches any movie/show whose Originally Available date is within the last specified number of days or years) (To specify years put a `y` at the end of the number i.e. `max_age: 1y`)
+- `max_age` (Matches any movie/show whose Originally Available date is within the last specified number of days)
 - `year.gte` (Matches any movie/show whose year is greater then or equal to the specified year)
 - `year.lte` (Matches any movie/show whose year is less then or equal to the specified year)
 - `rating.gte` (Matches any movie/show whose rating is greater then or equal to the specified rating)
@@ -594,13 +594,6 @@ collections:
     all: true
     filters:
       max_age: 180
-```
-```yaml
-collections:
-  Movies Released in the Last 5 Years:
-    all: True
-    filters:
-      max_age: 5y
 ```
 ```yaml
 collections:

@@ -17,19 +17,6 @@ from urllib.parse import urlparse
 import os
 import sqlite3
 
-#this will be taken out soon
-def regex_first_int(data, method, id_type="number", default=None):
-    try:
-        id = re.search('(\\d+)', str(data)).group(1)
-        if len(str(id)) != len(str(data)):
-            print("| Config Warning: {} can be replaced with {}".format(data, id))
-        return id
-    except AttributeError:
-        if default is None:
-            raise ValueError("| Config Error: Skipping {} failed to parse {} from {}".format(method, id_type, data))
-        else:
-            print("| Config Error: {} failed to parse {} from {} using {} as default".format(method, id_type, data, default))
-            return default
 
 def get_movie(plex, data):
     # If an int is passed as data, assume it is a movie's rating key
@@ -199,7 +186,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         else:
             print("| Config Error: {} method not supported".format(method))
 
-    subfilter_alias = {
+    filter_alias = {
         "actor": "actors",
         "content_rating": "contentRating",
         "country": "countries",
@@ -228,35 +215,29 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             current_m.reload()
             match = True
             if filters:
-                for sf in filters:
-                    modifier = sf[0][-4:]
-                    method = subfilter_alias[sf[0][:-4]] if modifier in [".not", ".lte", ".gte"] else subfilter_alias[sf[0]]
+                for f in filters:
+                    modifier = f[0][-4:]
+                    method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
-                        try:
-                            max_age = regex_first_int(sf[1], "max_age")
-                            if sf[1][-1] == "y":
-                                max_age = int(365.25 * max_age)
-                            threshold_date = datetime.now() - timedelta(days=max_age)
-                            attr = getattr(current_m, "originallyAvailableAt")
-                            if attr < threshold_date:
-                                match = False
-                                break
-                        except ValueError as e:
-                            print(e)
+                        threshold_date = datetime.now() - timedelta(days=f[1])
+                        attr = getattr(current_m, "originallyAvailableAt")
+                        if attr < threshold_date:
+                            match = False
+                            break
                     elif modifier in [".gte", ".lte"]:
                         if method == "originallyAvailableAt":
-                            threshold_date = datetime.strptime(sf[1], "%m/%d/%y")
+                            threshold_date = datetime.strptime(f[1], "%m/%d/%y")
                             attr = getattr(current_m, "originallyAvailableAt")
                             if (modifier == ".lte" and attr > threshold_date) or (modifier == ".gte" and attr < threshold_date):
                                 match = False
                                 break
                         elif method in ["year", "rating"]:
                             attr = getattr(current_m, method)
-                            if (modifier == ".lte" and attr > sf[1]) or (modifier == ".gte" and attr < sf[1]):
+                            if (modifier == ".lte" and attr > f[1]) or (modifier == ".gte" and attr < f[1]):
                                 match = False
                                 break
                     else:
-                        terms = sf[1] if isinstance(sf[1], list) else str(sf[1]).split(", ")
+                        terms = f[1] if isinstance(f[1], list) else str(f[1]).split(", ")
                         if method in ["video_resolution", "audio_language", "subtitle_language"]:
                             for media in current_m.media:
                                 if method == "video_resolution":
@@ -299,35 +280,29 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             current_s.reload()
             match = True
             if filters:
-                for sf in filters:
-                    modifier = sf[0][-4:]
-                    method = subfilter_alias[sf[0][:-4]] if modifier in [".not", ".lte", ".gte"] else subfilter_alias[sf[0]]
+                for f in filters:
+                    modifier = f[0][-4:]
+                    method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
-                        try:
-                            max_age = regex_first_int(sf[1], "max_age")
-                            if sf[1][-1] == "y":
-                                max_age = int(365.25 * max_age)
-                            threshold_date = datetime.now() - timedelta(days=max_age)
-                            attr = getattr(current_m, "originallyAvailableAt")
-                            if attr < threshold_date:
-                                match = False
-                                break
-                        except ValueError as e:
-                            print(e)
+                        threshold_date = datetime.now() - timedelta(days=f[1])
+                        attr = getattr(current_m, "originallyAvailableAt")
+                        if attr < threshold_date:
+                            match = False
+                            break
                     elif modifier in [".gte", ".lte"]:
                         if method == "originallyAvailableAt":
-                            threshold_date = datetime.strptime(sf[1], "%m/%d/%y")
+                            threshold_date = datetime.strptime(f[1], "%m/%d/%y")
                             attr = getattr(current_m, "originallyAvailableAt")
                             if (modifier == ".lte" and attr > threshold_date) or (modifier == ".gte" and attr < threshold_date):
                                 match = False
                                 break
                         elif method in ["year", "rating"]:
                             attr = getattr(current_m, method)
-                            if (modifier == ".lte" and attr > sf[1]) or (modifier == ".gte" and attr < sf[1]):
+                            if (modifier == ".lte" and attr > f[1]) or (modifier == ".gte" and attr < f[1]):
                                 match = False
                                 break
                     else:
-                        terms = sf[1] if isinstance(sf[1], list) else str(sf[1]).split(", ")
+                        terms = f[1] if isinstance(f[1], list) else str(f[1]).split(", ")
                         # if method in ["video_resolution", "audio_language", "subtitle_language"]:
                         #     for media in current_s.media:
                         #         if method == "video_resolution":

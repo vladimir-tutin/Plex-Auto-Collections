@@ -5,17 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.4.5] - 2020-11-05 - [#97](https://github.com/mza921/Plex-Auto-Collections/pull/97)
+### Changed
+- `max_age` no longer takes years
+
 ### Fixed
-- [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - actually fixed max_age
+- [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - actually fixed `max_age`
 
 ## [2.4.4] - 2020-11-05 - [commit](https://github.com/mza921/Plex-Auto-Collections/commit/eb9f3ed2ebfcb3ba9fbdfb07ff0ec56da6ccd4be)
 ### Fixed
-- [#94](https://github.com/mza921/Plex-Auto-Collections/issues/94) - Fixed Trakt Trending (again)
+- [#94](https://github.com/mza921/Plex-Auto-Collections/issues/94) - Fixed `trakt_trending` (again)
 
 ## [2.4.3] - 2020-11-05 - [#96](https://github.com/mza921/Plex-Auto-Collections/pull/96)
 ### Fixed
-- [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - fixed max_age
-- [#94](https://github.com/mza921/Plex-Auto-Collections/issues/94) - Fixed Trakt Trending
+- [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - fixed `max_age`
+- [#94](https://github.com/mza921/Plex-Auto-Collections/issues/94) - Fixed `trakt_trending`
 
 ## [2.4.2] - 2020-11-04 - [#90](https://github.com/mza921/Plex-Auto-Collections/pull/90)
 ### Fixed
