@@ -203,6 +203,12 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         "subtitle_language": "subtitle_language",
     }
 
+    def adjust_space(old_length, new_length, display_title):
+        space_length = old_length - new_length
+        if space_length > 0:
+            display_title += " " * space_length
+        return display_title
+
     if movies:
         # Check if already in collection
         cols = plex.Library.search(title=c, libtype="collection")
@@ -210,13 +216,23 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             fs = cols[0].children
         except IndexError:
             fs = []
+        movie_count = 0
+        movie_max = len(movies)
+        max_str_len = len(str(movie_max))
+        current_length = 0
         for rk in movies:
             current_m = get_movie(plex, rk)
             current_m.reload()
+            movie_count += 1
+            count_str_len = len(str(movie_count))
+            display_count = (" " * (max_str_len - count_str_len)) + str(movie_count)
             match = True
-            print(f'\r| Filtering {current_m.title}                                                                ', end = "\r")
             if filters:
                 for f in filters:
+                    past_length = current_length
+                    current_length = 14 + (max_str_len * 2) + len(current_m.title)
+                    print("| Filtering {}/{} {}".format(display_count, movie_max, adjust_space(past_length, current_length, current_m.title)), end = "\r")
+                    open_print = True
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
@@ -261,12 +277,12 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                             break
             if match:
                 if current_m in fs:
-                    print(f'\r| {c} Collection | = | {current_m.title}                                                                ', end = "\r")
                     map[current_m.ratingKey] = None
                 else:
-                    print(f'\r| {c} Collection | + | {current_m.title}                                                                ', end = "\r")
                     current_m.addCollection(c)
-                print()
+                print("| {} Collection | {} | {}".format(c, "=" if current_m in fs else "+", adjust_space(current_length, 20 + len(c) + len(current_m.title), current_m.title)))
+        displey_final = "| Processed {} Movies".format(movie_max)
+        print(adjust_space(current_length, len(displey_final), displey_final))
     elif plex.library_type == "movie":
         print("| No movies found")
 
@@ -277,13 +293,23 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             fs = cols[0].children
         except IndexError:
             fs = []
+        show_count = 0
+        show_max = len(shows)
+        max_str_len = len(str(show_max))
+        current_length = 0
         for rk in shows:
             current_s = get_item(plex, rk)
             current_s.reload()
+            show_count += 1
+            count_str_len = len(str(show_count))
+            display_count = (" " * (max_str_len - count_str_len)) + str(show_count)
             match = True
-            print(f'\r| Filtering {current_s.title}                                                                ', end = "\r")
             if filters:
                 for f in filters:
+                    past_length = current_length
+                    current_length = 14 + (max_str_len * 2) + len(current_s.title)
+                    print("| Filtering {}/{} {}".format(display_count, show_max, adjust_space(past_length, current_length, current_s.title)), end = "\r")
+                    open_print = True
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
@@ -320,7 +346,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                         elif method in ["actors", "genres"]:
                             mv_attrs = [getattr(x, 'tag') for x in getattr(current_s, method)]
 
-                        # Get the intersection of the user's terms and movie's terms
+                        # Get the intersection of the user's terms and show's terms
                         # If it's empty and modifier is not .not, it's not a match
                         # If it's not empty and modifier is .not, it's not a match
                         if (not list(set(terms) & set(show_attrs)) and modifier != ".not") or (list(set(terms) & set(show_attrs)) and modifier == ".not"):
@@ -328,12 +354,12 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                             break
             if match:
                 if current_s in fs:
-                    print(f'\r| {c} Collection | = | {current_s.title}                                                                ', end = "\r")
                     map[current_s.ratingKey] = None
                 else:
-                    print(f'\r| {c} Collection | + | {current_s.title}                                                                ', end = "\r")
                     current_s.addCollection(c)
-                print()
+                print("| {} Collection | {} | {}".format(c, "=" if current_s in fs else "+", adjust_space(current_length, 20 + len(c) + len(current_s.title), current_s.title)))
+        displey_final = "| Processed {} Shows".format(show_max)
+        print(adjust_space(current_length, len(displey_final), displey_final))
     elif plex.library_type == "show":
         print("| No shows found")
 
