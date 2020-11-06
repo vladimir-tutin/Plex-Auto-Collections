@@ -434,12 +434,13 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     print("| Config Error: {} attribute not supported".format(method_name))
             else:
                 print("| Config Error: {} attribute is blank".format(m))
-        print("| ")
 
-        #TODO: Display Filters Better
-        for filter in filters:
-            print("|  Collection Filter {}: {}".format(filter[0], filter[1]))
-        print("| ")
+        first_filter = True
+        for f in filters:
+            if first_filter == True:
+                print("| ")
+                first_filter = False
+            print("| Collection Filter {}: {}".format(f[0], f[1]))
 
         # Loops though and actually processes the methods
         for m, values in methods:

@@ -279,10 +279,8 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     map[current_m.ratingKey] = None
                 else:
                     current_m.addCollection(c)
-                display_match = "| {} Collection | {} | {}".format(c, "=" if current_m in fs else "+", current_m.title)
-                print(adjust_space(current_length, display_match))
-        displey_final = "| Processed {} Movies".format(movie_max)
-        print(adjust_space(current_length, displey_final))
+                print(adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_m in fs else "+", current_m.title)))
+        print(adjust_space(current_length, "| Processed {} Movies".format(movie_max)))
     elif plex.library_type == "movie":
         print("| No movies found")
 
@@ -353,10 +351,8 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     map[current_s.ratingKey] = None
                 else:
                     current_s.addCollection(c)
-                display_match = "| {} Collection | {} | {}".format(c, "=" if current_s in fs else "+", current_s.title)
-                print(adjust_space(current_length, display_match))
-        displey_final = "| Processed {} Shows".format(show_max)
-        print(adjust_space(current_length, displey_final))
+                print(adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_s in fs else "+", current_s.title)))
+        print(adjust_space(current_length, "| Processed {} Shows".format(show_max)))
     elif plex.library_type == "show":
         print("| No shows found")
 
