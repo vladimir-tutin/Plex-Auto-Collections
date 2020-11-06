@@ -8,8 +8,10 @@ from tmdbv3api import TMDb
 from tmdbv3api import Movie
 from tmdbv3api import List
 from tmdbv3api import TV
+from tmdbv3api import Discover
 from tmdbv3api import Collection
 from tmdbv3api import Company
+from tmdbv3api import Network
 from tmdbv3api import Person
 import config_tools
 import plex_tools
@@ -121,47 +123,54 @@ def imdb_get_movies(config_path, plex, data):
     return matched_imdb_movies, missing_imdb_movies
 
 def tmdb_get_movies(config_path, plex, data, method):
-    tmdb_id = int(data)
     t_movs = []
     t_movie = Movie()
     t_movie.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
     if t_movie.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
 
-    if method == "tmdb_list":
-        tmdb = List()
-        tmdb.api_key = t_movie.api_key
-        try:
+    if method == "tmdb_discover":
+        discover = Discover()
+        discover.api_key = t_tv.api_key
+        tmdb_shows = discover.discover_movies(data)
+        for tshow in tmdb_shows:
+            t_tvs.append(tshow.id)
+    else:
+        tmdb_id = int(data)
+        if method == "tmdb_list":
+            tmdb = List()
+            tmdb.api_key = t_movie.api_key
+            try:
+                t_col = tmdb.details(tmdb_id)
+                tmdb_name = str(t_col)
+                for tmovie in t_col:
+                    if tmovie.media_type == "movie":
+                        t_movs.append(tmovie.id)
+            except:
+                raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+        elif method == "tmdb_company":
+            tmdb = Company()
+            tmdb.api_key = t_movie.api_key
+            tmdb_name = str(tmdb.details(tmdb_id))
+            company_movies = tmdb.movies(tmdb_id)
+            for tmovie in company_movies:
+                t_movs.append(tmovie.id)
+        else:
+            tmdb = Collection()
+            tmdb.api_key = t_movie.api_key
             t_col = tmdb.details(tmdb_id)
             tmdb_name = str(t_col)
-            for tmovie in t_col:
-                if tmovie.media_type == "movie":
-                    t_movs.append(tmovie.id)
-        except:
-            raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
-    elif method == "tmdb_company":
-        tmdb = Company()
-        tmdb.api_key = t_movie.api_key
-        tmdb_name = str(tmdb.details(tmdb_id))
-        company_movies = tmdb.movies(tmdb_id)
-        for tmovie in company_movies:
-            t_movs.append(tmovie.id)
-    else:
-        tmdb = Collection()
-        tmdb.api_key = t_movie.api_key
-        t_col = tmdb.details(tmdb_id)
-        tmdb_name = str(t_col)
-        try:
-            for tmovie in t_col.parts:
-                t_movs.append(tmovie['id'])
-        except AttributeError:
             try:
-                t_movie.details(tmdb_id).imdb_id
-                tmdb_name = str(t_movie.details(tmdb_id))
-                t_movs.append(tmdb_id)
-            except:
-                raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
-    print("| Processing {}: {} ID: {}".format(method, tmdb_name, tmdb_id))
+                for tmovie in t_col.parts:
+                    t_movs.append(tmovie['id'])
+            except AttributeError:
+                try:
+                    t_movie.details(tmdb_id).imdb_id
+                    tmdb_name = str(t_movie.details(tmdb_id))
+                    t_movs.append(tmdb_id)
+                except:
+                    raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
+        print("| Processing {}: ({}) {}".format(method, tmdb_id, tmdb_name))
 
 
     # Create dictionary of movies and their guid
@@ -266,33 +275,48 @@ def get_tvdb_id_from_tmdb_id(id):
 def tmdb_get_shows(config_path, plex, data, method):
     config_tools.TraktClient(config_path)
 
-    tmdb_id = int(data)
-
     t_tvs = []
     t_tv = TV()
     t_tv.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
     if t_tv.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
 
-    if method == "tmdb_list":
-        tmdb = List()
-        tmdb.api_key = t_tv.api_key
-        try:
-            t_col = tmdb.details(tmdb_id)
-            tmdb_name = str(t_col)
-            for ttv in t_col:
-                if ttv.media_type == "tv":
-                    t_tvs.append(ttv.id)
-        except:
-            raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+    def run_discover(dict):
+        discover = Discover()
+        discover.api_key = t_tv.api_key
+        tmdb_shows = discover.discover_tv_shows(dict)
+        for tshow in tmdb_shows:
+            t_tvs.append(tshow.id)
+
+    if method == "tmdb_discover":
+        run_discover(data)
     else:
-        try:
-            t_tv.details(tmdb_id).number_of_seasons
-            tmdb_name = str(t_tv.details(tmdb_id))
-            t_tvs.append(tmdb_id)
-        except:
-            raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
-    print("| Processing {}: {} - {}".format(method, tmdb_id, tmdb_name))
+        tmdb_id = int(data)
+        if method == "tmdb_list":
+            tmdb = List()
+            tmdb.api_key = t_tv.api_key
+            try:
+                t_col = tmdb.details(tmdb_id)
+                tmdb_name = str(t_col)
+                for ttv in t_col:
+                    if ttv.media_type == "tv":
+                        t_tvs.append(ttv.id)
+            except:
+                raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+        elif method in ["tmdb_company", "tmdb_network"]:
+            tmdb = Company() if method == "tmdb_company" else Network()
+            discover_method = "with_companies" if method == "tmdb_company" else "with_networks"
+            tmdb.api_key = t_tv.api_key
+            tmdb_name = str(tmdb.details(tmdb_id))
+            run_discover({discover_method: tmdb_id})
+        else:
+            try:
+                t_tv.details(tmdb_id).number_of_seasons
+                tmdb_name = str(t_tv.details(tmdb_id))
+                t_tvs.append(tmdb_id)
+            except:
+                raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
+        print("| Processing {}: ({}) {}".format(method, tmdb_id, tmdb_name))
 
     p_tv_map = {}
     for item in plex.Library.all():

@@ -152,7 +152,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
     elif plex.library_type == "movie":
         if method == "imdb_list":
             movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
-        elif method in ["tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company"]:
+        elif "tmdb" in method:
             movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, method)
         elif method == "trakt_list":
             movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
@@ -169,7 +169,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         else:
             print("| Config Error: {} method not supported".format(method))
     elif plex.library_type == "show":
-        if method in ["tmdb_list", "tmdb_id", "tmdb_show"]:
+        if "tmdb" in method:
             shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, method)
         elif method == "tvdb_show":
             shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)

@@ -135,9 +135,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_collection",
         "tmdb_id",
         "tmdb_actor",
-        "tmdb_company",
         "tmdb_director"
         "tmdb_writer"
+        "tmdb_company",
+        "tmdb_network",
+        "tmdb_discover",
         "tmdb_list",
         "tmdb_movie",
         "tmdb_show",
@@ -162,6 +164,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     show_only_lists = [
         "tmdb_show",
         "tvdb_show"
+        "tmdb_network",
     ]
     movie_only_lists = [
         "tmdb_collection",
@@ -402,6 +405,9 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Collection ID"))
                 elif method_name == "tmdb_company":
                     methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb Company ID"))
+                elif method_name == "tmdb_discover":
+                    #FIGURE THIS OUT LOL
+                    methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb Network ID"))
                 elif method_name == "tmdb_id":
                     id = get_method_pair_tmdb(method_name, collections[c][m], "TMDb ID")
                     if tmdb_id is None:
@@ -411,10 +417,12 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "backdrop_path"), method_name]
                         tmdb_id = id[1][0]
                     methods.append(id)
-                elif method_name == "tmdb_list": #TODO: validate
+                elif method_name == "tmdb_list":
                     methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb List ID"))
                 elif method_name == "tmdb_movie":
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Movie ID"))
+                elif method_name == "tmdb_network":
+                    methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb Network ID"))
                 elif method_name == "tmdb_show":
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Show ID"))
                 elif method_name == "tvdb_show":
@@ -433,7 +441,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append((method_name, [regex_first_int(collections[c][m], method_name, default=30)]))
                 elif method_name == "trakt_watchlist":
                     methods.append((method_name, get_attribute_list(collections[c][m])))
-                elif method_name == "tautulli": #TODO:test
+                elif method_name == "tautulli":
                     try:
                         new_dictionary = {}
                         new_dictionary["list_type"] = check_for_attribute(collections[c][m], "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
@@ -462,7 +470,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             for v in values:
                 if m == "imdb_list":
                     print("| \n| Processing {}: {}".format(m, v[0]))
-                if m not in ["plex_search", "tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company", "tmdb_show"]:
+                elif m not in ["plex_search", "tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company", "tmdb_network", "tmdb_discover", "tmdb_show"]:
                     print("| \n| Processing {}: {}".format(m, v))
                 try:
                     missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)
