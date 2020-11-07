@@ -14,85 +14,111 @@ import config_tools
 import plex_tools
 import trakt
 
+def adjust_space(old_length, display_title):
+    space_length = old_length - len(display_title)
+    if space_length > 0:
+        display_title += " " * space_length
+    return display_title
+
+def imdb_get_ids(plex, imdb_url):
+    imdb_url = imdb_url.strip()
+    if imdb_url.startswith("https://www.imdb.com/list/ls") or imdb_url.startswith("https://www.imdb.com/search/title/?"):
+        try:
+            if imdb_url.startswith("https://www.imdb.com/list/ls"):
+                imdb_url = "https://www.imdb.com/list/ls{}".format(re.search('(\\d+)', str(imdb_url)).group(1))
+            else:
+                if "&start=" in imdb_url:
+                    imdb_url = re.sub("&start=\d+", "", imdb_url)
+                if "&count=" in imdb_url:
+                    imdb_url = re.sub("&count=\d+", "&count=100", imdb_url)
+                else:
+                    imdb_url += "&count=100"
+            library_language = plex.Library.language
+            r = requests.get(imdb_url, headers={'Accept-Language': library_language})
+            tree = html.fromstring(r.content)
+            title_ids = tree.xpath("//div[contains(@class, 'lister-item-image')]"
+                                   "//a/img//@data-tconst")
+            if imdb_url.startswith("https://www.imdb.com/list/ls"):
+                results = re.search('(?<=<div class="desc lister-total-num-results">).*?(?=</div>)', str(r.content))
+                total = 100 if results is None else re.search('(\\d+)', results.group(0).replace(',', '')).group(1)
+            else:
+                results = re.search('<span>\\d+-\\d+ of \\d+ titles.</span>', str(r.content))
+                total = 100 if results is None else re.findall('(\\d+)', results.group(0).replace(',', ''))[2]
+            for i in range(1, math.ceil(int(total) / 100)):
+                if imdb_url.startswith("https://www.imdb.com/list/ls"):
+                    r = requests.get(imdb_url + '?page={}'.format(i + 1), headers={'Accept-Language': library_language})
+                else:
+                    r = requests.get(imdb_url + '&start={}'.format(i * 100 + 1), headers={'Accept-Language': library_language})
+                tree = html.fromstring(r.content)
+                title_ids.extend(tree.xpath("//div[contains(@class, 'lister-item-image')]"
+                                            "//a/img//@data-tconst"))
+            if title_ids:
+                return title_ids
+            else:
+                print("| Config Error: No Movies Found at {}".format(imdb_url))
+
+        except AttributeError:
+            print("| Config Error: Skipping imdb_list failed to parse List ID from {}".format(imdb_url))
+        except requests.exceptions.MissingSchema:
+            print("| Config Error: URL Lookup Failed for {}".format(imdb_url))
+    else:
+        print("| Config Error {} must begin with either:\n| https://www.imdb.com/list/ls (For Lists)\n| https://www.imdb.com/search/title/? (For Searches)")
+    return None
 
 def imdb_get_movies(config_path, plex, data):
+    title_ids = data[1]
+    print("| {} Movies found on IMDb".format(len(title_ids)))
     tmdb = TMDb()
-    movie = Movie()
     tmdb.api_key = config_tools.TMDB(config_path).apikey
-    imdb_url = data
-    if imdb_url[-1:] == " ":
-        imdb_url = imdb_url[:-1]
+    movie = Movie()
     imdb_map = {}
-    library_language = plex.Library.language
-    if "/search/" in imdb_url:
-        if "&count=" in imdb_url:
-            imdb_url = re.sub("&count=\d+", "&count=100", imdb_url)
-        else:
-            imdb_url = imdb_url + "&count=100"
-    try:
-        r = requests.get(imdb_url, headers={'Accept-Language': library_language})
-    except requests.exceptions.MissingSchema:
-        return
-    tree = html.fromstring(r.content)
-    title_ids = tree.xpath("//div[contains(@class, 'lister-item-image')]"
-                           "//a/img//@data-tconst")
-    if "/search/" in imdb_url:
-        results = re.search('<span>\\d+-\\d+ of \\d+ titles.</span>', str(r.content))
-        total = 100 if results is None else re.findall('(\\d+)', results.group(0).replace(',', ''))[2]
-    else:
-        results = re.search('(?<=<div class="desc lister-total-num-results">).*?(?=</div>)', str(r.content))
-        total = 100 if results is None else re.search('(\\d+)', results.group(0).replace(',', '')).group(1)
-
-    for i in range(1, math.ceil(int(total) / 100)):
-        try:
-            if "/search/" in imdb_url:
-                r = requests.get(imdb_url + '&start={}'.format(i * 100 + 1), headers={'Accept-Language': library_language})
-            else:
-                r = requests.get(imdb_url + '?page={}'.format(i + 1), headers={'Accept-Language': library_language})
-        except requests.exceptions.MissingSchema:
-            return
-        tree = html.fromstring(r.content)
-        title_ids.extend(tree.xpath("//div[contains(@class, 'lister-item-image')]"
-                                    "//a/img//@data-tconst"))
     matched_imdb_movies = []
     missing_imdb_movies = []
+    current_length = 0
+    current_count = 0
     plex_tools.create_cache(config_path)
-    if title_ids:
-        for m in plex.Library.all():
-            try:
-                if 'plex://' in m.guid:
-                    item = m
-                    # Check cache for imdb_id
-                    imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
-                    if not imdb_id:
-                        imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
-                        print("| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title))
-                        plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
-                elif 'themoviedb://' in m.guid:
-                    if not tmdb.api_key == "None":
-                        tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
-                        tmdbapi = movie.details(tmdb_id)
-                        imdb_id = tmdbapi.imdb_id
-                    else:
-                        imdb_id = None
-                elif 'imdb://' in m.guid:
-                    imdb_id = m.guid.split('imdb://')[1].split('?')[0]
+    plex_movies = plex.Library.all()
+    for m in plex_movies:
+        current_count += 1
+        print_display = "| Processing: {}/{} {}".format(current_count, len(plex_movies), m.title)
+        print(adjust_space(current_length, print_display), end="\r")
+        current_length = len(print_display)
+        try:
+            if 'plex://' in m.guid:
+                item = m
+                # Check cache for imdb_id
+                imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
+                if not imdb_id:
+                    imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
+                    print(adjust_space(current_length, "| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title)))
+                    plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
+            elif 'themoviedb://' in m.guid:
+                if not tmdb.api_key == "None":
+                    tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
+                    tmdbapi = movie.details(tmdb_id)
+                    imdb_id = tmdbapi.imdb_id
                 else:
                     imdb_id = None
-            except:
+            elif 'imdb://' in m.guid:
+                imdb_id = m.guid.split('imdb://')[1].split('?')[0]
+            else:
                 imdb_id = None
+        except:
+            imdb_id = None
 
-            if imdb_id and imdb_id in title_ids:
-                imdb_map[imdb_id] = m
-            else:
-                imdb_map[m.ratingKey] = m
+        if imdb_id and imdb_id in title_ids:
+            imdb_map[imdb_id] = m
+        else:
+            imdb_map[m.ratingKey] = m
 
-        for imdb_id in title_ids:
-            movie = imdb_map.pop(imdb_id, None)
-            if movie:
-                matched_imdb_movies.append(plex.Server.fetchItem(movie.ratingKey))
-            else:
-                missing_imdb_movies.append(imdb_id)
+    print(adjust_space(current_length, "| Processed {} Movies".format(len(plex_movies))))
+
+    for imdb_id in title_ids:
+        movie = imdb_map.pop(imdb_id, None)
+        if movie:
+            matched_imdb_movies.append(plex.Server.fetchItem(movie.ratingKey))
+        else:
+            missing_imdb_movies.append(imdb_id)
 
     return matched_imdb_movies, missing_imdb_movies
 

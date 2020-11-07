@@ -210,18 +210,28 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             fs = cols[0].children
         except IndexError:
             fs = []
+        movie_count = 0
+        movie_max = len(movies)
+        max_str_len = len(str(movie_max))
+        current_length = 0
         for rk in movies:
             current_m = get_movie(plex, rk)
             current_m.reload()
+            movie_count += 1
+            count_str_len = len(str(movie_count))
+            display_count = (" " * (max_str_len - count_str_len)) + str(movie_count)
             match = True
             if filters:
                 for f in filters:
+                    print_display = "| Filtering {}/{} {}".format(display_count, movie_max, current_m.title)
+                    print(imdb_tools.adjust_space(current_length, print_display), end = "\r")
+                    current_length = len(print_display)
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
                         threshold_date = datetime.now() - timedelta(days=f[1])
                         attr = getattr(current_m, "originallyAvailableAt")
-                        if attr < threshold_date:
+                        if attr is None or attr < threshold_date:
                             match = False
                             break
                     elif modifier in [".gte", ".lte"]:
@@ -260,11 +270,11 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                             break
             if match:
                 if current_m in fs:
-                    print("| {} Collection | = | {}".format(c, current_m.title))
                     map[current_m.ratingKey] = None
                 else:
-                    print("| {} Collection | + | {}".format(c, current_m.title))
                     current_m.addCollection(c)
+                print(imdb_tools.adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_m in fs else "+", current_m.title)))
+        print(imdb_tools.adjust_space(current_length, "| Processed {} Movies".format(movie_max)))
     elif plex.library_type == "movie":
         print("| No movies found")
 
@@ -275,29 +285,36 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             fs = cols[0].children
         except IndexError:
             fs = []
+        show_count = 0
+        show_max = len(shows)
+        current_length = 0
         for rk in shows:
             current_s = get_item(plex, rk)
             current_s.reload()
+            show_count += 1
             match = True
             if filters:
                 for f in filters:
+                    print_display = "| Filtering {}/{} {}".format(show_count, show_max, current_s.title)
+                    print(imdb_tools.adjust_space(current_length, print_display), end = "\r")
+                    current_length = len(print_display)
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
                         threshold_date = datetime.now() - timedelta(days=f[1])
-                        attr = getattr(current_m, "originallyAvailableAt")
-                        if attr < threshold_date:
+                        attr = getattr(current_s, "originallyAvailableAt")
+                        if attr is None or attr < threshold_date:
                             match = False
                             break
                     elif modifier in [".gte", ".lte"]:
                         if method == "originallyAvailableAt":
                             threshold_date = datetime.strptime(f[1], "%m/%d/%y")
-                            attr = getattr(current_m, "originallyAvailableAt")
+                            attr = getattr(current_s, "originallyAvailableAt")
                             if (modifier == ".lte" and attr > threshold_date) or (modifier == ".gte" and attr < threshold_date):
                                 match = False
                                 break
                         elif method in ["year", "rating"]:
-                            attr = getattr(current_m, method)
+                            attr = getattr(current_s, method)
                             if (modifier == ".lte" and attr > f[1]) or (modifier == ".gte" and attr < f[1]):
                                 match = False
                                 break
@@ -313,11 +330,11 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                         #             if method == "subtitle_language":
                         #                 show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
                         if method in ["contentRating", "studio", "year", "rating", "originallyAvailableAt"]:
-                            mv_attrs = [str(getattr(current_m, method))]
+                            mv_attrs = [str(getattr(current_s, method))]
                         elif method in ["actors", "genres"]:
-                            mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
+                            mv_attrs = [getattr(x, 'tag') for x in getattr(current_s, method)]
 
-                        # Get the intersection of the user's terms and movie's terms
+                        # Get the intersection of the user's terms and show's terms
                         # If it's empty and modifier is not .not, it's not a match
                         # If it's not empty and modifier is .not, it's not a match
                         if (not list(set(terms) & set(show_attrs)) and modifier != ".not") or (list(set(terms) & set(show_attrs)) and modifier == ".not"):
@@ -325,11 +342,11 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                             break
             if match:
                 if current_s in fs:
-                    print("| {} Collection | = | {}".format(c, current_s.title))
                     map[current_s.ratingKey] = None
                 else:
-                    print("| {} Collection | + | {}".format(c, current_s.title))
                     current_s.addCollection(c)
+                print(imdb_tools.adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_s in fs else "+", current_s.title)))
+        print(imdb_tools.adjust_space(current_length, "| Processed {} Shows".format(show_max)))
     elif plex.library_type == "show":
         print("| No shows found")
 
