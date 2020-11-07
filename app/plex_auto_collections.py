@@ -17,6 +17,7 @@ from plex_tools import get_actor_rkey
 from plex_tools import get_collection
 from plex_tools import get_movie
 from imdb_tools import tmdb_get_metadata
+from imdb_tools import imdb_get_ids
 from config_tools import Config
 from config_tools import Plex
 from config_tools import Radarr
@@ -99,7 +100,6 @@ def get_method_pair_year(method_to_parse, values_to_parse):
             except AttributeError:
                 print("| Config Error: Skipping {} failed to parse year from {}".format(method_to_parse, year))
     return (method_to_parse, final_years)
-
 
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
@@ -250,7 +250,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         for m in collections[c]:
             if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
-            elif ("trakt" in m or ("tmdb" in m and plex.library_type == "show")) and not TraktClient.valid:
+            elif ("trakt" in m or (("tmdb" in m or "tvdb" in m) and plex.library_type == "show")) and not TraktClient.valid:
                 print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
             elif m == "tautulli" and not Tautulli.valid:
                 print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
@@ -414,7 +414,15 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Show ID"))
                 elif method_name == "tvdb_show":
                     methods.append(get_method_pair_int(method_name, collections[c][m], "TVDb Show ID"))
-                elif method_name in ["imdb_list", "trakt_list"]: #TODO: validate
+                elif method_name == "imdb_list":
+                    imdb_lists = get_attribute_list(collections[c][m])
+                    good_lists = []
+                    for imdb_url in imdb_lists:
+                        title_ids = imdb_get_ids(plex, imdb_url)
+                        if title_ids:
+                            good_lists.append((imdb_url, title_ids))
+                    methods.append((method_name, good_lists))
+                elif method_name == "trakt_list": #TODO: validate
                     methods.append((method_name, get_attribute_list(collections[c][m])))
                 elif method_name == "trakt_trending":
                     methods.append((method_name, [regex_first_int(collections[c][m], method_name, default=30)]))
@@ -445,7 +453,9 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         # Loops though and actually processes the methods
         for m, values in methods:
             for v in values:
-                if m != "plex_search":
+                if m == "imdb_list":
+                    print("| \n| Processing {}: {}".format(m, v[0]))
+                elif m != "plex_search":
                     print("| \n| Processing {}: {}".format(m, v))
                 try:
                     missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)
@@ -455,8 +465,10 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 if missing:
                     if libtype == "movie":
                         method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                        if m in ["trakt_list", "tmdb_list", "imdb_list"]:
+                        if m in ["trakt_list", "tmdb_list"]:
                             print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        elif m == "imdb_list":
+                            print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v[0]))
                         elif m == "tmdb_collection":
                             print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                         elif m == "trakt_trending":
@@ -862,6 +874,10 @@ while not mode == "q":
                 url = input("| Enter {} List URL: ".format(l_type)).strip()
                 c_name = input("| Enter collection name: ")
                 print("| Processing {} List: {}".format(l_type, url))
+                if method == "imdb_list":
+                    title_ids = imdb_get_ids(plex, url)
+                    if title_ids:
+                        url = (url, title_ids)
                 try:
                     missing = add_to_collection(config_path, plex, method, url, c_name)
                     if missing:
