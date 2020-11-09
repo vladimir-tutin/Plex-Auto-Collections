@@ -83,27 +83,24 @@ def imdb_get_movies(config_path, plex, data):
         print_display = "| Processing: {}/{} {}".format(current_count, len(plex_movies), m.title)
         print(adjust_space(current_length, print_display), end="\r")
         current_length = len(print_display)
-        try:
-            if 'plex://' in m.guid:
-                item = m
-                # Check cache for imdb_id
-                imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
-                if not imdb_id:
-                    imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
-                    print(adjust_space(current_length, "| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title)))
-                    plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
-            elif 'themoviedb://' in m.guid:
-                if not tmdb.api_key == "None":
-                    tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
-                    tmdbapi = movie.details(tmdb_id)
-                    imdb_id = tmdbapi.imdb_id
-                else:
-                    imdb_id = None
-            elif 'imdb://' in m.guid:
-                imdb_id = m.guid.split('imdb://')[1].split('?')[0]
+        if 'plex://' in m.guid:
+            item = m
+            # Check cache for imdb_id
+            imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
+            if not imdb_id:
+                imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
+                print(adjust_space(current_length, "| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title)))
+                plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
+        elif 'themoviedb://' in m.guid:
+            if not tmdb.api_key == "None":
+                tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
+                tmdbapi = movie.details(tmdb_id)
+                imdb_id = tmdbapi.imdb_id
             else:
                 imdb_id = None
-        except:
+        elif 'imdb://' in m.guid:
+            imdb_id = m.guid.split('imdb://')[1].split('?')[0]
+        else:
             imdb_id = None
 
         if imdb_id and imdb_id in title_ids:
