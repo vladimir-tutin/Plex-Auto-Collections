@@ -99,7 +99,7 @@ def imdb_get_movies(config_path, plex, data):
             if not tmdb.api_key == "None":
                 tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
                 tmdbapi = movie.details(tmdb_id)
-                imdb_id = tmdbapi.imdb_id
+                imdb_id = tmdbapi.imdb_id if hasattr(tmdbapi, 'imdb_id') else None
             else:
                 imdb_id = None
         elif 'imdb://' in m.guid:
