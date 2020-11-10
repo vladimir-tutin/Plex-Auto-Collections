@@ -216,11 +216,52 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "background", "file_background",
         "name_mapping"
     ]
+    discover_movie = [
+        "language", "with_original_language", "region", "sort_by",
+        "certification_country", "certification", "certification.lte", "certification.gte",
+        "include_adult",
+        "primary_release_year", "primary_release_date.gte", "primary_release_date.lte",
+        "release_date.gte", "release_date.lte", "year",
+        "vote_count.gte", "vote_count.lte",
+        "vote_average.gte", "vote_average.lte",
+        "with_cast", "with_crew", "with_people",
+        "with_companies",
+        "with_genres", "without_genres",
+        "with_keywords", "without_keywords",
+        "with_runtime.gte", "with_runtime.lte"
+    ]
+    discover_tv = [
+        "language", "with_original_language", "timezone", "sort_by",
+        "air_date.gte", "air_date.lte",
+        "first_air_date.gte", "first_air_date.lte", "first_air_date_year",
+        "vote_average.gte", "vote_count.gte",
+        "with_genres", "without_genres",
+        "with_keywords", "without_keywords",
+        "with_networks", "with_companies",
+        "with_runtime.gte", "with_runtime.lte",
+        "include_null_first_air_dates",
+        "screened_theatrically"
+    ]
+    discover_movie_sort = [
+        "popularity.asc", "popularity.desc",
+        "release_date.asc", "release_date.desc",
+        "revenue.asc", "revenue.desc",
+        "primary_release_date.asc", "primary_release_date.desc",
+        "original_title.asc", "original_title.desc",
+        "vote_average.asc", "vote_average.desc",
+        "vote_count.asc", "vote_count.desc"
+    ]
+    discover_tv_sort = [
+        "vote_average.desc", "vote_average.asc",
+        "first_air_date.desc", "first_air_date.asc",
+        "popularity.desc", "popularity.asc"
+    ]
     print("|\n| Running collection update press Ctrl+C to abort at anytime")
     for c in collections:
         print("| \n|===================================================================================================|\n|")
         print("| Updating collection: {}...".format(c))
         map = {}
+
         sync_collection = True if plex.sync_mode == "sync" else False
         if "sync_mode" in collections[c]:
             if collections[c]["sync_mode"]:
@@ -336,45 +377,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             print("| Config Error: {} attribute not supported".format(detail_name))
                 elif method_name in all_details:
                     check_details(method_name, collections[c][m])
-                elif method_name == "filters":
-                    for filter in collections[c][m]:
-                        if filter in alias or (filter.endswith(".not") and filter[:-4] in alias):
-                            final_filter = (alias[filter[:-4]] + filter[-4:]) if filter.endswith(".not") else alias[filter]
-                            print("| Config Warning: {} filter will run as {}".format(filter, final_filter))
-                        else:
-                            final_filter = filter
-                        if final_filter in movie_only_filters and libtype == "show":
-                            print("| Config Error: {} filter only works for movie libraries".format(final_filter))
-                        elif final_filter in all_filters:
-                            filters.append((final_filter, collections[c][m][filter])) #TODO: validate filters contents
-                        else:
-                            print("| Config Error: {} filter not supported".format(filter))
-                elif method_name == "plex_search":
-                    search = []
-                    searches_used = []
-                    for search_attr in collections[c][m]:
-                        if search_attr in alias or (search_attr.endswith(".not") and search_attr[:-4] in alias):
-                            final_attr = (alias[search_attr[:-4]] + search_attr[-4:]) if search_attr.endswith(".not") else alias[search_attr]
-                            print("| Config Warning: {} plex search attribute will run as {}".format(search_attr, final_attr))
-                        else:
-                            final_attr = search_attr
-                        if final_attr in movie_only_searches and libtype == "show":
-                            print("| Config Error: {} plex search attribute only works for movie libraries".format(final_attr))
-                        elif (final_attr[:-4] if final_attr.endswith(".not") else final_attr) in searches_used:
-                            print("| Config Error: Only one instance of {} can be used try using it as a filter instead".format(final_attr))
-                        elif final_attr in ["year", "year.not"]:
-                            year_pair = get_method_pair_year(final_attr, collections[c][m][search_attr])
-                            if len(year_pair[1]) > 0:
-                                searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
-                                search.append(get_method_pair_int(final_attr, collections[c][m][search_attr], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
-                        elif final_attr in plex_searches:
-                            if final_attr.startswith("tmdb_"):
-                                final_attr = final_attr[5:]
-                            searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
-                            search.append((final_attr, get_attribute_list(collections[c][m][search_attr])))
-                        else:
-                            print("| Config Error: {} plex search attribute not supported".format(search_attr))
-                    methods.append((method_name, [search]))
                 elif method_name in movie_only_searches and libtype == "show":
                     print("| Config Error: {} plex search only works for movie libraries".format(method_name))
                 elif method_name in ["year", "year.not"]:
@@ -405,9 +407,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Collection ID"))
                 elif method_name == "tmdb_company":
                     methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb Company ID"))
-                elif method_name == "tmdb_discover":
-                    #FIGURE THIS OUT LOL
-                    methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb Network ID"))
                 elif method_name == "tmdb_id":
                     id = get_method_pair_tmdb(method_name, collections[c][m], "TMDb ID")
                     if tmdb_id is None:
@@ -441,16 +440,129 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append((method_name, [regex_first_int(collections[c][m], method_name, default=30)]))
                 elif method_name == "trakt_watchlist":
                     methods.append((method_name, get_attribute_list(collections[c][m])))
-                elif method_name == "tautulli":
-                    try:
-                        new_dictionary = {}
-                        new_dictionary["list_type"] = check_for_attribute(collections[c][m], "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
-                        new_dictionary["list_days"] = check_for_attribute(collections[c][m], "list_days", parent="tautulli", var_type="int", default=30, save=False)
-                        new_dictionary["list_size"] = check_for_attribute(collections[c][m], "list_size", parent="tautulli", var_type="int", default=10, save=False)
-                        new_dictionary["list_buffer"] = check_for_attribute(collections[c][m], "list_buffer", parent="tautulli", var_type="int", default=20, save=False)
-                        methods.append((method_name, [new_dictionary]))
-                    except SystemExit as e:
-                        print(e)
+                elif method_name in ["filters", "plex_search", "tmdb_discover", "tautulli"]:
+                    if isinstance(collections[c][m], dict):
+                        if method_name == "filters":
+                            for filter in collections[c][m]:
+                                if filter in alias or (filter.endswith(".not") and filter[:-4] in alias):
+                                    final_filter = (alias[filter[:-4]] + filter[-4:]) if filter.endswith(".not") else alias[filter]
+                                    print("| Config Warning: {} filter will run as {}".format(filter, final_filter))
+                                else:
+                                    final_filter = filter
+                                if final_filter in movie_only_filters and libtype == "show":
+                                    print("| Config Error: {} filter only works for movie libraries".format(final_filter))
+                                elif final_filter in all_filters:
+                                    filters.append((final_filter, collections[c][m][filter])) #TODO: validate filters contents
+                                else:
+                                    print("| Config Error: {} filter not supported".format(filter))
+                        elif method_name == "plex_search":
+                            search = []
+                            searches_used = []
+                            for search_attr in collections[c][m]:
+                                if search_attr in alias or (search_attr.endswith(".not") and search_attr[:-4] in alias):
+                                    final_attr = (alias[search_attr[:-4]] + search_attr[-4:]) if search_attr.endswith(".not") else alias[search_attr]
+                                    print("| Config Warning: {} plex search attribute will run as {}".format(search_attr, final_attr))
+                                else:
+                                    final_attr = search_attr
+                                if final_attr in movie_only_searches and libtype == "show":
+                                    print("| Config Error: {} plex search attribute only works for movie libraries".format(final_attr))
+                                elif (final_attr[:-4] if final_attr.endswith(".not") else final_attr) in searches_used:
+                                    print("| Config Error: Only one instance of {} can be used try using it as a filter instead".format(final_attr))
+                                elif final_attr in ["year", "year.not"]:
+                                    year_pair = get_method_pair_year(final_attr, collections[c][m][search_attr])
+                                    if len(year_pair[1]) > 0:
+                                        searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
+                                        search.append(get_method_pair_int(final_attr, collections[c][m][search_attr], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
+                                elif final_attr in plex_searches:
+                                    if final_attr.startswith("tmdb_"):
+                                        final_attr = final_attr[5:]
+                                    searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
+                                    search.append((final_attr, get_attribute_list(collections[c][m][search_attr])))
+                                else:
+                                    print("| Config Error: {} plex search attribute not supported".format(search_attr))
+                            methods.append((method_name, [search]))
+                        elif method_name == "tmdb_discover":
+                            new_dictionary = {"limit": 100}
+                            for attr in collections[c][m]:
+                                if collections[c][m][attr]:
+                                    attr_data = collections[c][m][attr]
+                                    if (libtype == "movie" and attr in discover_movie) or (libtype == "show" and attr in discover_tv):
+                                        if attr == "language":
+                                            if re.compile("([a-z]{2})-([A-Z]{2})").match(str(attr_data)):
+                                                new_dictionary[attr] = str(attr_data)
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: {} must match pattern ([a-z]{2})-([A-Z]{2}) e.g. en-US".format(m, attr, attr_data))
+                                        elif attr == "region":
+                                            if re.compile("^[A-Z]{2}$").match(str(attr_data)):
+                                                new_dictionary[attr] = str(attr_data)
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: {} must match pattern ^[A-Z]{2}$ e.g. US".format(m, attr, attr_data))
+                                        elif attr == "sort_by":
+                                            if (libtype == "movie" and attr_data in discover_movie_sort) or (libtype == "show" and attr_data in discover_tv_sort):
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: {} is invalid".format(m, attr, attr_data))
+                                        elif attr == "certification_country":
+                                            if "certification" in collections[c][m] or "certification.lte" in collections[c][m] or "certification.gte" in collections[c][m]:
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: must be used with either certification, certification.lte, or certification.gte".format(m, attr))
+                                        elif attr in ["certification", "certification.lte", "certification.gte"]:
+                                            if "certification_country" in collections[c][m]:
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: must be used with certification_country".format(m, attr))
+                                        elif attr in ["include_adult", "include_null_first_air_dates", "screened_theatrically"]:
+                                            if attr_data is True:
+                                                new_dictionary[attr] = attr_data
+                                        elif attr in ["primary_release_date.gte", "primary_release_date.lte", "release_date.gte", "release_date.lte", "air_date.gte", "air_date.lte", "first_air_date.gte", "first_air_date.lte"]:
+                                            if re.compile("[0-1]?[0-9][/-][0-3]?[0-9][/-][1-2][890][0-9][0-9]").match(str(attr_data)):
+                                                the_date = str(attr_data).split("/") if "/" in str(attr_data) else str(attr_data).split("-")
+                                                new_dictionary[attr] = "{}-{}-{}".format(the_date[2], the_date[0], the_date[1])
+                                            elif re.compile("[1-2][890][0-9][0-9][/-][0-1]?[0-9][/-][0-3]?[0-9]").match(str(attr_data)):
+                                                the_date = str(attr_data).split("/") if "/" in str(attr_data) else str(attr_data).split("-")
+                                                new_dictionary[attr] = "{}-{}-{}".format(the_date[0], the_date[1], the_date[2])
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: {} must match pattern MM/DD/YYYY e.g. 12/25/2020".format(m, attr, attr_data))
+                                        elif attr in ["primary_release_year", "year", "first_air_date_year"]:
+                                            if isinstance(attr_data, int) and 1800 < attr_data and attr_data < 2200:
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: must be a valid year e.g. 1990".format(m, attr))
+                                        elif attr in ["vote_count.gte", "vote_count.lte", "vote_average.gte", "vote_average.lte", "with_runtime.gte", "with_runtime.lte"]:
+                                            if (isinstance(attr_data, int) or isinstance(attr_data, float)) and 0 < attr_data:
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: must be a valid number greater then 0".format(m, attr))
+                                        elif attr in ["with_cast", "with_crew", "with_people", "with_companies", "with_networks", "with_genres", "without_genres", "with_keywords", "without_keywords", "with_original_language", "timezone"]:
+                                            new_dictionary[attr] = attr_data
+                                        else:
+                                            print("| Config Error: {} attribute {} not supported".format(m, attr))
+                                    elif attr == "limit":
+                                        if isinstance(attr_data, int) and attr_data > 0:
+                                            new_dictionary[attr] = attr_data
+                                        else:
+                                            print("| Config Error: Skipping {} attribute {}: must be a valid number greater then 0".format(m, attr))
+                                    else:
+                                        print("| Config Error: {} attribute {} not supported".format(m, attr))
+                                else:
+                                    print("| Config Error: {} parameter {} is blank".format(m, attr))
+                            if len(new_dictionary) > 1:
+                                methods.append((method_name, [new_dictionary]))
+                            else:
+                                print("| Config Error: {} had no valid fields".format(m))
+                        elif method_name == "tautulli":
+                            try:
+                                new_dictionary = {}
+                                new_dictionary["list_type"] = check_for_attribute(collections[c][m], "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
+                                new_dictionary["list_days"] = check_for_attribute(collections[c][m], "list_days", parent="tautulli", var_type="int", default=30, save=False)
+                                new_dictionary["list_size"] = check_for_attribute(collections[c][m], "list_size", parent="tautulli", var_type="int", default=10, save=False)
+                                new_dictionary["list_buffer"] = check_for_attribute(collections[c][m], "list_buffer", parent="tautulli", var_type="int", default=20, save=False)
+                                methods.append((method_name, [new_dictionary]))
+                            except SystemExit as e:
+                                print(e)
+                    else:
+                        print("| Config Error: {} attribute is not a dictionary: {}".format(m, collections[c][m]))
                 elif method_name == "all":
                     methods.append((method_name, [""]))
                 elif method_name != "sync_mode":
@@ -825,7 +937,6 @@ print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
 
-
 if args.config_path and os.path.exists(args.config_path):
     config_path = os.path.abspath(args.config_path)    # Set config_path from command line switch
 elif args.config_path and not os.path.exists(args.config_path):
@@ -843,6 +954,7 @@ if args.update:
     config = Config(config_path, headless=True)
     plex = Plex(config_path)
     update_from_config(config_path, plex, True, args.no_meta, args.no_images)
+    print("|\n|===================================================================================================|")
     sys.exit(0)
 
 config = Config(config_path)

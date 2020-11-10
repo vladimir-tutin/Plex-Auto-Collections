@@ -2,6 +2,7 @@ import re
 import requests
 import math
 import sys
+import os
 from urllib.parse import urlparse
 from lxml import html
 from tmdbv3api import TMDb
@@ -131,10 +132,26 @@ def tmdb_get_movies(config_path, plex, data, method):
 
     if method == "tmdb_discover":
         discover = Discover()
-        discover.api_key = t_tv.api_key
-        tmdb_shows = discover.discover_movies(data)
-        for tshow in tmdb_shows:
-            t_tvs.append(tshow.id)
+        discover.api_key = t_movie.api_key
+        discover.discover_movies(data)
+        total_pages = int(os.environ["total_pages"])
+        total_results = int(os.environ["total_results"])
+        limit = int(data.pop('limit'))
+        amount = total_results if total_results < limit else limit
+        print("| Processing {}: {} items".format(method, amount))
+        for attr, value in data.items():
+            print("|            {}: {}".format(attr, value))
+        count = 0
+        for x in range(total_pages):
+            data["page"] = x + 1
+            tmdb_movies = discover.discover_movies(data)
+            for tmovie in tmdb_movies:
+                count += 1
+                t_movs.append(tmovie.id)
+                if count == amount:
+                    break
+            if count == amount:
+                break
     else:
         tmdb_id = int(data)
         if method == "tmdb_list":
@@ -280,15 +297,29 @@ def tmdb_get_shows(config_path, plex, data, method):
     t_tv.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
     if t_tv.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
-
-    def run_discover(dict):
-        discover = Discover()
-        discover.api_key = t_tv.api_key
-        tmdb_shows = discover.discover_tv_shows(dict)
-        for tshow in tmdb_shows:
-            t_tvs.append(tshow.id)
+    discover = Discover()
+    discover.api_key = t_tv.api_key
 
     if method == "tmdb_discover":
+        discover.discover_tv_shows(data)
+        total_pages = int(os.environ["total_pages"])
+        total_results = int(os.environ["total_results"])
+        limit = int(data.pop('limit'))
+        amount = total_results if total_results < limit else limit
+        print("| Processing {}: {} items".format(method, amount))
+        for attr, value in data.items():
+            print("|            {}: {}".format(attr, value))
+        count = 0
+        for x in range(total_pages):
+            data["page"] = x + 1
+            tmdb_shows = discover.discover_tv_shows(data)
+            for tshow in tmdb_shows:
+                count += 1
+                t_tvs.append(tshow.id)
+                if count == amount:
+                    break
+            if count == amount:
+                break
         run_discover(data)
     else:
         tmdb_id = int(data)
@@ -308,7 +339,9 @@ def tmdb_get_shows(config_path, plex, data, method):
             discover_method = "with_companies" if method == "tmdb_company" else "with_networks"
             tmdb.api_key = t_tv.api_key
             tmdb_name = str(tmdb.details(tmdb_id))
-            run_discover({discover_method: tmdb_id})
+            tmdb_shows = discover.discover_tv_shows({discover_method: tmdb_id})
+            for tshow in tmdb_shows:
+                t_tvs.append(tshow.id)
         else:
             try:
                 t_tv.details(tmdb_id).number_of_seasons
