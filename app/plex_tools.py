@@ -366,6 +366,7 @@ def delete_collection(data):
 def alt_id_lookup(plex, value):
     req = Request('{}{}'.format(plex.url, value.key))
     req.add_header('X-Plex-Token', plex.token)
+    req.add_header('User-Agent', 'Mozilla/5.0')
     with urlopen(req) as response:
         contents = response.read()
     bs = BeautifulSoup(contents, 'lxml')

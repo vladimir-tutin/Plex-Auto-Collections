@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.7] - 2020-11-09 - [#103](https://github.com/mza921/Plex-Auto-Collections/pull/103)
+### Fixed
+- [#92](https://github.com/mza921/Plex-Auto-Collections/issues/92) - fixed New Plex Movie Agent id lookup behind a proxy
+- [#75](https://github.com/mza921/Plex-Auto-Collections/issues/75) - fixed `tmdb_director`, `tmdb_actor`, and `tmdb_writer`
+
 ## [2.4.6] - 2020-11-06 - [#101](https://github.com/mza921/Plex-Auto-Collections/pull/101)
 ### Added
 - Progress for filtering movies/shows and imdb lists

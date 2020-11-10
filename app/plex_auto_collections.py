@@ -392,7 +392,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             new_ids.append(name)
                         except ValueError as e:
                             print(e)
-                    methods.append(("plex_search", [(method_name[5:], new_ids)]))
+                    methods.append(("plex_search", [[(method_name[5:], new_ids)]]))
                 elif method_name in plex_searches:
                     methods.append(("plex_search", [[(method_name, get_attribute_list(collections[c][m]))]]))
                 elif method_name == "tmdb_collection":
@@ -805,7 +805,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.4.6")
+print("| Version 2.4.7")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
