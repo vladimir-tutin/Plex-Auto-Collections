@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.4.7
+##### Version 2.4.8
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -104,7 +104,7 @@ A simple `Dockerfile` is available in this repo if you'd like to build it yourse
 The docker implementation today is limited but will improve over time. To use, try the following:
 
 ```shell
-docker run -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'mza921/plex-auto-collections' -u
+docker run --rm -v '/mnt/user/plex-auto-collections/':'/config':'rw' 'mza921/plex-auto-collections' -u
 ```
 
 The `-v '/mnt/user/plex-auto-collections/':'/config'` mounts a persistent volume to store your config file. Today, the docker image defaults to running the config named `config.yml` in your persistent volume (eventually, the docker will support an environment variable to change the config path).
@@ -906,6 +906,7 @@ Here's the full set of configurations:
 trakt:                                        # Opt
   client_id: #####                            # Req - Trakt application client ID
   client_secret: #####                        # Req - Trakt application client secret
+  auto_refresh_token: true                    # Req
   authorization:                              # Req
     access_token:                             # LEAVE BLANK
     token_type:                               # LEAVE BLANK
@@ -918,6 +919,8 @@ trakt:                                        # Opt
 On the first run, the script will walk the user through the OAuth flow by producing a Trakt URL for the user to follow. Once authenticated at the Trakt URL, the user needs to return the code to the script. If the code is correct, the script will populate the `authorization` subattributes to use in subsequent runs.
 
 For docker users, please note that the docker container runs with the `--update` option and is designed for no user interaction. To authenticate Trakt the first time, you need run the container with the `-it` flags and run `plex_auto_collections.py` without the `--update` option and walk through the OAuth flow mentioned above. Once you have the Trakt authentication data saved into the YAML, you'll be able to run the container normally.
+
+__NOTE__: When using multiple configuration files which share the same Trakt `access_token`, you must set the `auto_refresh_token` parameter to `false`. Since the `refresh_token` can only be used once, an `access_token` refresh in one file will invalidate the `access_token` in the all other files. The simplest workaround is to use different `authorization` values for each configuration file.
 
 ## Radarr
 

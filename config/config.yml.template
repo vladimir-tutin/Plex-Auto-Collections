@@ -73,6 +73,7 @@ tautulli:
 trakt:
   client_id: ############################
   client_secret: ############################
+  auto_refresh_token: true
   # Below is filled in automatically when the script is run
   authorization:
     access_token:

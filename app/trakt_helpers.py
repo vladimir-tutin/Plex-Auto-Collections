@@ -24,6 +24,26 @@ def authenticate(authorization=None):
     # print('Authorization: %r' % authorization)
     return authorization
 
+def get_refreshed_authorization(authorization):
+    if not authorization['refresh_token']:
+        # No refresh token to use
+        return
+    # Check for expired token
+    print("| Refreshing Access Token...")
+    refreshed_authorization = Trakt['oauth'].token_refresh(authorization['refresh_token'], 'urn:ietf:wg:oauth:2.0:oob')
+    return refreshed_authorization
+
+def clear_authorization():
+    return {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
+
+def check_trakt(authorization):
+    try:
+        with Trakt.configuration.oauth.from_response(authorization, refresh=True):
+            if Trakt['users/settings'].get():
+                return True
+    except ValueError as e:
+        return False
+
 def save_authorization(config_file, authorization):
     ruamel.yaml.YAML().allow_duplicate_keys = True
     from ruamel.yaml.util import load_yaml_guess_indent
