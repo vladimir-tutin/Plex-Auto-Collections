@@ -340,7 +340,7 @@ class TraktClient:
             except SystemExit as e:
                 fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
             try:
-                self.auto_refresh_token = check_for_attribute(config, "auto_refresh_token", parent="trakt", var_type="bool", default=True)
+                self.auto_refresh_token = check_for_attribute(config, "auto_refresh_token", parent="trakt", var_type="bool", default=False)
             except SystemExit as e:
                 fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
             if len(fatal_message) > 0:
