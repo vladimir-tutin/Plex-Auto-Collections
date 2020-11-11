@@ -14,6 +14,7 @@ from tmdbv3api import Collection
 from tmdbv3api import Company
 from tmdbv3api import Network
 from tmdbv3api import Person
+from tmdbv3api import Trending
 import config_tools
 import plex_tools
 import trakt
@@ -130,6 +131,7 @@ def tmdb_get_movies(config_path, plex, data, method):
     if t_movie.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
 
+    count = 0
     if method == "tmdb_discover":
         discover = Discover()
         discover.api_key = t_movie.api_key
@@ -141,7 +143,6 @@ def tmdb_get_movies(config_path, plex, data, method):
         print("| Processing {}: {} items".format(method, amount))
         for attr, value in data.items():
             print("|            {}: {}".format(attr, value))
-        count = 0
         for x in range(total_pages):
             data["page"] = x + 1
             tmdb_movies = discover.discover_movies(data)
@@ -152,6 +153,28 @@ def tmdb_get_movies(config_path, plex, data, method):
                     break
             if count == amount:
                 break
+    elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly"]:
+        trending = Trending()
+        trending.api_key = t_movie.api_key
+        for x in range(int(data / 20) + 1):
+            if method == "tmdb_popular":
+                tmdb_movies = t_movie.popular(x + 1)
+            elif method == "tmdb_top_rated":
+                tmdb_movies = t_movie.top_rated(x + 1)
+            elif method == "tmdb_now_playing":
+                tmdb_movies = t_movie.now_playing(x + 1)
+            elif method == "tmdb_trending_daily":
+                tmdb_movies = trending.movie_day(x + 1)
+            elif method == "tmdb_trending_weekly":
+                tmdb_movies = trending.movie_week(x + 1)
+            for tmovie in tmdb_movies:
+                count += 1
+                t_movs.append(tmovie.id)
+                if count == data:
+                    break
+            if count == data:
+                break
+        print("| Processing {}: {} Items".format(method, data))
     else:
         tmdb_id = int(data)
         if method == "tmdb_list":
@@ -300,6 +323,7 @@ def tmdb_get_shows(config_path, plex, data, method):
     discover = Discover()
     discover.api_key = t_tv.api_key
 
+    count = 0
     if method == "tmdb_discover":
         discover.discover_tv_shows(data)
         total_pages = int(os.environ["total_pages"])
@@ -309,7 +333,6 @@ def tmdb_get_shows(config_path, plex, data, method):
         print("| Processing {}: {} items".format(method, amount))
         for attr, value in data.items():
             print("|            {}: {}".format(attr, value))
-        count = 0
         for x in range(total_pages):
             data["page"] = x + 1
             tmdb_shows = discover.discover_tv_shows(data)
@@ -321,6 +344,26 @@ def tmdb_get_shows(config_path, plex, data, method):
             if count == amount:
                 break
         run_discover(data)
+    elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_trending_daily", "tmdb_trending_weekly"]:
+        trending = Trending()
+        trending.api_key = t_movie.api_key
+        for x in range(int(data / 20) + 1):
+            if method == "tmdb_popular":
+                tmdb_shows = t_tv.popular(x + 1)
+            elif method == "tmdb_top_rated":
+                tmdb_shows = t_tv.top_rated(x + 1)
+            elif method == "tmdb_trending_daily":
+                tmdb_shows = trending.tv_day(x + 1)
+            elif method == "tmdb_trending_weekly":
+                tmdb_shows = trending.tv_week(x + 1)
+            for tshow in tmdb_shows:
+                count += 1
+                t_tvs.append(tshow.id)
+                if count == amount:
+                    break
+            if count == amount:
+                break
+        print("| Processing {}: {} Items".format(method, data))
     else:
         tmdb_id = int(data)
         if method == "tmdb_list":

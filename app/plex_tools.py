@@ -100,22 +100,15 @@ def get_collection(plex, data, exact=None, subtype=None):
                     if selection >= 0:
                         return collection_list[selection]
                     elif selection == -1:
-                        return "No collection selected"
+                        raise ValueError("No collection selected")
                     else:
                         print("| Invalid entry")
                 except (IndexError, ValueError) as E:
                     print("| Invalid entry")
-    elif len(collection_list) == 1:
-        if exact:
-            # if collection_list[0] == data:
-            if collection_list[0].title == data:
-                return collection_list[0]
-            else:
-                return "Collection not in Plex, please update from config first"
-        else:
-            return collection_list[0]
+    elif len(collection_list) == 1 and (exact is None or (exact and collection_list[0].title == data)):
+        return collection_list[0]
     else:
-        return "No collection found"
+        raise ValueError("Collection {} not found".format(data))
 
 def add_to_collection(config_path, plex, method, value, c, map, filters=None):
     movies = []
@@ -150,7 +143,9 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
     elif method == "tautulli" and not Tautulli.valid:
         raise KeyError("| tautulli connection required for {}",format(method))
     elif plex.library_type == "movie":
-        if method == "imdb_list":
+        if method == "plex_collection":
+            movies = value.children
+        elif method == "imdb_list":
             movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
         elif "tmdb" in method:
             movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, method)
@@ -169,7 +164,9 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         else:
             print("| Config Error: {} method not supported".format(method))
     elif plex.library_type == "show":
-        if "tmdb" in method:
+        if method == "plex_collection":
+            shows = value.children
+        elif "tmdb" in method:
             shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, method)
         elif method == "tvdb_show":
             shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
