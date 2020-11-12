@@ -4,23 +4,30 @@ import plex_tools
 import trakt
 import os
 
-def trakt_get_movies(config_path, plex, data, list_type='userlist'):
+elif method == "trakt_list":
+movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
+elif method == "trakt_trending":
+movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, list_type='trending')
+elif method == "trakt_watchlist":
+movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, list_type='watchlist')
+
+def trakt_get_movies(config_path, plex, data, method):
     config_tools.TraktClient(config_path)
-    if list_type == 'userlist':
-        trakt_url = data
-        if trakt_url[-1:] == " ":
-            trakt_url = trakt_url[:-1]
-        trakt_list_path = urlparse(trakt_url).path
-        trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    elif list_type == 'trending':
+    if method == "trakt_trending":
         max_items = int(data)
         trakt_list_items = trakt.Trakt['movies'].trending(per_page=max_items)
-    elif list_type == 'watchlist':
+    elif method == "trakt_watchlist":
         trakt_url = data
         if trakt_url[-1:] == " ":
             trakt_url = trakt_url[:-1]
         trakt_list_path = 'users/{}/watchlist'.format(data)
         trakt_list_items = [movie for movie in trakt.Trakt[trakt_list_path].movies()]
+    else:
+        trakt_url = data
+        if trakt_url[-1:] == " ":
+            trakt_url = trakt_url[:-1]
+        trakt_list_path = urlparse(trakt_url).path
+        trakt_list_items = trakt.Trakt[trakt_list_path].items()
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     imdb_map = {}
@@ -68,23 +75,23 @@ def trakt_get_movies(config_path, plex, data, list_type='userlist'):
         # No movies
         return None, None
 
-def trakt_get_shows(config_path, plex, data, list_type='userlist'):
+def trakt_get_shows(config_path, plex, data, method):
     config_tools.TraktClient(config_path)
-    if list_type == 'userlist':
-        trakt_url = data
-        if trakt_url[-1:] == " ":
-            trakt_url = trakt_url[:-1]
-        trakt_list_path = urlparse(trakt_url).path
-        trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    elif list_type == 'trending':
+    if method == "trakt_trending":
         max_items = int(data)
         trakt_list_items = trakt.Trakt['shows'].trending(per_page=max_items)
-    elif list_type == 'watchlist':
+    elif method == "trakt_watchlist":
         trakt_url = data
         if trakt_url[-1:] == " ":
             trakt_url = trakt_url[:-1]
         trakt_list_path = 'users/{}/watchlist'.format(data)
         trakt_list_items = [show for show in trakt.Trakt[trakt_list_path].shows()]
+    else:
+        trakt_url = data
+        if trakt_url[-1:] == " ":
+            trakt_url = trakt_url[:-1]
+        trakt_list_path = urlparse(trakt_url).path
+        trakt_list_items = trakt.Trakt[trakt_list_path].items()
 
     tvdb_map = {}
     title_ids = []

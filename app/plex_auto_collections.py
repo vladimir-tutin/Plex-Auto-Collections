@@ -307,10 +307,13 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         for m in collections[c]:
             if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
+                map = {}
             elif ("trakt" in m or (("tmdb" in m or "tvdb" in m) and plex.library_type == "show")) and not TraktClient.valid:
                 print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
+                map = {}
             elif m == "tautulli" and not Tautulli.valid:
                 print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
+                map = {}
             elif collections[c][m]:
                 if m in alias:
                     method_name = alias[m]
@@ -959,7 +962,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.5.0")
+print("| Version 2.6.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
