@@ -157,7 +157,9 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         elif method == "trakt_list":
             movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
         elif method == "trakt_trending":
-            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, is_userlist=False)
+            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, list_type='trending')
+        elif method == "trakt_watchlist":
+            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, list_type='watchlist')
         elif method == "tautulli":
             movies, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":
@@ -176,7 +178,9 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         elif method == "trakt_list":
             shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
         elif method == "trakt_trending":
-            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, is_userlist=False)
+            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, list_type='trending')
+        elif method == "trakt_watchlist":
+            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, list_type='watchlist')
         elif method == "tautulli":
             shows, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":

@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.4.8] - 2020-11-11 - [#112](https://github.com/mza921/Plex-Auto-Collections/pull/112)
 ### Added
+- [#72](https://github.com/mza921/Plex-Auto-Collections/issues/72) - `trakt_watchlist` support
 - `auto_refresh_token` Trakt config parameter
+
 ### Fixed
 - [#50](https://github.com/mza921/Plex-Auto-Collections/issues/50) - Trakt access_token refresh
 

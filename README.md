@@ -21,6 +21,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
         - [IMDb List or Search (List Type)](#imdb-list-or-search-list-type)
         - [Trakt List (List Type)](#trakt-list-list-type)
         - [Trakt Trending List (List Type)](#trakt-trending-list-list-type)
+        - [Trakt Watchlist (List Type)](#trakt-watchlist-list-type)
         - [Tautulli List (List Type)](#tautulli-list-list-type)
       - [Collection Filters (Collection Attribute)](#collection-filters-collection-attribute)
       - [Sync Mode (Collection Attribute)](#sync-mode-collection-attribute)
@@ -157,6 +158,7 @@ The only required attribute for each collection is the list type. There are many
 - [IMDb List or Search](#imdb-list-or-search-list-type)
 - [Trakt List](#trakt-list-list-type)
 - [Trakt Trending List](#trakt-trending-list-list-type)
+- [Trakt Watchlist](#trakt-watchlist-list-type)
 - [Tautulli List](#tautulli-list-list-type)
 
 Note that most list types supports multiple lists, with the following exceptions:
@@ -476,6 +478,20 @@ This script can pull a number of items from the Trakt Trending List for [Movies]
 collections:
   Trending:
     trakt_trending: 30
+    sync_mode: sync
+```
+#### Trakt Watchlist (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+This script can pull items from a Trakt user's Watchlist for [Movies](https://trakt.tv/users/me/watchlist) or [Shows](https://trakt.tv/users/me/watchlist). Set the `trakt_watchlist` attribute to `me` to pull your own Watchlist. To pull other users' Watchlists, add their Trakt username to the attribute. The `sync_mode: sync` option is recommended.
+
+```yaml
+collections:
+  Trakt Watchlist:
+    trakt_watchlist: 
+      - me
+      - friendontrakt
     sync_mode: sync
 ```
 

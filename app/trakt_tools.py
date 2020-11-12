@@ -4,18 +4,23 @@ import plex_tools
 import trakt
 import os
 
-def trakt_get_movies(config_path, plex, data, is_userlist=True):
+def trakt_get_movies(config_path, plex, data, list_type='userlist'):
     config_tools.TraktClient(config_path)
-    if is_userlist:
+    if list_type == 'userlist':
         trakt_url = data
         if trakt_url[-1:] == " ":
             trakt_url = trakt_url[:-1]
         trakt_list_path = urlparse(trakt_url).path
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    else:
-        # Trending list
+    elif list_type == 'trending':
         max_items = int(data)
         trakt_list_items = trakt.Trakt['movies'].trending(per_page=max_items)
+    elif list_type == 'watchlist':
+        trakt_url = data
+        if trakt_url[-1:] == " ":
+            trakt_url = trakt_url[:-1]
+        trakt_list_path = 'users/{}/watchlist'.format(data)
+        trakt_list_items = [movie for movie in trakt.Trakt[trakt_list_path].movies()]
     title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     imdb_map = {}
@@ -63,18 +68,23 @@ def trakt_get_movies(config_path, plex, data, is_userlist=True):
         # No movies
         return None, None
 
-def trakt_get_shows(config_path, plex, data, is_userlist=True):
+def trakt_get_shows(config_path, plex, data, list_type='userlist'):
     config_tools.TraktClient(config_path)
-    if is_userlist:
+    if list_type == 'userlist':
         trakt_url = data
         if trakt_url[-1:] == " ":
             trakt_url = trakt_url[:-1]
         trakt_list_path = urlparse(trakt_url).path
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    else:
-        # Trending list
+    elif list_type == 'trending':
         max_items = int(data)
         trakt_list_items = trakt.Trakt['shows'].trending(per_page=max_items)
+    elif list_type == 'watchlist':
+        trakt_url = data
+        if trakt_url[-1:] == " ":
+            trakt_url = trakt_url[:-1]
+        trakt_list_path = 'users/{}/watchlist'.format(data)
+        trakt_list_items = [show for show in trakt.Trakt[trakt_list_path].shows()]
 
     tvdb_map = {}
     title_ids = []

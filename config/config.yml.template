@@ -27,6 +27,9 @@ collections:
   Trakt Trending:
     trakt_trending: 30
     sync_mode: sync
+  Trakt Watchlist:
+    trakt_watchlist: me
+    sync_mode: sync
   Pixar:
     studio: Pixar
     summary: A collection of Pixar movies
@@ -73,7 +76,7 @@ tautulli:
 trakt:
   client_id: ############################
   client_secret: ############################
-  auto_refresh_token: true
+  auto_refresh_token: false
   # Below is filled in automatically when the script is run
   authorization:
     access_token:
