@@ -144,6 +144,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "imdb_list",
         "trakt_list",
         "trakt_trending",
+        "trakt_watchlist",
         "tautulli"
     ]
     plex_searches = [
@@ -426,6 +427,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append((method_name, get_attribute_list(collections[c][m])))
                 elif method_name == "trakt_trending":
                     methods.append((method_name, [regex_first_int(collections[c][m], method_name, default=30)]))
+                elif method_name == "trakt_watchlist":
+                    methods.append((method_name, get_attribute_list(collections[c][m])))
                 elif method_name == "tautulli": #TODO:test
                     try:
                         new_dictionary = {}
@@ -465,7 +468,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 if missing:
                     if libtype == "movie":
                         method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                        if m in ["trakt_list", "tmdb_list"]:
+                        if m in ["trakt_list", "trakt_watchlist", "tmdb_list"]:
                             print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                         elif m == "imdb_list":
                             print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v[0]))
@@ -484,7 +487,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                                 add_to_radarr(config_path, missing)
                     elif libtype == "show":
                         method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
-                        if m in ["trakt_list", "tmdb_list"]:
+                        if m in ["trakt_list", "trakt_watchlist", "tmdb_list"]:
                             print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                         elif m == "trakt_trending":
                             print("| {} missing show{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
@@ -805,7 +808,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.4.7")
+print("| Version 2.5.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
