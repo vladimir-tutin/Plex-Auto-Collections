@@ -4,12 +4,6 @@ import plex_tools
 import trakt
 import os
 
-elif method == "trakt_list":
-movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
-elif method == "trakt_trending":
-movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, list_type='trending')
-elif method == "trakt_watchlist":
-movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, list_type='watchlist')
 
 def trakt_get_movies(config_path, plex, data, method):
     config_tools.TraktClient(config_path)
