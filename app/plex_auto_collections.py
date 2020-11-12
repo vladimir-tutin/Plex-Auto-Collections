@@ -144,8 +144,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_popular",
         "tmdb_top_rated",
         "tmdb_now_playing",
-        "tmdb_trending_daily",
-        "tmdb_trending_weekly",
+        #"tmdb_trending_daily",     #TURNON:Trending
+        #"tmdb_trending_weekly",    #TURNON:Trending
         "tmdb_list",
         "tmdb_movie",
         "tmdb_show",
@@ -241,7 +241,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "language", "with_original_language", "timezone", "sort_by",
         "air_date.gte", "air_date.lte",
         "first_air_date.gte", "first_air_date.lte", "first_air_date_year",
-        "vote_average.gte", "vote_count.gte",
+        "vote_count.gte", "vote_count.lte",
+        "vote_average.gte", "vote_average.lte",
         "with_genres", "without_genres",
         "with_keywords", "without_keywords",
         "with_networks", "with_companies",

@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.5.0
+##### Version 2.6.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -12,10 +12,15 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
     - [Collections](#collections)
       - [List Type](#list-type-collection-attribute)
         - [Plex Search (List Type)](#plex-search-list-type)
+        - [Plex Collection (List Type)](#plex-collection-list-type)
         - [TMDb Collection (List Type)](#tmdb-collection-list-type)
         - [TMDb People (List Type)](#tmdb-people-list-type)
         - [TMDb Company (List Type)](#tmdb-company-list-type)
         - [TMDb Network (List Type)](#tmdb-network-list-type)
+        - [TMDb Popular (List Type)](#tmdb-popular-list-type)
+        - [TMDb Top Rated (List Type)](#tmdb-top-rated-list-type)
+        - [TMDb Now Playing (List Type)](#tmdb-now-playing-list-type)
+        - [TMDb Discover (List Type)](#tmdb-discover-list-type)
         - [TMDb List (List Type)](#tmdb-list-list-type)
         - [TMDb Movie (List Type)](#tmdb-movie-list-type)
         - [TMDb Show (List Type)](#tmdb-show-list-type)
@@ -151,10 +156,15 @@ Each collection is defined by the mapping name which becomes the name of the Ple
 
 The only required attribute for each collection is the list type. There are many different list types to choose from:
 - [Plex Search](#plex-search-list-type)
+- [Plex Collection](#plex-collection-list-type)
 - [TMDb Collection](#tmdb-collection-list-type)
 - [TMDb People](#tmdb-people-list-type)
 - [TMDb Company](#tmdb-company-list-type)
 - [TMDb Network](#tmdb-network-list-type)
+- [TMDb Popular](#tmdb-popular-list-type)
+- [TMDb Top Rated](#tmdb-top-rated-list-type)
+- [TMDb Now Playing](#tmdb-now-playing-list-type)
+- [TMDb Discover](#tmdb-discover-list-type)
 - [TMDb List](#tmdb-list-list-type)
 - [TMDb Movie](#tmdb-movie-list-type)
 - [TMDb Show](#tmdb-show-list-type)
@@ -255,6 +265,28 @@ collections:
 Notes:
 - You can only use each search option once per `plex_search` but you can give the search multiple values.
 - If you want to restrict the search by multiples of the same attribute (i.e. You want every movie that is a Romance and Comedy) try using [filters](#collection-filters-collection-attribute).
+
+#### Plex Collection (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+You can create Collections based on collections already in Plex
+
+```yaml
+collections:
+  Dinosaurs:
+    plex_collection: Jurassic Park
+```
+
+ Note if you want to add multiple collections you have to use a list. Comma separated values will not work.
+
+ ```yaml
+ collections:
+   Dinosaurs:
+     plex_collection:
+       - Jurassic Park
+       - The Land Before Time
+ ```
 
 #### TMDb Collection (List Type)
 
@@ -395,6 +427,201 @@ collections:
     tmdb_network: https://www.themoviedb.org/network/16
 ```
 
+#### TMDb Popular (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+You can build a collection using TMDb's most popular movies/shows by using `tmdb_popular`. The `tmdb_popular` attribute only supports a single integer value. The `sync_mode: sync` option is recommended since the list is continuously updated.
+
+```yaml
+collections:
+  TMDb Trending:
+    tmdb_popular: 30
+    sync_mode: sync
+```
+
+#### TMDb Top Rated (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+You can build a collection using TMDb's top rated movies/shows by using `tmdb_top_rated`. The `tmdb_top_rated` attribute only supports a single integer value. The `sync_mode: sync` option is recommended since the list is continuously updated.
+
+```yaml
+collections:
+  TMDb Top Rated:
+    tmdb_top_rated: 30
+    sync_mode: sync
+```
+
+#### TMDb Now Playing (List Type)
+
+###### Works with Movie Libraries
+
+You can build a collection using TMDb's release_type to get movies that are now in theaters by using `tmdb_now_playing`. The `tmdb_now_playing` attribute only supports a single integer value. The `sync_mode: sync` option is recommended since the list is continuously updated.
+
+```yaml
+collections:
+  TMDb Now Playing:
+    tmdb_now_playing: 30
+    sync_mode: sync
+```
+
+#### TMDb Discover (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+You can use [TMDb's discover engine](https://www.themoviedb.org/documentation/api/discover) to create a collection based on the search for movies/shows using all different sorts of parameters shown below. The parameters are directly from [TMDb Movie Discover](https://developers.themoviedb.org/3/discover/movie-discover) and [TMDb TV Discover](https://developers.themoviedb.org/3/discover/tv-discover)
+
+##### TMDb Discover Parameters For Movies
+- `limit` (Specify how many movies you want returned by the query. Value must be an integer greater then 0. default: 100)
+- `language` (Specify a language to query translatable fields with. pattern: `([a-z]{2})-([A-Z]{2})` default: en-US)
+- `region` (Specify a [ISO 3166-1 code](https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes) to filter release dates. Must be uppercase. pattern: `^[A-Z]{2}$`)
+- `sort_by` (Choose from one of the many available sort options. Allowed Values: `popularity.asc`, `popularity.desc`, `release_date.asc`, `release_date.desc`, `revenue.asc`, `revenue.desc`, `primary_release_date.asc`, `primary_release_date.desc`, `original_title.asc`, `original_title.desc`, `vote_average.asc`, `vote_average.desc`, `vote_count.asc`, `vote_count.desc` default: `popularity.desc`)
+- `certification_country` (Used in conjunction with the certification parameter, use this to specify a country with a valid certification.)
+- `certification` (Filter results with a valid certification from the `certification_country` parameter.)
+- `certification.lte` (Filter and only include movies that have a certification that is less than or equal to the specified value.)
+- `certification.gte` (Filter and only include movies that have a certification that is greater than or equal to the specified value.)
+- `include_adult` (A filter and include or exclude adult movies. Must be `true` or `false`)
+- `primary_release_year` (A filter to limit the results to a specific primary release year. Year must be a 4 digit integer i.e. 1990.)
+- `primary_release_date.gte` (Filter and only include movies that have a primary release date that is greater or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `primary_release_date.lte` (Filter and only include movies that have a primary release date that is less than or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `release_date.gte` (Filter and only include movies that have a release date (looking at all release dates) that is greater or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `release_date.lte` (Filter and only include movies that have a release date (looking at all release dates) that is less than or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `year` (A filter to limit the results to a specific year (looking at all release dates). Year must be a 4 digit integer i.e. 1990.)
+- `vote_count.gte` (Filter and only include movies that have a vote count that is greater or equal to the specified value. Value must be an integer greater then 0.)
+- `vote_count.lte` (Filter and only include movies that have a vote count that is less than or equal to the specified value. Value must be an integer greater then 0.)
+- `vote_average.gte` (Filter and only include movies that have a rating that is greater or equal to the specified value. Value must be a number greater then 0.)
+- `vote_average.lte` (Filter and only include movies that have a rating that is less than or equal to the specified value. Value must be an number greater then 0.)
+- `with_cast` (A comma separated list of person ID's. Only include movies that have one of the ID's added as an actor.)
+- `with_crew` (A comma separated list of person ID's. Only include movies that have one of the ID's added as a crew member.)
+- `with_people` (A comma separated list of person ID's. Only include movies that have one of the ID's added as a either a actor or a crew member.)
+- `with_companies` (A comma separated list of production company ID's. Only include movies that have one of the ID's added as a production company.)
+- `with_genres` (Comma separated value of genre ids that you want to include in the results.)
+- `without_genres` (Comma separated value of genre ids that you want to exclude from the results.)
+- `with_keywords` (A comma separated list of keyword ID's. Only includes movies that have one of the ID's added as a keyword.)
+- `without_keywords` (Exclude items with certain keywords. You can comma and pipe seperate these values to create an 'AND' or 'OR' logic.)
+- `with_runtime.gte` (Filter and only include movies that have a runtime that is greater or equal to a value. Value must be an integer greater then 0.)
+- `with_runtime.lte` (Filter and only include movies that have a runtime that is less than or equal to a value. Value must be an integer greater then 0.)
+- `with_original_language` (Specify an ISO 639-1 string to filter results by their original language value.)
+
+##### TMDb Discover Parameters For Shows
+- `limit` (Specify how many movies you want returned by the query. Value must be an integer greater then 0. default: 100)
+- `language` (Specify a language to query translatable fields with. pattern: `([a-z]{2})-([A-Z]{2})` default: en-US)
+- `sort_by` (Choose from one of the many available sort options. Allowed Values: `vote_average.desc`, `vote_average.asc`, `first_air_date.desc`, `first_air_date.asc`, `popularity.desc`, `popularity.asc` default: `popularity.desc`)
+- `air_date.gte` (Filter and only include TV shows that have a air date (by looking at all episodes) that is greater or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `air_date.lte` (Filter and only include TV shows that have a air date (by looking at all episodes) that is less than or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `first_air_date.gte` (Filter and only include TV shows that have a original air date that is greater or equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. Date must be in the MM/DD/YYYY Format.)
+- `first_air_date.lte` (Filter and only include TV shows that have a original air date that is less than or equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. Date must be in the MM/DD/YYYY Format.)
+- `first_air_date_year` (Filter and only include TV shows that have a original air date year that equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. Year must be a 4 digit integer i.e. 1990.)
+- `include_null_first_air_dates` (Use this filter to include TV shows that don't have an air date while using any of the `first_air_date` filters. Must be `true` or `false`.)
+"- `timezone` (Used in conjunction with the `air_date.gte/lte` filter to calculate the proper UTC offset. default: America/New_York)
+- `vote_count.gte` (Filter and only include TV that have a vote count that is greater or equal to the specified value. Value must be an integer greater then 0.)
+- `vote_count.lte` (Filter and only include TV that have a vote count that is less than or equal to the specified value. Value must be an integer greater then 0.)
+- `vote_average.gte` (Filter and only include TV that have a rating that is greater or equal to the specified value. Value must be a number greater then 0.)
+- `vote_average.lte` (Filter and only include TV that have a rating that is less than or equal to the specified value. Value must be an number greater then 0.)
+- `with_networks` (Comma separated value of network ids that you want to include in the results.)
+- `with_companies` (A comma separated list of production company ID's. Only include movies that have one of the ID's added as a production company.)
+- `with_genres` (Comma separated value of genre ids that you want to include in the results.)
+- `without_genres` (Comma separated value of genre ids that you want to exclude from the results.)
+- `with_keywords` (A comma separated list of keyword ID's. Only includes TV shows that have one of the ID's added as a keyword.)
+- `without_keywords` (Exclude items with certain keywords. You can comma and pipe seperate these values to create an 'AND' or 'OR' logic.)
+- `with_runtime.gte` (Filter and only include TV shows with an episode runtime that is greater than or equal to a value.)
+- `with_runtime.lte` (Filter and only include TV shows with an episode runtime that is less than or equal to a value.)
+- `with_original_language` (Specify an ISO 639-1 string to filter results by their original language value.)
+- `screened_theatrically` (Filter results to include items that have been screened theatrically. Must be `true` or `false`.)
+
+```yaml
+collections:
+  Movies Released in October 2020:
+    tmdb_discover:
+      primary_release_date.gte: 10/01/2020
+      primary_release_date.lte: 10/31/2020
+```
+```yaml
+collections:
+  Popular Movies:
+    tmdb_discover:
+      sort_by: popularity.desc
+```
+```yaml
+collections:
+  Highest Rated R Movies:
+    tmdb_discover:
+      certification_country: US
+      certification: R
+      sort_by: vote_average.desc
+```
+```yaml
+collections:
+  Most Popular Kids Movies:
+    tmdb_discover:
+      certification_country: US
+      certification.lte: G
+      sort_by: popularity.desc
+```
+```yaml
+collections:
+  Highest Rated Movies From 2010:
+    tmdb_discover:
+      primary_release_year: 2010
+      sort_by: vote_average.desc
+```
+```yaml
+collections:
+  Best Dramas From 2014:
+    tmdb_discover:
+      with_genres: 18
+      primary_release_year: 2014
+      sort_by: vote_average.desc
+```
+```yaml
+collections:
+  Highest Rated Science Fiction Movies with Tom Cruise:
+    tmdb_discover:
+      with_genres: 878
+      with_cast: 500
+      sort_by: vote_average.desc
+```
+```yaml
+collections:
+  Highest Grossing Comedy Movies with Will Ferrell:
+    tmdb_discover:
+      with_genres: 35
+      with_cast: 23659
+      sort_by: revenue.desc
+```
+```yaml
+collections:
+  Top Rated Movies with Brad Pitt and Edward Norton:
+    tmdb_discover:
+      with_people: 287,819
+      sort_by: vote_average.desc
+```
+```yaml
+collections:
+  Popular Movies with David Fincher and Rooney Mara:
+    tmdb_discover:
+      with_people: 108916,7467
+      sort_by: popularity.desc
+```
+```yaml
+collections:
+  Top Rated Dramas:
+    tmdb_discover:
+      with_genres: 18
+      sort_by: vote_average.desc
+      vote_count.gte: 10
+```
+```yaml
+collections:
+  Highest Grossing R Movies with Liam Neeson:
+    tmdb_discover:
+      certification_country: US
+      certification: R
+      sort_by: revenue.desc
+      with_cast: 3896
+```
+
 #### TMDb List (List Type)
 
 ###### Works with Movie and TV Show Libraries
@@ -516,7 +743,7 @@ This script can pull a number of items from the Trakt Trending List for [Movies]
 
 ```yaml
 collections:
-  Trending:
+  Trakt Trending:
     trakt_trending: 30
     sync_mode: sync
 ```
