@@ -324,6 +324,7 @@ class TraktClient:
         if TraktClient.valid:
             self.client_id = check_for_attribute(config, "client_id", parent="trakt")
             self.client_secret = check_for_attribute(config, "client_secret", parent="trakt")
+            self.auto_refresh_token = check_for_attribute(config, "auto_refresh_token", parent="trakt")
             self.authorization = config['authorization']
             Trakt.configuration.defaults.client(self.client_id, self.client_secret)
             Trakt.configuration.defaults.oauth.from_response(self.authorization)
@@ -338,43 +339,52 @@ class TraktClient:
                 self.client_secret = check_for_attribute(config, "client_secret", parent="trakt", throw=True)
             except SystemExit as e:
                 fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
+            try:
+                self.auto_refresh_token = check_for_attribute(config, "auto_refresh_token", parent="trakt", var_type="bool", default=False)
+            except SystemExit as e:
+                fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
             if len(fatal_message) > 0:
                 print(fatal_message)
                 TraktClient.valid = False
             else:
+                Trakt.configuration.defaults.client(self.client_id, self.client_secret)
                 if 'authorization' in config and config['authorization']:
                     self.authorization = config['authorization']
                 else:
-                    self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
-
-                Trakt.configuration.defaults.client(self.client_id, self.client_secret)
-                def check_trakt (auth):
-                    with Trakt.configuration.oauth.from_response(auth, refresh=True):
-                        return True if Trakt['users/settings'].get() else False
-
-                if check_trakt(self.authorization):
+                    self.authorization = trakt_helpers.clear_authorization()
+                if trakt_helpers.check_trakt(self.authorization):
+                    # Initial authorization attempt
                     TraktClient.valid = True
                 else:
-                    self.authorization = {'access_token': None, 'token_type': None, 'expires_in': None, 'refresh_token': None, 'scope': None, 'created_at': None}
-                    print("| Stored Authorization Failed")
-
-                    if Config.headless:
-                        print("| Run without --update/-u to configure Trakt")
-                        TraktClient.valid = False
+                    # Try getting a new access_token from the refresh_token
+                    if self.auto_refresh_token and self.authorization['refresh_token']:
+                        self.refreshed_authorization = trakt_helpers.get_refreshed_authorization(self.authorization)
                     else:
-                        try:
-                            self.updated_authorization = trakt_helpers.authenticate(self.authorization)
-                            if check_trakt(self.updated_authorization):
-                                Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
-                                if self.updated_authorization != self.authorization:
-                                    trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
-                                TraktClient.valid = True
-                            else:
-                                TraktClient.valid = False
-                                print("| New Authorization Failed")
-                        except SystemExit as e:
-                            print(e)
+                        self.refreshed_authorization = None
+                    if trakt_helpers.check_trakt(self.refreshed_authorization):
+                        # Save the refreshed authorization 
+                        trakt_helpers.save_authorization(Config(config_path).config_path, self.refreshed_authorization)
+                        TraktClient.valid = True
+                    else:
+                        # Clear everything and re-auth
+                        trakt_helpers.clear_authorization()
+                        if Config.headless:
+                            print("| Run without --update/-u to configure Trakt")
                             TraktClient.valid = False
+                        else:
+                            try:
+                                self.updated_authorization = trakt_helpers.authenticate(self.authorization)
+                                if trakt_helpers.check_trakt(self.updated_authorization):
+                                    Trakt.configuration.defaults.oauth.from_response(self.updated_authorization)
+                                    if self.updated_authorization != self.authorization:
+                                        trakt_helpers.save_authorization(Config(config_path).config_path, self.updated_authorization)
+                                    TraktClient.valid = True
+                                else:
+                                    TraktClient.valid = False
+                                    print("| New Authorization Failed")
+                            except SystemExit as e:
+                                print(e)
+                                TraktClient.valid = False
             print("| Trakt Connection {}".format("Successful" if TraktClient.valid else "Failed"))
 
 
