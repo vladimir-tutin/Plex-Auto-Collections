@@ -143,6 +143,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tvdb_show",
         "imdb_list",
         "trakt_list",
+        "trakt_trending",
         "trakt_watchlist",
         "tautulli"
     ]
