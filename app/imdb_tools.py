@@ -2,14 +2,19 @@ import re
 import requests
 import math
 import sys
+import os
 from urllib.parse import urlparse
 from lxml import html
 from tmdbv3api import TMDb
 from tmdbv3api import Movie
 from tmdbv3api import List
 from tmdbv3api import TV
+from tmdbv3api import Discover
 from tmdbv3api import Collection
+from tmdbv3api import Company
+#from tmdbv3api import Network #TURNON:Trending
 from tmdbv3api import Person
+#from tmdbv3api import Trending #TURNON:Trending
 import config_tools
 import plex_tools
 import trakt
@@ -95,7 +100,7 @@ def imdb_get_movies(config_path, plex, data):
             if not tmdb.api_key == "None":
                 tmdb_id = m.guid.split('themoviedb://')[1].split('?')[0]
                 tmdbapi = movie.details(tmdb_id)
-                imdb_id = tmdbapi.imdb_id
+                imdb_id = tmdbapi.imdb_id if hasattr(tmdbapi, 'imdb_id') else None
             else:
                 imdb_id = None
         elif 'imdb://' in m.guid:
@@ -119,36 +124,93 @@ def imdb_get_movies(config_path, plex, data):
 
     return matched_imdb_movies, missing_imdb_movies
 
-
-def tmdb_get_movies(config_path, plex, data, is_list=False):
-    tmdb_id = int(data)
+def tmdb_get_movies(config_path, plex, data, method):
     t_movs = []
     t_movie = Movie()
     t_movie.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
     if t_movie.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
 
-    tmdb = List() if is_list else Collection()
-    tmdb.api_key = t_movie.api_key
-    t_col = tmdb.details(tmdb_id)
-
-    if is_list:
-        try:
-            for tmovie in t_col:
-                if tmovie.media_type == "movie":
-                    t_movs.append(tmovie.id)
-        except:
-            raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+    count = 0
+    if method == "tmdb_discover":
+        discover = Discover()
+        discover.api_key = t_movie.api_key
+        discover.discover_movies(data)
+        total_pages = int(os.environ["total_pages"])
+        total_results = int(os.environ["total_results"])
+        limit = int(data.pop('limit'))
+        amount = total_results if total_results < limit else limit
+        print("| Processing {}: {} items".format(method, amount))
+        for attr, value in data.items():
+            print("|            {}: {}".format(attr, value))
+        for x in range(total_pages):
+            data["page"] = x + 1
+            tmdb_movies = discover.discover_movies(data)
+            for tmovie in tmdb_movies:
+                count += 1
+                t_movs.append(tmovie.id)
+                if count == amount:
+                    break
+            if count == amount:
+                break
+    elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly"]:
+        #trending = Trending()                  #TURNON:Trending
+        #trending.api_key = t_movie.api_key     #TURNON:Trending
+        for x in range(int(data / 20) + 1):
+            if method == "tmdb_popular":
+                tmdb_movies = t_movie.popular(x + 1)
+            elif method == "tmdb_top_rated":
+                tmdb_movies = t_movie.top_rated(x + 1)
+            elif method == "tmdb_now_playing":
+                tmdb_movies = t_movie.now_playing(x + 1)
+            #elif method == "tmdb_trending_daily":          #TURNON:Trending
+            #    tmdb_movies = trending.movie_day(x + 1)    #TURNON:Trending
+            #elif method == "tmdb_trending_weekly":         #TURNON:Trending
+            #    tmdb_movies = trending.movie_week(x + 1)   #TURNON:Trending
+            for tmovie in tmdb_movies:
+                count += 1
+                t_movs.append(tmovie.id)
+                if count == data:
+                    break
+            if count == data:
+                break
+        print("| Processing {}: {} Items".format(method, data))
     else:
-        try:
-            for tmovie in t_col.parts:
-                t_movs.append(tmovie['id'])
-        except AttributeError:
+        tmdb_id = int(data)
+        if method == "tmdb_list":
+            tmdb = List()
+            tmdb.api_key = t_movie.api_key
             try:
-                t_movie.details(tmdb_id).imdb_id
-                t_movs.append(tmdb_id)
+                t_col = tmdb.details(tmdb_id)
+                tmdb_name = str(t_col)
+                for tmovie in t_col:
+                    if tmovie.media_type == "movie":
+                        t_movs.append(tmovie.id)
             except:
-                raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
+                raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+        elif method == "tmdb_company":
+            tmdb = Company()
+            tmdb.api_key = t_movie.api_key
+            tmdb_name = str(tmdb.details(tmdb_id))
+            company_movies = tmdb.movies(tmdb_id)
+            for tmovie in company_movies:
+                t_movs.append(tmovie.id)
+        else:
+            tmdb = Collection()
+            tmdb.api_key = t_movie.api_key
+            t_col = tmdb.details(tmdb_id)
+            tmdb_name = str(t_col)
+            try:
+                for tmovie in t_col.parts:
+                    t_movs.append(tmovie['id'])
+            except AttributeError:
+                try:
+                    t_movie.details(tmdb_id).imdb_id
+                    tmdb_name = str(t_movie.details(tmdb_id))
+                    t_movs.append(tmdb_id)
+                except:
+                    raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
+        print("| Processing {}: ({}) {}".format(method, tmdb_id, tmdb_name))
 
 
     # Create dictionary of movies and their guid
@@ -250,33 +312,92 @@ def get_tvdb_id_from_tmdb_id(id):
     else:
         return None
 
-def tmdb_get_shows(config_path, plex, data, is_list=False):
+def tmdb_get_shows(config_path, plex, data, method):
     config_tools.TraktClient(config_path)
-
-    tmdb_id = int(data)
 
     t_tvs = []
     t_tv = TV()
     t_tv.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
     if t_tv.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
+    discover = Discover()
+    discover.api_key = t_tv.api_key
 
-    if is_list:
-        tmdb = List()
-        tmdb.api_key = t_tv.api_key
-        try:
-            t_col = tmdb.details(tmdb_id)
-            for ttv in t_col:
-                if ttv.media_type == "tv":
-                    t_tvs.append(ttv.id)
-        except:
-            raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+    count = 0
+    if method == "tmdb_discover":
+        discover.discover_tv_shows(data)
+        total_pages = int(os.environ["total_pages"])
+        total_results = int(os.environ["total_results"])
+        limit = int(data.pop('limit'))
+        amount = total_results if total_results < limit else limit
+        print("| Processing {}: {} items".format(method, amount))
+        for attr, value in data.items():
+            print("|            {}: {}".format(attr, value))
+        for x in range(total_pages):
+            data["page"] = x + 1
+            tmdb_shows = discover.discover_tv_shows(data)
+            for tshow in tmdb_shows:
+                count += 1
+                t_tvs.append(tshow.id)
+                if count == amount:
+                    break
+            if count == amount:
+                break
+        run_discover(data)
+    elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_trending_daily", "tmdb_trending_weekly"]:
+        #trending = Trending()                  #TURNON:Trending
+        #trending.api_key = t_movie.api_key     #TURNON:Trending
+        for x in range(int(data / 20) + 1):
+            if method == "tmdb_popular":
+                tmdb_shows = t_tv.popular(x + 1)
+            elif method == "tmdb_top_rated":
+                tmdb_shows = t_tv.top_rated(x + 1)
+            #elif method == "tmdb_trending_daily":      #TURNON:Trending
+            #    tmdb_shows = trending.tv_day(x + 1)    #TURNON:Trending
+            #elif method == "tmdb_trending_weekly":     #TURNON:Trending
+            #    tmdb_shows = trending.tv_week(x + 1)   #TURNON:Trending
+            for tshow in tmdb_shows:
+                count += 1
+                t_tvs.append(tshow.id)
+                if count == amount:
+                    break
+            if count == amount:
+                break
+        print("| Processing {}: {} Items".format(method, data))
     else:
-        try:
-            t_tv.details(tmdb_id).number_of_seasons
-            t_tvs.append(tmdb_id)
-        except:
-            raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
+        tmdb_id = int(data)
+        if method == "tmdb_list":
+            tmdb = List()
+            tmdb.api_key = t_tv.api_key
+            try:
+                t_col = tmdb.details(tmdb_id)
+                tmdb_name = str(t_col)
+                for ttv in t_col:
+                    if ttv.media_type == "tv":
+                        t_tvs.append(ttv.id)
+            except:
+                raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
+        elif method in ["tmdb_company", "tmdb_network"]:
+            if method == "tmdb_company":
+                tmdb = Company()
+                tmdb.api_key = t_tv.api_key
+                tmdb_name = str(tmdb.details(tmdb_id))
+            else:
+                #tmdb = Network()                           #TURNON:Trending
+                #tmdb.api_key = t_tv.api_key                #TURNON:Trending
+                tmdb_name = ""#str(tmdb.details(tmdb_id))   #TURNON:Trending
+            discover_method = "with_companies" if method == "tmdb_company" else "with_networks"
+            tmdb_shows = discover.discover_tv_shows({discover_method: tmdb_id})
+            for tshow in tmdb_shows:
+                t_tvs.append(tshow.id)
+        else:
+            try:
+                t_tv.details(tmdb_id).number_of_seasons
+                tmdb_name = str(t_tv.details(tmdb_id))
+                t_tvs.append(tmdb_id)
+            except:
+                raise ValueError("| Config Error: TMDb ID: {} not found".format(tmdb_id))
+        print("| Processing {}: ({}) {}".format(method, tmdb_id, tmdb_name))
 
     p_tv_map = {}
     for item in plex.Library.all():
@@ -310,7 +431,7 @@ def tmdb_get_shows(config_path, plex, data, is_list=False):
 
     return matched, missing
 
-def tvdb_get_shows(config_path, plex, data, is_list=False):
+def tvdb_get_shows(config_path, plex, data):
     config_tools.TraktClient(config_path)
 
     id = int(data)

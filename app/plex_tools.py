@@ -100,22 +100,15 @@ def get_collection(plex, data, exact=None, subtype=None):
                     if selection >= 0:
                         return collection_list[selection]
                     elif selection == -1:
-                        return "No collection selected"
+                        raise ValueError("No collection selected")
                     else:
                         print("| Invalid entry")
                 except (IndexError, ValueError) as E:
                     print("| Invalid entry")
-    elif len(collection_list) == 1:
-        if exact:
-            # if collection_list[0] == data:
-            if collection_list[0].title == data:
-                return collection_list[0]
-            else:
-                return "Collection not in Plex, please update from config first"
-        else:
-            return collection_list[0]
+    elif len(collection_list) == 1 and (exact is None or (exact and collection_list[0].title == data)):
+        return collection_list[0]
     else:
-        return "No collection found"
+        raise ValueError("Collection {} not found".format(data))
 
 def add_to_collection(config_path, plex, method, value, c, map, filters=None):
     movies = []
@@ -150,16 +143,14 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
     elif method == "tautulli" and not Tautulli.valid:
         raise KeyError("| tautulli connection required for {}",format(method))
     elif plex.library_type == "movie":
-        if method == "imdb_list":
+        if method == "plex_collection":
+            movies = value.children
+        elif method == "imdb_list":
             movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
-        elif method in ["tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company"]:
+        elif "tmdb" in method:
             movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, method)
-        elif method == "trakt_list":
-            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value)
-        elif method == "trakt_trending":
-            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, list_type='trending')
-        elif method == "trakt_watchlist":
-            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, list_type='watchlist')
+        elif "trakt" in method:
+            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, method)
         elif method == "tautulli":
             movies, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":
@@ -169,18 +160,14 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         else:
             print("| Config Error: {} method not supported".format(method))
     elif plex.library_type == "show":
-        if method == "tmdb_list":
-            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, is_list=True)
-        elif method in ["tmdb_id", "tmdb_show"]:
-            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value)
+        if method == "plex_collection":
+            shows = value.children
+        elif "tmdb" in method:
+            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, method)
         elif method == "tvdb_show":
             shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
-        elif method == "trakt_list":
-            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value)
-        elif method == "trakt_trending":
-            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, list_type='trending')
-        elif method == "trakt_watchlist":
-            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, list_type='watchlist')
+        elif "trakt" in method:
+            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, method)
         elif method == "tautulli":
             shows, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":

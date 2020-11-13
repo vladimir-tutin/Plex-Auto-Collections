@@ -131,12 +131,21 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "collection_sort": "collection_order"
     }
     all_lists = [
-        "plex_search"
+        "plex_search",
+        "plex_collection",
         "tmdb_collection",
         "tmdb_id",
         "tmdb_actor",
-        "tmdb_director"
-        "tmdb_writer"
+        "tmdb_director",
+        "tmdb_writer",
+        "tmdb_company",
+        "tmdb_network",
+        "tmdb_discover",
+        "tmdb_popular",
+        "tmdb_top_rated",
+        "tmdb_now_playing",
+        #"tmdb_trending_daily",     #TURNON:Trending
+        #"tmdb_trending_weekly",    #TURNON:Trending
         "tmdb_list",
         "tmdb_movie",
         "tmdb_show",
@@ -161,13 +170,16 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     show_only_lists = [
         "tmdb_show",
         "tvdb_show"
+        "tmdb_network",
     ]
     movie_only_lists = [
         "tmdb_collection",
         "tmdb_id",
         "tmdb_actor",
+        "tmdb_company",
         "tmdb_director",
         "tmdb_writer",
+        "tmdb_now_playing",
         "tmdb_movie",
         "imdb_list",
     ]
@@ -211,11 +223,53 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "background", "file_background",
         "name_mapping"
     ]
+    discover_movie = [
+        "language", "with_original_language", "region", "sort_by",
+        "certification_country", "certification", "certification.lte", "certification.gte",
+        "include_adult",
+        "primary_release_year", "primary_release_date.gte", "primary_release_date.lte",
+        "release_date.gte", "release_date.lte", "year",
+        "vote_count.gte", "vote_count.lte",
+        "vote_average.gte", "vote_average.lte",
+        "with_cast", "with_crew", "with_people",
+        "with_companies",
+        "with_genres", "without_genres",
+        "with_keywords", "without_keywords",
+        "with_runtime.gte", "with_runtime.lte"
+    ]
+    discover_tv = [
+        "language", "with_original_language", "timezone", "sort_by",
+        "air_date.gte", "air_date.lte",
+        "first_air_date.gte", "first_air_date.lte", "first_air_date_year",
+        "vote_count.gte", "vote_count.lte",
+        "vote_average.gte", "vote_average.lte",
+        "with_genres", "without_genres",
+        "with_keywords", "without_keywords",
+        "with_networks", "with_companies",
+        "with_runtime.gte", "with_runtime.lte",
+        "include_null_first_air_dates",
+        "screened_theatrically"
+    ]
+    discover_movie_sort = [
+        "popularity.asc", "popularity.desc",
+        "release_date.asc", "release_date.desc",
+        "revenue.asc", "revenue.desc",
+        "primary_release_date.asc", "primary_release_date.desc",
+        "original_title.asc", "original_title.desc",
+        "vote_average.asc", "vote_average.desc",
+        "vote_count.asc", "vote_count.desc"
+    ]
+    discover_tv_sort = [
+        "vote_average.desc", "vote_average.asc",
+        "first_air_date.desc", "first_air_date.asc",
+        "popularity.desc", "popularity.asc"
+    ]
     print("|\n| Running collection update press Ctrl+C to abort at anytime")
     for c in collections:
         print("| \n|===================================================================================================|\n|")
         print("| Updating collection: {}...".format(c))
         map = {}
+
         sync_collection = True if plex.sync_mode == "sync" else False
         if "sync_mode" in collections[c]:
             if collections[c]["sync_mode"]:
@@ -230,10 +284,12 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 print("| Config Error: sync_mode attribute is blank")
         if sync_collection == True:
             print("| Sync Mode: sync")
-            plex_collection = get_collection(plex, c, headless)
-            if isinstance(plex_collection, Collections):
+            try:
+                plex_collection = get_collection(plex, c, headless)
                 for item in plex_collection.children:
                     map[item.ratingKey] = item
+            except ValueError as e:
+                print("| Config Error: {}".format(e))
         else:
             print("| Sync Mode: append")
 
@@ -251,10 +307,13 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         for m in collections[c]:
             if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
+                map = {}
             elif ("trakt" in m or (("tmdb" in m or "tvdb" in m) and plex.library_type == "show")) and not TraktClient.valid:
                 print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
+                map = {}
             elif m == "tautulli" and not Tautulli.valid:
                 print("| Config Error: {} skipped. tautulli incorrectly configured".format(m))
+                map = {}
             elif collections[c][m]:
                 if m in alias:
                     method_name = alias[m]
@@ -331,45 +390,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             print("| Config Error: {} attribute not supported".format(detail_name))
                 elif method_name in all_details:
                     check_details(method_name, collections[c][m])
-                elif method_name == "filters":
-                    for filter in collections[c][m]:
-                        if filter in alias or (filter.endswith(".not") and filter[:-4] in alias):
-                            final_filter = (alias[filter[:-4]] + filter[-4:]) if filter.endswith(".not") else alias[filter]
-                            print("| Config Warning: {} filter will run as {}".format(filter, final_filter))
-                        else:
-                            final_filter = filter
-                        if final_filter in movie_only_filters and libtype == "show":
-                            print("| Config Error: {} filter only works for movie libraries".format(final_filter))
-                        elif final_filter in all_filters:
-                            filters.append((final_filter, collections[c][m][filter])) #TODO: validate filters contents
-                        else:
-                            print("| Config Error: {} filter not supported".format(filter))
-                elif method_name == "plex_search":
-                    search = []
-                    searches_used = []
-                    for search_attr in collections[c][m]:
-                        if search_attr in alias or (search_attr.endswith(".not") and search_attr[:-4] in alias):
-                            final_attr = (alias[search_attr[:-4]] + search_attr[-4:]) if search_attr.endswith(".not") else alias[search_attr]
-                            print("| Config Warning: {} plex search attribute will run as {}".format(search_attr, final_attr))
-                        else:
-                            final_attr = search_attr
-                        if final_attr in movie_only_searches and libtype == "show":
-                            print("| Config Error: {} plex search attribute only works for movie libraries".format(final_attr))
-                        elif (final_attr[:-4] if final_attr.endswith(".not") else final_attr) in searches_used:
-                            print("| Config Error: Only one instance of {} can be used try using it as a filter instead".format(final_attr))
-                        elif final_attr in ["year", "year.not"]:
-                            year_pair = get_method_pair_year(final_attr, collections[c][m][search_attr])
-                            if len(year_pair[1]) > 0:
-                                searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
-                                search.append(get_method_pair_int(final_attr, collections[c][m][search_attr], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
-                        elif final_attr in plex_searches:
-                            if final_attr.startswith("tmdb_"):
-                                final_attr = final_attr[5:]
-                            searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
-                            search.append((final_attr, get_attribute_list(collections[c][m][search_attr])))
-                        else:
-                            print("| Config Error: {} plex search attribute not supported".format(search_attr))
-                    methods.append((method_name, [search]))
                 elif method_name in movie_only_searches and libtype == "show":
                     print("| Config Error: {} plex search only works for movie libraries".format(method_name))
                 elif method_name in ["year", "year.not"]:
@@ -396,8 +416,20 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append(("plex_search", [[(method_name[5:], new_ids)]]))
                 elif method_name in plex_searches:
                     methods.append(("plex_search", [[(method_name, get_attribute_list(collections[c][m]))]]))
+                elif method_name == "plex_collection":
+                    collection_list = collections[c][m] if isinstance(collections[c][m], list) else [collections[c][m]]
+                    final_collections = []
+                    for new_collection in collection_list:
+                        try:
+                            final_collections.append(get_collection(plex, new_collection, headless))
+                        except ValueError as e:
+                            print("| Config Error: {} {}".format(method_name, new_collection))
+                    if len(final_collections) > 0:
+                        methods.append(("plex_collection", final_collections))
                 elif method_name == "tmdb_collection":
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Collection ID"))
+                elif method_name == "tmdb_company":
+                    methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb Company ID"))
                 elif method_name == "tmdb_id":
                     id = get_method_pair_tmdb(method_name, collections[c][m], "TMDb ID")
                     if tmdb_id is None:
@@ -407,10 +439,14 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "backdrop_path"), method_name]
                         tmdb_id = id[1][0]
                     methods.append(id)
-                elif method_name == "tmdb_list": #TODO: validate
+                elif method_name in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly"]:
+                    methods.append((method_name, [regex_first_int(collections[c][m], method_name, default=20)]))
+                elif method_name == "tmdb_list":
                     methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb List ID"))
                 elif method_name == "tmdb_movie":
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Movie ID"))
+                elif method_name == "tmdb_network":
+                    methods.append(get_method_pair_int(method_name, collections[c][m], "TMDb Network ID"))
                 elif method_name == "tmdb_show":
                     methods.append(get_method_pair_tmdb(method_name, collections[c][m], "TMDb Show ID"))
                 elif method_name == "tvdb_show":
@@ -429,16 +465,129 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     methods.append((method_name, [regex_first_int(collections[c][m], method_name, default=30)]))
                 elif method_name == "trakt_watchlist":
                     methods.append((method_name, get_attribute_list(collections[c][m])))
-                elif method_name == "tautulli": #TODO:test
-                    try:
-                        new_dictionary = {}
-                        new_dictionary["list_type"] = check_for_attribute(collections[c][m], "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
-                        new_dictionary["list_days"] = check_for_attribute(collections[c][m], "list_days", parent="tautulli", var_type="int", default=30, save=False)
-                        new_dictionary["list_size"] = check_for_attribute(collections[c][m], "list_size", parent="tautulli", var_type="int", default=10, save=False)
-                        new_dictionary["list_buffer"] = check_for_attribute(collections[c][m], "list_buffer", parent="tautulli", var_type="int", default=20, save=False)
-                        methods.append((method_name, [new_dictionary]))
-                    except SystemExit as e:
-                        print(e)
+                elif method_name in ["filters", "plex_search", "tmdb_discover", "tautulli"]:
+                    if isinstance(collections[c][m], dict):
+                        if method_name == "filters":
+                            for filter in collections[c][m]:
+                                if filter in alias or (filter.endswith(".not") and filter[:-4] in alias):
+                                    final_filter = (alias[filter[:-4]] + filter[-4:]) if filter.endswith(".not") else alias[filter]
+                                    print("| Config Warning: {} filter will run as {}".format(filter, final_filter))
+                                else:
+                                    final_filter = filter
+                                if final_filter in movie_only_filters and libtype == "show":
+                                    print("| Config Error: {} filter only works for movie libraries".format(final_filter))
+                                elif final_filter in all_filters:
+                                    filters.append((final_filter, collections[c][m][filter])) #TODO: validate filters contents
+                                else:
+                                    print("| Config Error: {} filter not supported".format(filter))
+                        elif method_name == "plex_search":
+                            search = []
+                            searches_used = []
+                            for search_attr in collections[c][m]:
+                                if search_attr in alias or (search_attr.endswith(".not") and search_attr[:-4] in alias):
+                                    final_attr = (alias[search_attr[:-4]] + search_attr[-4:]) if search_attr.endswith(".not") else alias[search_attr]
+                                    print("| Config Warning: {} plex search attribute will run as {}".format(search_attr, final_attr))
+                                else:
+                                    final_attr = search_attr
+                                if final_attr in movie_only_searches and libtype == "show":
+                                    print("| Config Error: {} plex search attribute only works for movie libraries".format(final_attr))
+                                elif (final_attr[:-4] if final_attr.endswith(".not") else final_attr) in searches_used:
+                                    print("| Config Error: Only one instance of {} can be used try using it as a filter instead".format(final_attr))
+                                elif final_attr in ["year", "year.not"]:
+                                    year_pair = get_method_pair_year(final_attr, collections[c][m][search_attr])
+                                    if len(year_pair[1]) > 0:
+                                        searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
+                                        search.append(get_method_pair_int(final_attr, collections[c][m][search_attr], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
+                                elif final_attr in plex_searches:
+                                    if final_attr.startswith("tmdb_"):
+                                        final_attr = final_attr[5:]
+                                    searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
+                                    search.append((final_attr, get_attribute_list(collections[c][m][search_attr])))
+                                else:
+                                    print("| Config Error: {} plex search attribute not supported".format(search_attr))
+                            methods.append((method_name, [search]))
+                        elif method_name == "tmdb_discover":
+                            new_dictionary = {"limit": 100}
+                            for attr in collections[c][m]:
+                                if collections[c][m][attr]:
+                                    attr_data = collections[c][m][attr]
+                                    if (libtype == "movie" and attr in discover_movie) or (libtype == "show" and attr in discover_tv):
+                                        if attr == "language":
+                                            if re.compile("([a-z]{2})-([A-Z]{2})").match(str(attr_data)):
+                                                new_dictionary[attr] = str(attr_data)
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: {} must match pattern ([a-z]{2})-([A-Z]{2}) e.g. en-US".format(m, attr, attr_data))
+                                        elif attr == "region":
+                                            if re.compile("^[A-Z]{2}$").match(str(attr_data)):
+                                                new_dictionary[attr] = str(attr_data)
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: {} must match pattern ^[A-Z]{2}$ e.g. US".format(m, attr, attr_data))
+                                        elif attr == "sort_by":
+                                            if (libtype == "movie" and attr_data in discover_movie_sort) or (libtype == "show" and attr_data in discover_tv_sort):
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: {} is invalid".format(m, attr, attr_data))
+                                        elif attr == "certification_country":
+                                            if "certification" in collections[c][m] or "certification.lte" in collections[c][m] or "certification.gte" in collections[c][m]:
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: must be used with either certification, certification.lte, or certification.gte".format(m, attr))
+                                        elif attr in ["certification", "certification.lte", "certification.gte"]:
+                                            if "certification_country" in collections[c][m]:
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: must be used with certification_country".format(m, attr))
+                                        elif attr in ["include_adult", "include_null_first_air_dates", "screened_theatrically"]:
+                                            if attr_data is True:
+                                                new_dictionary[attr] = attr_data
+                                        elif attr in ["primary_release_date.gte", "primary_release_date.lte", "release_date.gte", "release_date.lte", "air_date.gte", "air_date.lte", "first_air_date.gte", "first_air_date.lte"]:
+                                            if re.compile("[0-1]?[0-9][/-][0-3]?[0-9][/-][1-2][890][0-9][0-9]").match(str(attr_data)):
+                                                the_date = str(attr_data).split("/") if "/" in str(attr_data) else str(attr_data).split("-")
+                                                new_dictionary[attr] = "{}-{}-{}".format(the_date[2], the_date[0], the_date[1])
+                                            elif re.compile("[1-2][890][0-9][0-9][/-][0-1]?[0-9][/-][0-3]?[0-9]").match(str(attr_data)):
+                                                the_date = str(attr_data).split("/") if "/" in str(attr_data) else str(attr_data).split("-")
+                                                new_dictionary[attr] = "{}-{}-{}".format(the_date[0], the_date[1], the_date[2])
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: {} must match pattern MM/DD/YYYY e.g. 12/25/2020".format(m, attr, attr_data))
+                                        elif attr in ["primary_release_year", "year", "first_air_date_year"]:
+                                            if isinstance(attr_data, int) and 1800 < attr_data and attr_data < 2200:
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: must be a valid year e.g. 1990".format(m, attr))
+                                        elif attr in ["vote_count.gte", "vote_count.lte", "vote_average.gte", "vote_average.lte", "with_runtime.gte", "with_runtime.lte"]:
+                                            if (isinstance(attr_data, int) or isinstance(attr_data, float)) and 0 < attr_data:
+                                                new_dictionary[attr] = attr_data
+                                            else:
+                                                print("| Config Error: Skipping {} attribute {}: must be a valid number greater then 0".format(m, attr))
+                                        elif attr in ["with_cast", "with_crew", "with_people", "with_companies", "with_networks", "with_genres", "without_genres", "with_keywords", "without_keywords", "with_original_language", "timezone"]:
+                                            new_dictionary[attr] = attr_data
+                                        else:
+                                            print("| Config Error: {} attribute {} not supported".format(m, attr))
+                                    elif attr == "limit":
+                                        if isinstance(attr_data, int) and attr_data > 0:
+                                            new_dictionary[attr] = attr_data
+                                        else:
+                                            print("| Config Error: Skipping {} attribute {}: must be a valid number greater then 0".format(m, attr))
+                                    else:
+                                        print("| Config Error: {} attribute {} not supported".format(m, attr))
+                                else:
+                                    print("| Config Error: {} parameter {} is blank".format(m, attr))
+                            if len(new_dictionary) > 1:
+                                methods.append((method_name, [new_dictionary]))
+                            else:
+                                print("| Config Error: {} had no valid fields".format(m))
+                        elif method_name == "tautulli":
+                            try:
+                                new_dictionary = {}
+                                new_dictionary["list_type"] = check_for_attribute(collections[c][m], "list_type", parent="tautulli", test_list=["popular", "watched"], options="| \tpopular (Most Popular List)\n| \twatched (Most Watched List)", throw=True, save=False)
+                                new_dictionary["list_days"] = check_for_attribute(collections[c][m], "list_days", parent="tautulli", var_type="int", default=30, save=False)
+                                new_dictionary["list_size"] = check_for_attribute(collections[c][m], "list_size", parent="tautulli", var_type="int", default=10, save=False)
+                                new_dictionary["list_buffer"] = check_for_attribute(collections[c][m], "list_buffer", parent="tautulli", var_type="int", default=20, save=False)
+                                methods.append((method_name, [new_dictionary]))
+                            except SystemExit as e:
+                                print(e)
+                    else:
+                        print("| Config Error: {} attribute is not a dictionary: {}".format(m, collections[c][m]))
                 elif method_name == "all":
                     methods.append((method_name, [""]))
                 elif method_name != "sync_mode":
@@ -458,7 +607,9 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             for v in values:
                 if m == "imdb_list":
                     print("| \n| Processing {}: {}".format(m, v[0]))
-                elif m != "plex_search":
+                elif m == "plex_collection":
+                    print("| \n| Processing {}: {}".format(m, v.title))
+                elif m not in ["plex_search", "tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company", "tmdb_network", "tmdb_discover", "tmdb_show"]:
                     print("| \n| Processing {}: {}".format(m, v))
                 try:
                     missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)
@@ -505,9 +656,10 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
         print("| ")
 
-        plex_collection = get_collection(plex, c, headless)
-
-        if not isinstance(plex_collection, Collections):
+        try:
+            plex_collection = get_collection(plex, c, headless)
+        except ValueError as e:
+            print("| Config Error: {}".format(e))
             continue       # No collections created with requested criteria
 
         if not no_meta:
@@ -620,162 +772,164 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
 def append_collection(config_path, config_update=None):
     while True:
-        if config_update:
-            collection_name = config_update
-            selected_collection = get_collection(plex, collection_name, True)
-        else:
-            collection_name = input("| Enter collection to add to: ")
-            selected_collection = get_collection(plex, collection_name)
+        selected_collection = None
         try:
-            if not isinstance(selected_collection, str):
-                print("| \"{}\" Selected.".format(selected_collection.title))
-                finished = False
-                while not finished:
-                    try:
-                        collection_type = selected_collection.subtype
-                        if collection_type == 'movie':
-                            method = input("| Add Movie(m), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c), Back(b)?: ")
-                        else:
-                            method = input("| Add Show(s), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c), Back(b)?: ")
-                        if method == "m":
-                            if not config_update:
-                                method = "movie"
-                                value = input("| Enter Movie (Name or Rating Key): ")
-                                if value is int:
-                                    plex_movie = get_movie(plex, int(value))
-                                    print('| +++ Adding %s to collection %s' % (
-                                        plex_movie.title, selected_collection.title))
-                                    plex_movie.addCollection(selected_collection.title)
-                                else:
-                                    results = get_movie(plex, value)
-                                    if len(results) > 1:
-                                        while True:
-                                            i = 1
-                                            for result in results:
-                                                print("| {POS}) {TITLE} - {RATINGKEY}".format(POS=i, TITLE=result.title,
-                                                                                            RATINGKEY=result.ratingKey))
-                                                i += 1
-                                            s = input("| Select movie (N for None): ")
-                                            if int(s):
-                                                s = int(s)
-                                                if len(results) >= s > 0:
-                                                    result = results[s - 1]
-                                                    print('| +++ Adding %s to collection %s' % (
-                                                        result.title, selected_collection.title))
-                                                    result.addCollection(selected_collection.title)
-                                                    break
-                                            else:
-                                                break
+            if config_update:
+                collection_name = config_update
+                selected_collection = get_collection(plex, collection_name, True)
+            else:
+                collection_name = input("| Enter collection to add to: ")
+                selected_collection = get_collection(plex, collection_name)
+        except ValueError as e:
+            print("| Config Error: {}".format(e))
+            break
+
+        try:
+            print("| \"{}\" Selected.".format(selected_collection.title))
+            finished = False
+            while not finished:
+                try:
+                    collection_type = selected_collection.subtype
+                    if collection_type == 'movie':
+                        method = input("| Add Movie(m), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c), Back(b)?: ")
+                    else:
+                        method = input("| Add Show(s), Actor(a), IMDb/TMDb/Trakt List(l), Custom(c), Back(b)?: ")
+                    if method == "m":
+                        if not config_update:
+                            method = "movie"
+                            value = input("| Enter Movie (Name or Rating Key): ")
+                            if value is int:
+                                plex_movie = get_movie(plex, int(value))
+                                print('| +++ Adding %s to collection %s' % (
+                                    plex_movie.title, selected_collection.title))
+                                plex_movie.addCollection(selected_collection.title)
                             else:
-                                print("| Movies in configuration file not yet supported")
+                                results = get_movie(plex, value)
+                                if len(results) > 1:
+                                    while True:
+                                        i = 1
+                                        for result in results:
+                                            print("| {POS}) {TITLE} - {RATINGKEY}".format(POS=i, TITLE=result.title,
+                                                                                        RATINGKEY=result.ratingKey))
+                                            i += 1
+                                        s = input("| Select movie (N for None): ")
+                                        if int(s):
+                                            s = int(s)
+                                            if len(results) >= s > 0:
+                                                result = results[s - 1]
+                                                print('| +++ Adding %s to collection %s' % (
+                                                    result.title, selected_collection.title))
+                                                result.addCollection(selected_collection.title)
+                                                break
+                                        else:
+                                            break
+                        else:
+                            print("| Movies in configuration file not yet supported")
 
-                        # elif method == "s":
-                        #     if not config_update:
-                        #         method = "show"
-                        #         value = input("Enter Show (Name or Rating Key): ")
-                        #         if value is int:
-                        #             plex_show = get_show(int(value))
-                        #             print('+++ Adding %s to collection %s' % (
-                        #                 plex_show.title, selected_collection.title))
-                        #             plex_show.addCollection(selected_collection.title)
-                        #         else:
-                        #             results = get_show(plex, value)
-                        #             if len(results) > 1:
-                        #                 while True:
-                        #                     i = 1
-                        #                     for result in results:
-                        #                         print("{POS}) {TITLE} - {RATINGKEY}".format(POS=i, TITLE=result.title,
-                        #                                                                     RATINGKEY=result.ratingKey))
-                        #                         i += 1
-                        #                     s = input("Select show (N for None): ")
-                        #                     if int(s):
-                        #                         s = int(s)
-                        #                         if len(results) >= s > 0:
-                        #                             result = results[s - 1]
-                        #                             print('+++ Adding %s to collection %s' % (
-                        #                                 result.title, selected_collection.title))
-                        #                             result.addCollection(selected_collection.title)
-                        #                             break
-                        #                     else:
-                        #                         break
-                        #     else:
-                        #         print("Shows in configuration file not yet supported")
+                    # elif method == "s":
+                    #     if not config_update:
+                    #         method = "show"
+                    #         value = input("Enter Show (Name or Rating Key): ")
+                    #         if value is int:
+                    #             plex_show = get_show(int(value))
+                    #             print('+++ Adding %s to collection %s' % (
+                    #                 plex_show.title, selected_collection.title))
+                    #             plex_show.addCollection(selected_collection.title)
+                    #         else:
+                    #             results = get_show(plex, value)
+                    #             if len(results) > 1:
+                    #                 while True:
+                    #                     i = 1
+                    #                     for result in results:
+                    #                         print("{POS}) {TITLE} - {RATINGKEY}".format(POS=i, TITLE=result.title,
+                    #                                                                     RATINGKEY=result.ratingKey))
+                    #                         i += 1
+                    #                     s = input("Select show (N for None): ")
+                    #                     if int(s):
+                    #                         s = int(s)
+                    #                         if len(results) >= s > 0:
+                    #                             result = results[s - 1]
+                    #                             print('+++ Adding %s to collection %s' % (
+                    #                                 result.title, selected_collection.title))
+                    #                             result.addCollection(selected_collection.title)
+                    #                             break
+                    #                     else:
+                    #                         break
+                    #     else:
+                    #         print("Shows in configuration file not yet supported")
 
-                        elif method == "a":
-                            method = "actors"
-                            value = input("| Enter Actor Name: ")
-                            try:
-                                a_rkey = get_actor_rkey(plex, value)
+                    elif method == "a":
+                        method = "actors"
+                        value = input("| Enter Actor Name: ")
+                        try:
+                            a_rkey = get_actor_rkey(plex, value)
+                            if config_update:
+                                modify_config(config_path, collection_name, method, value)
+                            else:
+                                add_to_collection(config_path, plex, method, a_rkey, selected_collection.title)
+                        except ValueError as e:
+                            print(e)
+
+                    elif method == "l":
+                        l_type = input("| Enter list type IMDb(i) TMDb(t) Trakt(k): ")
+                        if l_type == "i":
+                            l_type = "IMDb"
+                            method = "imdb_list"
+                        elif l_type == "t":
+                            l_type = "TMDb"
+                            method = "tmdb_collection"
+                        elif l_type == "k":
+                            l_type = "Trakt"
+                            method = "trakt_list"
+                        else:
+                            return
+                        url = input("| Enter {} List URL: ".format(l_type)).strip()
+                        print("| Processing {} List: {}".format(l_type, url))
+                        if config_update:
+                            modify_config(config_path, collection_name, method, url)
+                        else:
+                            missing = add_to_collection(config_path, plex, method, url, selected_collection.title)
+                            if missing:
+                                if collection_type == 'movie':
+                                    print("| {} missing movies from {} List: {}".format(len(missing), l_type, url))
+                                    if input("| Add missing movies to Radarr? (y/n)").upper() == "Y":
+                                        add_to_radarr(config_path, missing)
+                                # elif collection_type == 'show':
+                                #     print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
+                                #     if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
+                                #         add_to_sonarr(missing_shows)
+                            print("| Bad {} List URL".format(l_type))
+
+                    elif method == "c":
+                        print("| Please read the below link to see valid search types. "
+                              "Please note not all have been tested")
+                        print(
+                            "| https://python-plexapi.readthedocs.io/en/latest/modules/video.html?highlight=plexapi.video.Movie#plexapi.video.Movie")
+                        while True:
+                            method = input("| Enter Search method (q to quit): ")
+                            if method in "quit":
+                                break
+                            m_search = "  " + method + " "
+                            if m_search in Movie.__doc__ or hasattr(Movie, m_search):
+                                if method[-1:] == "s":
+                                    method_p = method[:-1]
+                                else:
+                                    method_p = method
+                                value = input("| Enter {}: ".format(method_p))
                                 if config_update:
                                     modify_config(config_path, collection_name, method, value)
                                 else:
-                                    add_to_collection(config_path, plex, method, a_rkey, selected_collection.title)
-                            except ValueError as e:
-                                print(e)
-
-                        elif method == "l":
-                            l_type = input("| Enter list type IMDb(i) TMDb(t) Trakt(k): ")
-                            if l_type == "i":
-                                l_type = "IMDb"
-                                method = "imdb_list"
-                            elif l_type == "t":
-                                l_type = "TMDb"
-                                method = "tmdb_collection"
-                            elif l_type == "k":
-                                l_type = "Trakt"
-                                method = "trakt_list"
+                                    add_to_collection(config_path, plex, method, value, selected_collection.title)
+                                break
                             else:
-                                return
-                            url = input("| Enter {} List URL: ".format(l_type)).strip()
-                            print("| Processing {} List: {}".format(l_type, url))
-                            if config_update:
-                                modify_config(config_path, collection_name, method, url)
-                            else:
-                                missing = add_to_collection(config_path, plex, method, url, selected_collection.title)
-                                if missing:
-                                    if collection_type == 'movie':
-                                        print("| {} missing movies from {} List: {}".format(len(missing), l_type, url))
-                                        if input("| Add missing movies to Radarr? (y/n)").upper() == "Y":
-                                            add_to_radarr(config_path, missing)
-                                    # elif collection_type == 'show':
-                                    #     print("{} missing shows from {} List: {}".format(len(missing_shows), l_type, url))
-                                    #     if input("Add missing shows to Sonarr? (y/n)").upper() == "Y":
-                                    #         add_to_sonarr(missing_shows)
-                                print("| Bad {} List URL".format(l_type))
-
-                        elif method == "c":
-                            print("| Please read the below link to see valid search types. "
-                                  "Please note not all have been tested")
-                            print(
-                                "| https://python-plexapi.readthedocs.io/en/latest/modules/video.html?highlight=plexapi.video.Movie#plexapi.video.Movie")
-                            while True:
-                                method = input("| Enter Search method (q to quit): ")
-                                if method in "quit":
-                                    break
-                                m_search = "  " + method + " "
-                                if m_search in Movie.__doc__ or hasattr(Movie, m_search):
-                                    if method[-1:] == "s":
-                                        method_p = method[:-1]
-                                    else:
-                                        method_p = method
-                                    value = input("| Enter {}: ".format(method_p))
-                                    if config_update:
-                                        modify_config(config_path, collection_name, method, value)
-                                    else:
-                                        add_to_collection(config_path, plex, method, value, selected_collection.title)
-                                    break
-                                else:
-                                    print("| Search method did not match an attribute for plexapi.video.Movie")
-                    except TypeError:
-                        print("| Bad {} URL".format(l_type))
-                    except KeyError as e:
-                        print("| " + str(e))
-                    if input("| Add more to collection? (y/n): ") == "n":
-                        finished = True
-                break
-            else:
-                print("| " + selected_collection)
-                break
+                                print("| Search method did not match an attribute for plexapi.video.Movie")
+                except TypeError:
+                    print("| Bad {} URL".format(l_type))
+                except KeyError as e:
+                    print("| " + str(e))
+                if input("| Add more to collection? (y/n): ") == "n":
+                    finished = True
+                    break
         except AttributeError:
             print("| No collection found")
 
@@ -808,11 +962,10 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.5.0")
+print("| Version 2.6.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 if args.config_path and os.path.exists(args.config_path):
     config_path = os.path.abspath(args.config_path)    # Set config_path from command line switch
@@ -831,6 +984,7 @@ if args.update:
     config = Config(config_path, headless=True)
     plex = Plex(config_path)
     update_from_config(config_path, plex, True, args.no_meta, args.no_images)
+    print("|\n|===================================================================================================|")
     sys.exit(0)
 
 config = Config(config_path)
@@ -920,24 +1074,23 @@ while not mode == "q":
         elif mode == "-":
             print("|\n|===================================================================================================|")
             data = input("| \n| Enter collection name to search for (blank for all): ")
-            collection = get_collection(plex, data)
-            if not isinstance(collection, str):
-                delete_collection(collection)
-            else:
-                print("| " + collection)
+            try:
+                delete_collection(get_collection(plex, data))
+            except ValueError as e:
+                print("| Config Error: {}".format(e))
 
         elif mode == "s":
             print("|\n|===================================================================================================|")
             data = input("| \n| Enter collection name to search for (blank for all): ")
-            collection = get_collection(plex, data)
-            if not isinstance(collection, str):
+            try:
+                collection = get_collection(plex, data)
                 print("| Found {} collection {}".format(collection.subtype, collection.title))
                 items = collection.children
                 print("| {}s in collection: ".format(collection.subtype).capitalize())
                 for i, m in enumerate(items):
                     print("| {}) {}".format(i + 1, m.title))
-            else:
-                print("| " + collection)
+            except ValueError as e:
+                print("| Error: {}".format(e))
     except KeyboardInterrupt:
         print()
         pass

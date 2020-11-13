@@ -37,6 +37,10 @@ collections:
     content_rating: G
     collection_mode: show_items
     collection_order: alpha
+  Studio Ghibli:
+    tmdb_company: https://www.themoviedb.org/company/10342
+  CBS:
+    tmdb_network: https://www.themoviedb.org/network/16
   90s Comedies:
     plex_search:
       year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
