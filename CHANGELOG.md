@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Created a mapping for IMDb ID to Plex Rating Key once each run instead of every time tmdb, imdb, tvdb, or trakt list was run.
 
+### Fixed
+- [#109](https://github.com/mza921/Plex-Auto-Collections/issues/109) - The Cache shouldn't be created unless it has to be
+
 ## [2.6.0] - 2020-11-12 - [#113](https://github.com/mza921/Plex-Auto-Collections/pull/113)
 ### Added
 - [#107](https://github.com/mza921/Plex-Auto-Collections/issues/107) - Added `plex_collection`
