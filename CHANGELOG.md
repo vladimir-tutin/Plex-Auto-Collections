@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2020-11-14 - [#115](https://github.com/mza921/Plex-Auto-Collections/pull/115)
+### Changed
+- Created a mapping for IMDb ID to Plex Rating Key once each run instead of every time tmdb, imdb, tvdb, or trakt list was run.
+
 ## [2.6.0] - 2020-11-12 - [#113](https://github.com/mza921/Plex-Auto-Collections/pull/113)
 ### Added
 - [#107](https://github.com/mza921/Plex-Auto-Collections/issues/107) - Added `plex_collection`

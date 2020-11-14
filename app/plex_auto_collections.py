@@ -11,6 +11,8 @@ from plexapi.video import Show
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
 from plexapi.library import Collections
+from plex_tools import get_movie_map
+from plex_tools import get_show_map
 from plex_tools import add_to_collection
 from plex_tools import delete_collection
 from plex_tools import get_actor_rkey
@@ -29,6 +31,7 @@ from config_tools import modify_config
 from config_tools import check_for_attribute
 from radarr_tools import add_to_radarr
 from urllib.parse import urlparse
+
 
 def regex_first_int(data, method, id_type="number", default=None):
     try:
@@ -104,12 +107,16 @@ def get_method_pair_year(method_to_parse, values_to_parse):
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
     collections = config.collections
-    if isinstance(plex.Library, MovieSection):
-        libtype = "movie"
-    elif isinstance(plex.Library, ShowSection):
-        libtype = "show"
     if not headless:
         print("|\n|===================================================================================================|")
+    if isinstance(plex.Library, MovieSection):
+        libtype = "movie"
+        print("|\n| Processing Plex Movies")
+        plex_map = get_movie_map(config_path, plex)
+    elif isinstance(plex.Library, ShowSection):
+        libtype = "show"
+        print("|\n| Processing Plex Shows")
+        plex_map = get_show_map(config_path, plex)
     alias = {
         "actors": "actor", "role": "actor", "roles": "actor",
         "content_ratings": "content_rating", "contentRating": "content_rating", "contentRatings": "content_rating",
@@ -423,7 +430,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         try:
                             final_collections.append(get_collection(plex, new_collection, headless))
                         except ValueError as e:
-                            print("| Config Error: {} {}".format(method_name, new_collection))
+                            print("| Config Error: {} {} Not Found".format(method_name, new_collection))
                     if len(final_collections) > 0:
                         methods.append(("plex_collection", final_collections))
                 elif method_name == "tmdb_collection":
@@ -612,7 +619,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 elif m not in ["plex_search", "tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company", "tmdb_network", "tmdb_discover", "tmdb_show"]:
                     print("| \n| Processing {}: {}".format(m, v))
                 try:
-                    missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)
+                    missing, map = add_to_collection(config_path, plex, m, v, c, plex_map, map, filters)
                 except (KeyError, ValueError, SystemExit) as e:
                     print(e)
                     missing = False
@@ -962,7 +969,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.6.0")
+print("| Version 2.6.1")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))

@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.6.0
+##### Version 2.6.1
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -756,7 +756,7 @@ This script can pull items from a Trakt user's Watchlist for [Movies](https://tr
 ```yaml
 collections:
   Trakt Watchlist:
-    trakt_watchlist: 
+    trakt_watchlist:
       - me
       - friendontrakt
     sync_mode: sync

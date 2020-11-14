@@ -6,6 +6,7 @@ from plexapi.library import ShowSection
 from datetime import datetime, timedelta
 import imdb_tools
 import trakt_tools
+import trakt
 from config_tools import Config
 from config_tools import TMDB
 from config_tools import TraktClient
@@ -14,9 +15,17 @@ from bs4 import BeautifulSoup
 from urllib.request import Request
 from urllib.request import urlopen
 from urllib.parse import urlparse
+from tmdbv3api import TMDb
+from tmdbv3api import Movie as TMDb_Movie
 import os
 import sqlite3
 
+
+def adjust_space(old_length, display_title):
+    space_length = old_length - len(display_title)
+    if space_length > 0:
+        display_title += " " * space_length
+    return display_title
 
 def get_movie(plex, data):
     # If an int is passed as data, assume it is a movie's rating key
@@ -83,6 +92,91 @@ def get_actor_rkey(plex, data):
     except UnboundLocalError:
         raise ValueError("| Config Error: Actor: {} not found".format(search))
 
+def get_movie_map(config_path, plex):
+    movie_map = {}
+    current_length = 0
+    current_count = 0
+    if TMDB.valid:
+        tmdb = TMDb()
+        tmdb.api_key = TMDB(config_path).apikey
+        tmovie = TMDb_Movie()
+    plex_movies = plex.Library.all()
+    created = False
+    for m in plex_movies:
+        current_count += 1
+        print_display = "| Processing: {}/{} {}".format(current_count, len(plex_movies), m.title)
+        print(adjust_space(current_length, print_display), end="\r")
+        current_length = len(print_display)
+        guid = urlparse(m.guid)
+        item_type = guid.scheme.split('.')[-1]
+        if item_type == 'plex':
+            if created == False:
+                create_cache()
+                created = True
+            imdb_id = query_cache(config_path, m.guid, 'imdb_id')
+            if not imdb_id:
+                imdb_id, tmdb_id = alt_id_lookup(plex, m)
+                print(adjust_space(current_length, "| Cache | + | {} | {} | {} | {}".format(m.guid, imdb_id, tmdb_id, m.title)))
+                update_cache(config_path, m.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
+        elif item_type == 'imdb':
+            imdb_id = guid.netloc
+        elif item_type == 'themoviedb':
+            tmdb_id = guid.netloc
+            imdb_id = None
+            if TMDB.valid and imdb_id is None:
+                tmdbapi = tmovie.details(tmdb_id)
+                if hasattr(tmdbapi, 'imdb_id'):
+                    imdb_id = tmdbapi.imdb_id
+            if TraktClient.valid and imdb_id is None:
+                lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
+                if lookup:
+                    if isinstance(lookup, list):
+                        imdb_id = lookup[0].get_key('imdb')
+                    else:
+                        imdb_id = lookup.get_key('imdb')
+        else:
+            imdb_id = None
+        if imdb_id:
+            movie_map[imdb_id] = m.ratingKey
+        else:
+            print(adjust_space(current_length, "| Unable to map IMDb ID for {} [GUID]: {}".format(m.title, m.guid)))
+    print(adjust_space(current_length, "| Processed {} Movies".format(len(plex_movies))))
+    return movie_map
+
+def get_show_map(config_path, plex):
+    show_map = {}
+    current_length = 0
+    current_count = 0
+    if TMDB.valid:
+        tmdb = TMDb()
+        tmdb.api_key = TMDB(config_path).apikey
+    plex_shows = plex.Library.all()
+    for s in plex_shows:
+        current_count += 1
+        print_display = "| Processing: {}/{} {}".format(current_count, len(plex_shows), s.title)
+        print(adjust_space(current_length, print_display), end="\r")
+        current_length = len(print_display)
+        guid = urlparse(s.guid)
+        item_type = guid.scheme.split('.')[-1]
+        if item_type == 'thetvdb':
+            tvdb_id = guid.netloc
+        elif item_type == 'themoviedb' and TraktClient.valid:
+            tmdb_id = guid.netloc
+            lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')
+            if lookup:
+                lookup = lookup[0] if isinstance(lookup, list) else lookup
+                tvdb_id = lookup.get_key('tvdb')
+            else:
+                tvdb_id = None
+        else:
+            tvdb_id = None
+        if tvdb_id:
+            show_map[tvdb_id] = s.ratingKey
+        else:
+            print(adjust_space(current_length, "| Unable to map TVDb ID for {} [GUID]: {}".format(s.title, s.guid)))
+    print(adjust_space(current_length, "| Processed {} Shows".format(len(plex_shows))))
+    return show_map
+
 # subtype can be 'movie', 'show', or None (movie/tv combined)
 def get_collection(plex, data, exact=None, subtype=None):
     collection_list = plex.Library.search(title=data, libtype="collection")
@@ -105,12 +199,14 @@ def get_collection(plex, data, exact=None, subtype=None):
                         print("| Invalid entry")
                 except (IndexError, ValueError) as E:
                     print("| Invalid entry")
-    elif len(collection_list) == 1 and (exact is None or (exact and collection_list[0].title == data)):
+    elif len(collection_list) == 1 and (exact is None or collection_list[0].title == data):
         return collection_list[0]
     else:
-        raise ValueError("Collection {} not found".format(data))
+        raise ValueError("Collection {} Not Found".format(data))
 
-def add_to_collection(config_path, plex, method, value, c, map, filters=None):
+def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=None, filters=None):
+    if map is None:
+        map = {}
     movies = []
     shows = []
     items = []
@@ -143,14 +239,16 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
     elif method == "tautulli" and not Tautulli.valid:
         raise KeyError("| tautulli connection required for {}",format(method))
     elif plex.library_type == "movie":
+        if plex_map is None:
+            plex_map = get_movie_map()
         if method == "plex_collection":
             movies = value.children
         elif method == "imdb_list":
-            movies, missing = imdb_tools.imdb_get_movies(config_path, plex, value)
+            movies, missing = imdb_tools.imdb_get_movies(config_path, plex, plex_map, value)
         elif "tmdb" in method:
-            movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, value, method)
+            movies, missing = imdb_tools.tmdb_get_movies(config_path, plex, plex_map, value, method)
         elif "trakt" in method:
-            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, value, method)
+            movies, missing = trakt_tools.trakt_get_movies(config_path, plex, plex_map, value, method)
         elif method == "tautulli":
             movies, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":
@@ -160,14 +258,16 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
         else:
             print("| Config Error: {} method not supported".format(method))
     elif plex.library_type == "show":
+        if plex_map is None:
+            plex_map = get_show_map()
         if method == "plex_collection":
             shows = value.children
         elif "tmdb" in method:
-            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, value, method)
+            shows, missing = imdb_tools.tmdb_get_shows(config_path, plex, plex_map, value, method)
         elif method == "tvdb_show":
-            shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, value)
+            shows, missing = imdb_tools.tvdb_get_shows(config_path, plex, plex_map, value)
         elif "trakt" in method:
-            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, value, method)
+            shows, missing = trakt_tools.trakt_get_shows(config_path, plex, plex_map, value, method)
         elif method == "tautulli":
             shows, missing = imdb_tools.get_tautulli(config_path, plex, value)
         elif method == "all":
@@ -215,7 +315,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             if filters:
                 for f in filters:
                     print_display = "| Filtering {}/{} {}".format(display_count, movie_max, current_m.title)
-                    print(imdb_tools.adjust_space(current_length, print_display), end = "\r")
+                    print(adjust_space(current_length, print_display), end = "\r")
                     current_length = len(print_display)
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
@@ -264,8 +364,8 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     map[current_m.ratingKey] = None
                 else:
                     current_m.addCollection(c)
-                print(imdb_tools.adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_m in fs else "+", current_m.title)))
-        print(imdb_tools.adjust_space(current_length, "| Processed {} Movies".format(movie_max)))
+                print(adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_m in fs else "+", current_m.title)))
+        print(adjust_space(current_length, "| Processed {} Movies".format(movie_max)))
     elif plex.library_type == "movie":
         print("| No movies found")
 
@@ -287,7 +387,7 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
             if filters:
                 for f in filters:
                     print_display = "| Filtering {}/{} {}".format(show_count, show_max, current_s.title)
-                    print(imdb_tools.adjust_space(current_length, print_display), end = "\r")
+                    print(adjust_space(current_length, print_display), end = "\r")
                     current_length = len(print_display)
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
@@ -336,8 +436,8 @@ def add_to_collection(config_path, plex, method, value, c, map, filters=None):
                     map[current_s.ratingKey] = None
                 else:
                     current_s.addCollection(c)
-                print(imdb_tools.adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_s in fs else "+", current_s.title)))
-        print(imdb_tools.adjust_space(current_length, "| Processed {} Shows".format(show_max)))
+                print(adjust_space(current_length, "| {} Collection | {} | {}".format(c, "=" if current_s in fs else "+", current_s.title)))
+        print(adjust_space(current_length, "| Processed {} Shows".format(show_max)))
     elif plex.library_type == "show":
         print("| No shows found")
 
