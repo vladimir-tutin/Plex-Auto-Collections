@@ -111,7 +111,7 @@ def get_movie_map(config_path, plex):
         item_type = guid.scheme.split('.')[-1]
         if item_type == 'plex':
             if created == False:
-                create_cache()
+                create_cache(config_path)
                 created = True
             imdb_id = query_cache(config_path, m.guid, 'imdb_id')
             if not imdb_id:
