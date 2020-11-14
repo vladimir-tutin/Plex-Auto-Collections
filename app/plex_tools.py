@@ -239,7 +239,7 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
     elif method == "tautulli" and not Tautulli.valid:
         raise KeyError("| tautulli connection required for {}",format(method))
     elif plex.library_type == "movie":
-        if plex_map is None:
+        if plex_map is None and ("imdb" in method or "tmdb" in method or "trakt" in method):
             plex_map = get_movie_map()
         if method == "plex_collection":
             movies = value.children
@@ -258,7 +258,7 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
         else:
             print("| Config Error: {} method not supported".format(method))
     elif plex.library_type == "show":
-        if plex_map is None:
+        if plex_map is None and ("tvdb" in method or "tmdb" in method or "trakt" in method):
             plex_map = get_show_map()
         if method == "plex_collection":
             shows = value.children
