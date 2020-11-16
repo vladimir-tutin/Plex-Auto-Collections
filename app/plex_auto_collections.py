@@ -356,12 +356,12 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         posters_found.append(["url", check_value, check_name])
                     elif check_name == "tmdb_poster":
                         try:
-                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "poster_path"), check_name])
+                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "poster"), check_name])
                         except ValueError as e:
                             print(e)
                     elif check_name == "tmdb_profile":
                         try:
-                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "profile_path"), check_name])
+                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "profile"), check_name])
                         except ValueError as e:
                             print(e)
                     elif check_name == "file_poster":
@@ -373,7 +373,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         backgrounds_found.append(["url", check_value, check_name])
                     elif check_name == "tmdb_background":
                         try:
-                            backgrounds_found.append(["url", tmdb_get_metadata(config_path, check_value, "backdrop_path"), check_name])
+                            backgrounds_found.append(["url", tmdb_get_metadata(config_path, check_value, "backdrop"), check_name])
                         except ValueError as e:
                             print(e)
                     elif check_name == "file_background":
@@ -412,7 +412,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             if person_id is None:
                                 if "summary" not in details:
                                     details["summary"] = tmdb_get_metadata(config_path, id, "biography")
-                                details["poster"] = ["url", tmdb_get_metadata(config_path, id, "profile_path"), method_name]
+                                details["poster"] = ["url", tmdb_get_metadata(config_path, id, "profile"), method_name]
                                 person_id = id
                                 person_method = method_name
                             if method_name == "tmdb_actor":
@@ -441,9 +441,18 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     id = get_method_pair_tmdb(method_name, collections[c][m], "TMDb ID")
                     if tmdb_id is None:
                         if "summary" not in details:
-                            details["summary"] = tmdb_get_metadata(config_path, id[1][0], "overview")
-                        details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "poster_path"), method_name]
-                        details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "backdrop_path"), method_name]
+                            try:
+                                details["summary"] = tmdb_get_metadata(config_path, id[1][0], "overview")
+                            except ValueError as e:
+                                print(e)
+                        try:
+                            details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "poster"), method_name]
+                        except ValueError as e:
+                            print(e)
+                        try:
+                            details["background"] = ["url", tmdb_get_metadata(config_path, id[1][0], "backdrop"), method_name]
+                        except ValueError as e:
+                            print(e)
                         tmdb_id = id[1][0]
                     methods.append(id)
                 elif method_name in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly"]:

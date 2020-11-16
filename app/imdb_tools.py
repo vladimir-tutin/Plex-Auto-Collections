@@ -332,49 +332,55 @@ def tvdb_get_shows(config_path, plex, data):
 
 def tmdb_get_metadata(config_path, data, type):
     # Instantiate TMDB objects
-    id = int(data)
+    tmdb_id = int(data)
 
-    tmdb_url_prefix = "https://image.tmdb.org/t/p/original"
     api_key = config_tools.TMDB(config_path).apikey
     language = config_tools.TMDB(config_path).language
     is_movie = config_tools.Plex(config_path).library_type == "movie"
 
-    if type in ["overview", "poster_path", "backdrop_path"]:
+    if type in ["overview", "poster", "backdrop"]:
         collection = Collection()
         collection.api_key = api_key
         collection.language = language
         try:
             if type == "overview":
-                return collection.details(id).overview
-            elif type == "poster_path":
-                return tmdb_url_prefix + collection.details(id).poster_path
-            elif type == "backdrop_path":
-                return tmdb_url_prefix + collection.details(id).backdrop_path
+                meta = collection.details(tmdb_id).overview
+            elif type == "poster":
+                meta = collection.details(tmdb_id).poster_path
+            elif type == "backdrop":
+                meta = collection.details(tmdb_id).backdrop_path
         except AttributeError:
             media = Movie() if is_movie else TV()
             media.api_key = api_key
             media.language = language
             try:
                 if type == "overview":
-                    return media.details(id).overview
-                elif type == "poster_path":
-                    return tmdb_url_prefix + media.details(id).poster_path
-                elif type == "backdrop_path":
-                    return tmdb_url_prefix + media.details(id).backdrop_path
+                    meta = media.details(tmdb_id).overview
+                elif type == "poster":
+                    meta = media.details(tmdb_id).poster_path
+                elif type == "backdrop":
+                    meta = media.details(tmdb_id).backdrop_path
             except AttributeError:
-                raise ValueError("| Config Error: TMBd {} ID: {} not found".format("Movie/Collection" if is_movie else "Show", id))
-    elif type in ["biography", "profile_path", "name"]:
+                raise ValueError("| TMDb Error: TMBd {} ID: {} not found".format("Movie/Collection" if is_movie else "Show", tmdb_id))
+    elif type in ["biography", "profile", "name"]:
         person = Person()
         person.api_key = api_key
         person.language = language
         try:
             if type == "biography":
-                return person.details(id).biography
-            elif type == "profile_path":
-                return tmdb_url_prefix + person.details(id).profile_path
+                meta = person.details(tmdb_id).biography
+            elif type == "profile":
+                meta = person.details(tmdb_id).profile_path
             elif type == "name":
-                return person.details(id).name
+                meta = person.details(tmdb_id).name
         except AttributeError:
-            raise ValueError("| Config Error: TMBd Actor ID: {} not found".format(id))
+            raise ValueError("| TMDb Error: TMBd Actor ID: {} not found".format(tmdb_id))
     else:
         raise RuntimeError("type {} not yet supported in tmdb_get_metadata".format(type))
+
+    if meta is None:
+        raise ValueError("| TMDb Error: TMDB ID {} has no {}".format(tmdb_id, type))
+    elif type in ["profile", "poster", "backdrop"]:
+        return "https://image.tmdb.org/t/p/original" + meta
+    else:
+        return meta
