@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [#109](https://github.com/mza921/Plex-Auto-Collections/issues/109) - The Cache shouldn't be created unless it has to be
+- [#117](https://github.com/mza921/Plex-Auto-Collections/issues/117) - Typo
+- [#118](https://github.com/mza921/Plex-Auto-Collections/issues/118) - Check for to see if the tmdb attribute exists
 
 ## [2.6.0] - 2020-11-12 - [#113](https://github.com/mza921/Plex-Auto-Collections/pull/113)
 ### Added
