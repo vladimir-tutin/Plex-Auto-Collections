@@ -314,7 +314,7 @@ class Tautulli:
                 except:
                     print("| Config Error: Invalid url")
                     Tautulli.valid = False
-            print("| tautulli connection {}".format("scuccessful" if Tautulli.valid else "failed"))
+            print("| tautulli Connection {}".format("Successful" if Tautulli.valid else "failed"))
 
 
 class TraktClient:
@@ -362,7 +362,7 @@ class TraktClient:
                     else:
                         self.refreshed_authorization = None
                     if trakt_helpers.check_trakt(self.refreshed_authorization):
-                        # Save the refreshed authorization 
+                        # Save the refreshed authorization
                         trakt_helpers.save_authorization(Config(config_path).config_path, self.refreshed_authorization)
                         TraktClient.valid = True
                     else:
