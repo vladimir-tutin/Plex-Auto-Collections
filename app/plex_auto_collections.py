@@ -106,6 +106,7 @@ def get_method_pair_year(method_to_parse, values_to_parse):
 
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
+    radarr = Radarr(config_path) if Radarr.valid else None
     collections = config.collections
     if not headless:
         print("|\n|===================================================================================================|")
@@ -228,7 +229,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "collection_mode", "collection_order",
         "poster", "tmdb_poster", "tmdb_profile", "file_poster",
         "background", "file_background",
-        "name_mapping"
+        "name_mapping", "add_to_radarr"
     ]
     discover_movie = [
         "language", "with_original_language", "region", "sort_by",
@@ -381,6 +382,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             backgrounds_found.append(["file", os.path.abspath(check_value), check_name])
                         else:
                             print("| Config Error: Background Path Does Not Exist: {}".format(os.path.abspath(check_value)))
+                    elif check_name == "add_to_radarr":
+                        if check_value == True or check_value == False:
+                            details[check_name] = check_value
+                        else:
+                            print("| Config Error: add_to_radarr must be either true or false")
                     else:
                         details[check_name] = check_value
                 if method_name == "details":
@@ -618,6 +624,12 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 first_filter = False
             print("| Collection Filter {}: {}".format(f[0], f[1]))
 
+        do_radarr = False
+        if radarr:
+            do_radarr = radarr.add_movie
+            if "add_to_radarr" in details
+                do_radarr = details["add_to_radarr"]
+
         # Loops though and actually processes the methods
         for m, values in methods:
             for v in values:
@@ -645,13 +657,11 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             print("| {} missing movie{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
                         else:
                             print("| {} ID: {} missing".format(method_name, v))
-                        if Radarr.valid:
-                            radarr = Radarr(config_path)
-                            if radarr.add_movie:
-                                print("| Adding missing movies to Radarr")
-                                add_to_radarr(config_path, missing)
-                            elif not headless and radarr.add_movie is None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                                add_to_radarr(config_path, missing)
+                        if do_radarr:
+                            print("| Adding missing movies to Radarr")
+                            add_to_radarr(config_path, missing)
+                        elif do_radarr is None and not headless and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                            add_to_radarr(config_path, missing)
                     elif libtype == "show":
                         method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
                         if m in ["trakt_list", "trakt_watchlist", "tmdb_list"]:
