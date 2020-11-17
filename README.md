@@ -1240,7 +1240,7 @@ If you were to add two more profiles, the `id` would be as follows:
 
 In this example, to set any added movies to the `Ultra-HD` profile, set `quality_profile_id` to `5`. To set any added movies to `HD-1080p`, set `quality_profile_id` to `4`.
 
-The `add_movie` key allows missing to movies to be added to Radarr. If this key is missing, the script will prompt the user to add missing movies or not. If you'd like to add movies but not had Radarr search, then set `search_movie` to `false`.
+The `add_movie` key allows missing to movies to be added to Radarr. If this key is missing, the script will prompt the user to add missing movies or not. If you'd like to add movies but not had Radarr search, then set `search_movie` to `false`. If you want to override this attribute per collection you can use the `add_to_radarr` attribute under a collection and set it to true or false to override any global choice.
 
 Note that Radarr support has not been tested with extensively Trakt lists and Sonarr support has not yet been implemented.
 
