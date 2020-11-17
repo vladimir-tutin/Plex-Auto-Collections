@@ -106,15 +106,16 @@ def get_method_pair_year(method_to_parse, values_to_parse):
 
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
-    radarr = Radarr(config_path) if Radarr.valid else None
     collections = config.collections
     if not headless:
         print("|\n|===================================================================================================|")
     if isinstance(plex.Library, MovieSection):
+        radarr = Radarr(config_path) if Radarr.valid else None
         libtype = "movie"
         print("|\n| Processing Plex Movies")
         plex_map = get_movie_map(config_path, plex)
     elif isinstance(plex.Library, ShowSection):
+        radarr = None
         libtype = "show"
         print("|\n| Processing Plex Shows")
         plex_map = get_show_map(config_path, plex)
@@ -137,6 +138,26 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "subtitle-language": "subtitle_language",
         "subfilters": "filters",
         "collection_sort": "collection_order"
+    }
+    pretty_names = {
+        "tmdb_collection": "TMDb Collection",
+        "tmdb_id": "TMDb ID",
+        "tmdb_company": "TMDb Company",
+        "tmdb_network": "TMDb Network",
+        "tmdb_discover": "TMDb Discover",
+        "tmdb_popular": "TMDb Popular",
+        "tmdb_top_rated": "TMDb Top Rated",
+        "tmdb_now_playing": "TMDb Now Playing",
+        "tmdb_trending_daily": "TMDb Trending Daily",
+        "tmdb_trending_weekly": "TMDb Trending Weekly",
+        "tmdb_list": "TMDb List",
+        "tmdb_movie": "TMDb Movie",
+        "tmdb_show": "TMDb Show",
+        "tvdb_show": "TVDb Show",
+        "imdb_list": "IMDb List",
+        "trakt_list": "Trakt List",
+        "trakt_trending": "Trakt Trending",
+        "trakt_watchlist": "Trakt Watchlist"
     }
     all_lists = [
         "plex_search",
@@ -645,32 +666,21 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     print(e)
                     missing = False
                 if missing:
-                    if libtype == "movie":
-                        method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
-                        if m in ["trakt_list", "trakt_watchlist", "tmdb_list"]:
-                            print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                        elif m == "imdb_list":
-                            print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v[0]))
-                        elif m == "tmdb_collection":
-                            print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                        elif m == "trakt_trending":
-                            print("| {} missing movie{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                        else:
-                            print("| {} ID: {} missing".format(method_name, v))
-                        if do_radarr:
-                            print("| Adding missing movies to Radarr")
-                            add_to_radarr(config_path, missing)
-                        elif do_radarr is None and not headless and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                            add_to_radarr(config_path, missing)
-                    elif libtype == "show":
-                        method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
-                        if m in ["trakt_list", "trakt_watchlist", "tmdb_list"]:
-                            print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                        elif m == "trakt_trending":
-                            print("| {} missing show{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
-                        else:
-                            print("| {} ID: {} missing".format(method_name, v))
+                    def missing_print(display_value):
+                        print("| {} missing {}{} from {}: {}".format(len(missing), libtype, "s" if len(missing) > 1 else "", pretty_names[m], display_value))
 
+                    if m in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly", "trakt_trending"]:
+                        missing_print("Top {}".format(v))
+                    elif m == "imdb_list":
+                        missing_print(v[0])
+                    else:
+                        missing_print(v)
+
+                    if do_radarr:
+                        print("| Adding missing movies to Radarr")
+                        add_to_radarr(config_path, missing)
+                    elif do_radarr is None and not headless and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                        add_to_radarr(config_path, missing)
                         # if not skip_sonarr:
                         #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
                         #         add_to_radarr(missing_shows)

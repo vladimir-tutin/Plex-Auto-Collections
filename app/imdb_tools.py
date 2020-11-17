@@ -86,19 +86,20 @@ def tmdb_get_movies(config_path, plex, plex_map, data, method):
 
     count = 0
     if method == "tmdb_discover":
+        attrs = data.copy()
         discover = Discover()
         discover.api_key = t_movie.api_key
-        discover.discover_movies(data)
+        discover.discover_movies(attrs)
         total_pages = int(os.environ["total_pages"])
         total_results = int(os.environ["total_results"])
-        limit = int(data.pop('limit'))
+        limit = int(attrs.pop('limit'))
         amount = total_results if total_results < limit else limit
         print("| Processing {}: {} items".format(method, amount))
-        for attr, value in data.items():
+        for attr, value in attrs.items():
             print("|            {}: {}".format(attr, value))
         for x in range(total_pages):
-            data["page"] = x + 1
-            tmdb_movies = discover.discover_movies(data)
+            attrs["page"] = x + 1
+            tmdb_movies = discover.discover_movies(attrs)
             for tmovie in tmdb_movies:
                 count += 1
                 t_movs.append(tmovie.id)
@@ -225,22 +226,23 @@ def tmdb_get_shows(config_path, plex, data, method):
     t_tv.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
     if t_tv.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
-    discover = Discover()
-    discover.api_key = t_tv.api_key
 
     count = 0
     if method == "tmdb_discover":
-        discover.discover_tv_shows(data)
+        attrs = data.copy()
+        discover = Discover()
+        discover.api_key = t_tv.api_key
+        discover.discover_tv_shows(attrs)
         total_pages = int(os.environ["total_pages"])
         total_results = int(os.environ["total_results"])
-        limit = int(data.pop('limit'))
+        limit = int(attrs.pop('limit'))
         amount = total_results if total_results < limit else limit
         print("| Processing {}: {} items".format(method, amount))
-        for attr, value in data.items():
+        for attr, value in attrs.items():
             print("|            {}: {}".format(attr, value))
         for x in range(total_pages):
-            data["page"] = x + 1
-            tmdb_shows = discover.discover_tv_shows(data)
+            attrs["page"] = x + 1
+            tmdb_shows = discover.discover_tv_shows(attrs)
             for tshow in tmdb_shows:
                 count += 1
                 t_tvs.append(tshow.id)
@@ -248,7 +250,6 @@ def tmdb_get_shows(config_path, plex, data, method):
                     break
             if count == amount:
                 break
-        run_discover(data)
     elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_trending_daily", "tmdb_trending_weekly"]:
         #trending = Trending()                  #TURNON:Trending
         #trending.api_key = t_movie.api_key     #TURNON:Trending
