@@ -6,13 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.6.1] - 2020-11-14 - [#115](https://github.com/mza921/Plex-Auto-Collections/pull/115)
 ### Changed
-- Created a mapping for IMDb ID to Plex Rating Key once each run instead of every time tmdb, imdb, tvdb, or trakt list was run.
+- Created a mapping for TMDb ID to Plex Rating Key once each run instead of every time tmdb, imdb, tvdb, or trakt list was run.
 - [#110](https://github.com/mza921/Plex-Auto-Collections/issues/110) - Added `add_to_radarr` as a collection level attribute override
 
 ### Fixed
 - [#109](https://github.com/mza921/Plex-Auto-Collections/issues/109) - The Cache shouldn't be created unless it has to be
 - [#117](https://github.com/mza921/Plex-Auto-Collections/issues/117) - Typo
 - [#118](https://github.com/mza921/Plex-Auto-Collections/issues/118) - Check for to see if the tmdb attribute exists
+- [#120](https://github.com/mza921/Plex-Auto-Collections/issues/120) - Sometimes the collection wasn't found
 
 ## [2.6.0] - 2020-11-12 - [#113](https://github.com/mza921/Plex-Auto-Collections/pull/113)
 ### Added
