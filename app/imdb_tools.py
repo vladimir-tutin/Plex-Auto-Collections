@@ -16,8 +16,6 @@ from tmdbv3api import Company
 from tmdbv3api import Person
 #from tmdbv3api import Trending #TURNON:Trending
 import config_tools
-import plex_tools
-import trakt
 
 def imdb_get_ids(plex, imdb_url):
     imdb_url = imdb_url.strip()
@@ -64,17 +62,41 @@ def imdb_get_ids(plex, imdb_url):
         print("| Config Error {} must begin with either:\n| https://www.imdb.com/list/ls (For Lists)\n| https://www.imdb.com/search/title/? (For Searches)")
     return None
 
+def tmdb_get_imdb(config_path, tmdb_id):
+    movie = Movie()
+    movie.api_key = config_tools.TMDB(config_path).apikey
+    return movie.external_ids(tmdb_id)['imdb_id']
+
+def tmdb_get_tvdb(config_path, tmdb_id):
+    show = TV()
+    show.api_key = config_tools.TMDB(config_path).apikey
+    return show.external_ids(tmdb_id)['tvdb_id']
+
+def imdb_get_tmdb(config_path, imdb_id):
+    movie = Movie()
+    movie.api_key = config_tools.TMDB(config_path).apikey
+    search = movie.external(external_id=imdb_id, external_source="imdb_id")['movie_results']
+    if len(search) == 1:
+        try:
+            return search[0]['id']
+        except IndexError:
+            return None
+    else:
+        return None
+
 def imdb_get_movies(config_path, plex, plex_map, data):
     title_ids = data[1]
     print("| {} Movies found on IMDb".format(len(title_ids)))
-    imdb_map = {}
+    t_movie = Movie()
+    t_movie.api_key = config_tools.TMDB(config_path).apikey
     matched = []
     missing = []
     for imdb_id in title_ids:
-        if imdb_id in plex_map:
-            matched.append(plex.Server.fetchItem(plex_map[imdb_id]))
+        tmdb_id = imdb_get_tmdb(config_path, imdb_id)
+        if tmdb_id in plex_map:
+            matched.append(plex.Server.fetchItem(plex_map[tmdb_id]))
         else:
-            missing.append(imdb_id)
+            missing.append(tmdb_id)
     return matched, missing
 
 def tmdb_get_movies(config_path, plex, plex_map, data, method):
@@ -169,11 +191,10 @@ def tmdb_get_movies(config_path, plex, plex_map, data, method):
     matched = []
     missing = []
     for mid in t_movs:
-        imdb_id = t_movie.details(mid).imdb_id
-        if imdb_id in plex_map:
-            matched.append(plex.Server.fetchItem(plex_map[imdb_id]))
+        if mid in plex_map:
+            matched.append(plex.Server.fetchItem(plex_map[mid]))
         else:
-            missing.append(t_movie.details(mid).imdb_id)
+            missing.append(mid)
 
     return matched, missing
 
@@ -210,20 +231,12 @@ def get_tautulli(config_path, plex, data):
 
     return matched, missing
 
-def get_tvdb_id_from_tmdb_id(id):
-    lookup = trakt.Trakt['search'].lookup(id, 'tmdb', 'show')
-    if lookup:
-        lookup = lookup[0] if isinstance(lookup, list) else lookup
-        return lookup.get_key('tvdb')
-    else:
-        return None
-
 def tmdb_get_shows(config_path, plex, data, method):
     config_tools.TraktClient(config_path)
 
     t_tvs = []
     t_tv = TV()
-    t_tv.api_key = config_tools.TMDB(config_path).apikey  # Set TMDb api key for Movie
+    t_tv.api_key = config_tools.TMDB(config_path).apikey
     if t_tv.api_key == "None":
         raise KeyError("Invalid TMDb API Key")
 
@@ -308,9 +321,9 @@ def tmdb_get_shows(config_path, plex, data, method):
     matched = []
     missing = []
     for mid in t_tvs:
-        tvdb_id = get_tvdb_id_from_tmdb_id(mid)
+        tvdb_id = tmdb_get_tvdb(config_path, mid)
         if tvdb_id is None:
-            print("| Trakt Error: tmbd_id: {} could not converted to tvdb_id try just using tvdb_id instead".format(mid))
+            print("| TMDb Error: tmdb_id: {} has no associated tvdb_id try just using tvdb_id instead".format(mid))
         elif tvdb_id in plex_map:
             matched.append(plex.Server.fetchItem(plex_map[tvdb_id]))
         else:

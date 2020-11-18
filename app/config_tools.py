@@ -12,9 +12,7 @@ from plexapi.video import Movie
 from plexapi.video import Show
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
-from trakt import Trakt
 import trakt_helpers
-import trakt
 
 
 def check_for_attribute(config, attribute, parent=None, test_list=None, options="", default=None, do_print=True, default_is_none=False, var_type="str", throw=False, save=True):

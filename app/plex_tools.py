@@ -6,7 +6,6 @@ from plexapi.library import ShowSection
 from datetime import datetime, timedelta
 import imdb_tools
 import trakt_tools
-import trakt
 from config_tools import Config
 from config_tools import TMDB
 from config_tools import TraktClient
@@ -113,33 +112,26 @@ def get_movie_map(config_path, plex):
             if created == False:
                 create_cache(config_path)
                 created = True
-            imdb_id = query_cache(config_path, m.guid, 'imdb_id')
-            if not imdb_id:
+            tmdb_id = query_cache(config_path, m.guid, 'tmdb_id')
+            if not tmdb_id:
                 imdb_id, tmdb_id = alt_id_lookup(plex, m)
                 print(adjust_space(current_length, "| Cache | + | {} | {} | {} | {}".format(m.guid, imdb_id, tmdb_id, m.title)))
                 update_cache(config_path, m.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
         elif item_type == 'imdb':
             imdb_id = guid.netloc
-        elif item_type == 'themoviedb':
+            tmdb_id = None
+            if TMDB.valid and tmdb_id is None:
+                tmdb_id = imdb_tools.imdb_get_tmdb(config_path, imdb_id)
+            if TraktClient.valid and tmdb_id is None:
+                tmdb_id = trakt_tools.trakt_imdb_to_tmdb(config_path, imdb_id)
+        elif item_type == 'tmdb':
             tmdb_id = guid.netloc
-            imdb_id = None
-            if TMDB.valid and imdb_id is None:
-                tmdbapi = tmovie.details(tmdb_id)
-                if hasattr(tmdbapi, 'imdb_id'):
-                    imdb_id = tmdbapi.imdb_id
-            if TraktClient.valid and imdb_id is None:
-                lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
-                if lookup:
-                    if isinstance(lookup, list):
-                        imdb_id = lookup[0].get_key('imdb')
-                    else:
-                        imdb_id = lookup.get_key('imdb')
         else:
-            imdb_id = None
-        if imdb_id:
-            movie_map[imdb_id] = m.ratingKey
+            tmdb_id = None
+        if tmdb_id:
+            movie_map[tmdb_id] = m.ratingKey
         else:
-            print(adjust_space(current_length, "| Unable to map IMDb ID for {} [GUID]: {}".format(m.title, m.guid)))
+            print(adjust_space(current_length, "| Unable to map TMDb ID for {} [GUID]: {}".format(m.title, m.guid)))
     print(adjust_space(current_length, "| Processed {} Movies".format(len(plex_movies))))
     return movie_map
 
@@ -160,14 +152,13 @@ def get_show_map(config_path, plex):
         item_type = guid.scheme.split('.')[-1]
         if item_type == 'thetvdb':
             tvdb_id = guid.netloc
-        elif item_type == 'themoviedb' and TraktClient.valid:
+        elif item_type == 'themoviedb':
             tmdb_id = guid.netloc
-            lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')
-            if lookup:
-                lookup = lookup[0] if isinstance(lookup, list) else lookup
-                tvdb_id = lookup.get_key('tvdb')
-            else:
-                tvdb_id = None
+            tvdb_id = None
+            if TMDB.valid and tmdb_id is None:
+                tvdb_id = imdb_tools.tmdb_get_tvdb(config_path, tmdb_id)
+            if TraktClient.valid and tmdb_id is None:
+                tvdb_id = trakt_tools.trakt_tmdb_to_tvdb(config_path, tmdb_id)
         else:
             tvdb_id = None
         if tvdb_id:
@@ -232,7 +223,7 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
         print(output)
         return plex.Library.search(**search_terms)
 
-    if ("trakt" in method or (("tmdb" in method or "tvdb" in method) and plex.library_type == "show")) and not TraktClient.valid:
+    if "trakt" in method and not TraktClient.valid:
         raise KeyError("| trakt connection required for {}",format(method))
     elif ("imdb" in method or "tmdb" in method) and not TMDB.valid:
         raise KeyError("| tmdb connection required for {}",format(method))

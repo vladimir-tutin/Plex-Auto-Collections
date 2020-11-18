@@ -337,7 +337,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
                 map = {}
-            elif ("trakt" in m or (("tmdb" in m or "tvdb" in m) and plex.library_type == "show")) and not TraktClient.valid:
+            elif "trakt" in m and not TraktClient.valid:
                 print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
                 map = {}
             elif m == "tautulli" and not Tautulli.valid:

@@ -1,9 +1,35 @@
 import config_tools
 from urllib.parse import urlparse
-import plex_tools
 import trakt
 import os
 
+
+def trakt_tmdb_to_imdb(config_path, tmdb_id):
+    config_tools.TraktClient(config_path)
+    lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
+    if lookup:
+        lookup = lookup[0] if isinstance(lookup, list) else lookup
+        return lookup.get_key('imdb')
+    else:
+        return None
+
+def trakt_imdb_to_tmdb(config_path, imdb_id):
+    config_tools.TraktClient(config_path)
+    lookup = trakt.Trakt['search'].lookup(imdb_id, 'imdb', 'movie')
+    if lookup:
+        lookup = lookup[0] if isinstance(lookup, list) else lookup
+        return lookup.get_key('tmdb')
+    else:
+        return None
+
+def trakt_tmdb_to_tvdb(config_path, tmdb_id):
+    config_tools.TraktClient(config_path)
+    lookup = trakt.Trakt['search'].lookup(id, 'tmdb', 'show')
+    if lookup:
+        lookup = lookup[0] if isinstance(lookup, list) else lookup
+        return lookup.get_key('tvdb')
+    else:
+        return None
 
 def trakt_get_movies(config_path, plex, plex_map, data, method):
     config_tools.TraktClient(config_path)
@@ -22,16 +48,16 @@ def trakt_get_movies(config_path, plex, plex_map, data, method):
             trakt_url = trakt_url[:-1]
         trakt_list_path = urlparse(trakt_url).path
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
+    title_ids = [m.keys[1][1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     print("| {} Movies found on Trakt".format(len(title_ids)))
     matched = []
     missing = []
-    for imdb_id in title_ids:
-        if imdb_id in plex_map:
-            matched.append(plex.Server.fetchItem(plex_map[imdb_id]))
+    for tmdb_id in title_ids:
+        if tmdb_id in plex_map:
+            matched.append(plex.Server.fetchItem(plex_map[tmdb_id]))
         else:
-            missing.append(imdb_id)
+            missing.append(tmdb_id)
     return matched, missing
 
 def trakt_get_shows(config_path, plex, plex_map, data, method):
