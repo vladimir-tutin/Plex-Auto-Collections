@@ -100,7 +100,6 @@ def get_movie_map(config_path, plex):
         tmdb.api_key = TMDB(config_path).apikey
         tmovie = TMDb_Movie()
     plex_movies = plex.Library.all()
-    created = False
     for m in plex_movies:
         current_count += 1
         print_display = "| Processing: {}/{} {}".format(current_count, len(plex_movies), m.title)
@@ -109,14 +108,7 @@ def get_movie_map(config_path, plex):
         guid = urlparse(m.guid)
         item_type = guid.scheme.split('.')[-1]
         if item_type == 'plex':
-            if created == False:
-                create_cache(config_path)
-                created = True
-            tmdb_id = query_cache(config_path, m.guid, 'tmdb_id')
-            if not tmdb_id:
-                imdb_id, tmdb_id = alt_id_lookup(plex, m)
-                print(adjust_space(current_length, "| Cache | + | {} | {} | {} | {}".format(m.guid, imdb_id, tmdb_id, m.title)))
-                update_cache(config_path, m.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
+            imdb_id, tmdb_id = alt_id_lookup(plex, m)
         elif item_type == 'imdb':
             imdb_id = guid.netloc
             tmdb_id = None
