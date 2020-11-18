@@ -12,6 +12,7 @@ from plexapi.video import Movie
 from plexapi.video import Show
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
+from trakt import Trakt
 import trakt_helpers
 
 
