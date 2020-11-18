@@ -187,7 +187,7 @@ class Radarr:
             self.token = check_for_attribute(config, "token", parent="radarr")
             self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", var_type="int")
             self.root_folder_path = check_for_attribute(config, "root_folder_path", parent="radarr")
-            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", var_type="bool", default_is_none=True, do_print=False)
+            self.add_to_radarr = check_for_attribute(config, "add_to_radarr", parent="radarr", var_type="bool", default_is_none=True, do_print=False)
             self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", var_type="bool", default=False, do_print=False)
         elif Radarr.valid is None:
             if TMDB.valid:
@@ -215,9 +215,15 @@ class Radarr:
                 except SystemExit as e:
                     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:
-                    self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", var_type="bool", default_is_none=True, throw=True)
+                    self.add_to_radarr = check_for_attribute(config, "add_to_radarr", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", var_type="bool", default_is_none=True, throw=True)
                 except SystemExit as e:
                     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                if "add_movie" in config:
+                    try:
+                        self.add_to_radarr = check_for_attribute(config, "add_movie", parent="radarr", var_type="bool", throw=True, save=False)
+                        print("| Config Warning: replace add_movie with add_to_radarr")
+                    except SystemExit as e:
+                        pass
                 try:
                     self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| \ttrue (Have Radarr seach the added movies)\n| \tfalse (Do not have Radarr seach the added movies)", var_type="bool", default=False, throw=True)
                 except SystemExit as e:

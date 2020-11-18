@@ -647,7 +647,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
 
         do_radarr = False
         if radarr:
-            do_radarr = radarr.add_movie
+            do_radarr = radarr.add_to_radarr
             if "add_to_radarr" in details:
                 do_radarr = details["add_to_radarr"]
 
