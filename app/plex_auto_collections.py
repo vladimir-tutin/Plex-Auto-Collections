@@ -169,8 +169,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_popular",
         "tmdb_top_rated",
         "tmdb_now_playing",
-        #"tmdb_trending_daily",     #TURNON:Trending
-        #"tmdb_trending_weekly",    #TURNON:Trending
+        "tmdb_trending_daily",
+        "tmdb_trending_weekly",
         "tmdb_list",
         "tmdb_movie",
         "tmdb_show",
@@ -994,7 +994,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.6.1")
+print("| Version 2.7.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))

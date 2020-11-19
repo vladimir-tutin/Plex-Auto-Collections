@@ -12,9 +12,9 @@ from tmdbv3api import TV
 from tmdbv3api import Discover
 from tmdbv3api import Collection
 from tmdbv3api import Company
-#from tmdbv3api import Network #TURNON:Trending
+from tmdbv3api import Network
 from tmdbv3api import Person
-#from tmdbv3api import Trending #TURNON:Trending
+from tmdbv3api import Trending
 import config_tools
 
 def imdb_get_ids(plex, imdb_url):
@@ -142,8 +142,8 @@ def tmdb_get_movies(config_path, plex, plex_map, data, method):
             if count == amount:
                 break
     elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly"]:
-        #trending = Trending()                  #TURNON:Trending
-        #trending.api_key = t_movie.api_key     #TURNON:Trending
+        trending = Trending()
+        trending.api_key = t_movie.api_key
         for x in range(int(data / 20) + 1):
             if method == "tmdb_popular":
                 tmdb_movies = t_movie.popular(x + 1)
@@ -151,10 +151,10 @@ def tmdb_get_movies(config_path, plex, plex_map, data, method):
                 tmdb_movies = t_movie.top_rated(x + 1)
             elif method == "tmdb_now_playing":
                 tmdb_movies = t_movie.now_playing(x + 1)
-            #elif method == "tmdb_trending_daily":          #TURNON:Trending
-            #    tmdb_movies = trending.movie_day(x + 1)    #TURNON:Trending
-            #elif method == "tmdb_trending_weekly":         #TURNON:Trending
-            #    tmdb_movies = trending.movie_week(x + 1)   #TURNON:Trending
+            elif method == "tmdb_trending_daily":
+                tmdb_movies = trending.movie_day(x + 1)
+            elif method == "tmdb_trending_weekly":
+                tmdb_movies = trending.movie_week(x + 1)
             for tmovie in tmdb_movies:
                 count += 1
                 t_movs.append(tmovie.id)
@@ -276,17 +276,17 @@ def tmdb_get_shows(config_path, plex, data, method):
             if count == amount:
                 break
     elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_trending_daily", "tmdb_trending_weekly"]:
-        #trending = Trending()                  #TURNON:Trending
-        #trending.api_key = t_movie.api_key     #TURNON:Trending
+        trending = Trending()
+        trending.api_key = t_movie.api_key
         for x in range(int(data / 20) + 1):
             if method == "tmdb_popular":
                 tmdb_shows = t_tv.popular(x + 1)
             elif method == "tmdb_top_rated":
                 tmdb_shows = t_tv.top_rated(x + 1)
-            #elif method == "tmdb_trending_daily":      #TURNON:Trending
-            #    tmdb_shows = trending.tv_day(x + 1)    #TURNON:Trending
-            #elif method == "tmdb_trending_weekly":     #TURNON:Trending
-            #    tmdb_shows = trending.tv_week(x + 1)   #TURNON:Trending
+            elif method == "tmdb_trending_daily":
+                tmdb_shows = trending.tv_day(x + 1)
+            elif method == "tmdb_trending_weekly":
+                tmdb_shows = trending.tv_week(x + 1)
             for tshow in tmdb_shows:
                 count += 1
                 t_tvs.append(tshow.id)
@@ -314,9 +314,9 @@ def tmdb_get_shows(config_path, plex, data, method):
                 tmdb.api_key = t_tv.api_key
                 tmdb_name = str(tmdb.details(tmdb_id))
             else:
-                #tmdb = Network()                           #TURNON:Trending
-                #tmdb.api_key = t_tv.api_key                #TURNON:Trending
-                tmdb_name = ""#str(tmdb.details(tmdb_id))   #TURNON:Trending
+                tmdb = Network()
+                tmdb.api_key = t_tv.api_key
+                tmdb_name = str(tmdb.details(tmdb_id))
             discover_method = "with_companies" if method == "tmdb_company" else "with_networks"
             tmdb_shows = discover.discover_tv_shows({discover_method: tmdb_id})
             for tshow in tmdb_shows:

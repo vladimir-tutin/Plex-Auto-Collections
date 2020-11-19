@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.6.1
+##### Version 2.7.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -18,6 +18,7 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
         - [TMDb Company (List Type)](#tmdb-company-list-type)
         - [TMDb Network (List Type)](#tmdb-network-list-type)
         - [TMDb Popular (List Type)](#tmdb-popular-list-type)
+        - [TMDb Trending (List Type)](#tmdb-trending-list-type)
         - [TMDb Top Rated (List Type)](#tmdb-top-rated-list-type)
         - [TMDb Now Playing (List Type)](#tmdb-now-playing-list-type)
         - [TMDb Discover (List Type)](#tmdb-discover-list-type)
@@ -162,6 +163,7 @@ The only required attribute for each collection is the list type. There are many
 - [TMDb Company](#tmdb-company-list-type)
 - [TMDb Network](#tmdb-network-list-type)
 - [TMDb Popular](#tmdb-popular-list-type)
+- [TMDb Trending](#tmdb-trending-list-type)
 - [TMDb Top Rated](#tmdb-top-rated-list-type)
 - [TMDb Now Playing](#tmdb-now-playing-list-type)
 - [TMDb Discover](#tmdb-discover-list-type)
@@ -440,8 +442,27 @@ You can build a collection using TMDb's most popular movies/shows by using `tmdb
 
 ```yaml
 collections:
-  TMDb Trending:
+  TMDb Popular:
     tmdb_popular: 30
+    sync_mode: sync
+```
+
+#### TMDb Trending (List Type)
+
+###### Works with Movie and TV Show Libraries
+
+You can build a collection using TMDb's daily or weekly trending movies/shows by using `tmdb_trending_daily` or `tmdb_trending_weekly`. Both attributes only support a single integer value. The `sync_mode: sync` option is recommended since the lists are continuously updated.
+
+```yaml
+collections:
+  TMDb Daily Trending:
+    tmdb_trending_daily: 30
+    sync_mode: sync
+```
+```yaml
+collections:
+  TMDb Weekly Trending:
+    tmdb_trending_weekly: 30
     sync_mode: sync
 ```
 
