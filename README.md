@@ -1119,6 +1119,7 @@ plex:                                         # Req
   token: #####                                # Req - User's Plex authentication token
   url: http://192.168.1.1:32400               # Req - URL to access Plex
   sync_mode: append                           # Opt - Global Sync Mode
+  cache: False                                # Opt - Create a cache of IDs
 ```
 
 Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
@@ -1130,6 +1131,8 @@ You can set the global default [Sync Mode](#sync-mode-collection-attribute) here
 ##### Options
 - `append` (Only Add Items to the Collection)
 - `sync` (Add & Remove Items from the Collection)
+
+Setting the `cache` attribute to true will cause the program to create a cache file that allows for faster ID mapping on future runs. Each item in the cache will update every 20-30 days.
 
 Lastly, if you need help finding your Plex authentication token, please see Plex's [support article](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 

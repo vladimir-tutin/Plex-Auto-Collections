@@ -48,7 +48,7 @@ def trakt_get_movies(config_path, plex, plex_map, data, method):
             trakt_url = trakt_url[:-1]
         trakt_list_path = urlparse(trakt_url).path
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    title_ids = [m.keys[1][1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
+    title_ids = [int(m.keys[1][1]) for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     print("| {} Movies found on Trakt".format(len(title_ids)))
     matched = []

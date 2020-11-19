@@ -11,8 +11,7 @@ from plexapi.video import Show
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
 from plexapi.library import Collections
-from plex_tools import get_movie_map
-from plex_tools import get_show_map
+from plex_tools import get_map
 from plex_tools import add_to_collection
 from plex_tools import delete_collection
 from plex_tools import get_actor_rkey
@@ -112,13 +111,10 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     if isinstance(plex.Library, MovieSection):
         radarr = Radarr(config_path) if Radarr.valid else None
         libtype = "movie"
-        print("|\n| Processing Plex Movies")
-        plex_map = get_movie_map(config_path, plex)
     elif isinstance(plex.Library, ShowSection):
         radarr = None
         libtype = "show"
-        print("|\n| Processing Plex Shows")
-        plex_map = get_show_map(config_path, plex)
+    plex_map = get_map(config_path, plex)
     alias = {
         "actors": "actor", "role": "actor", "roles": "actor",
         "content_ratings": "content_rating", "contentRating": "content_rating", "contentRatings": "content_rating",

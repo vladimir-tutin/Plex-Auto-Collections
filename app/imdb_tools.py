@@ -84,6 +84,18 @@ def imdb_get_tmdb(config_path, imdb_id):
     else:
         return None
 
+def tvdb_get_tmdb(config_path, tvdb_id):
+    movie = Movie()
+    movie.api_key = config_tools.TMDB(config_path).apikey
+    search = movie.external(external_id=tvdb_id, external_source="tvdb_id")['tv_results']
+    if len(search) == 1:
+        try:
+            return search[0]['id']
+        except IndexError:
+            return None
+    else:
+        return None
+
 def imdb_get_movies(config_path, plex, plex_map, data):
     title_ids = data[1]
     print("| {} Movies found on IMDb".format(len(title_ids)))
