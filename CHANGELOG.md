@@ -6,12 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.7.0] - 2020-11-20 - [#115](https://github.com/mza921/Plex-Auto-Collections/pull/115)
 ### Added
+- Added `tmdb_trending_daily` and `tmdb_trending_weekly`
 - [#98](https://github.com/mza921/Plex-Auto-Collections/issues/98) - Added `cache` attribute to cache the IDs of movies/shows for quicker lookup
 
 ### Changed
 - Created a mapping for TMDb ID to Plex Rating Key once each run instead of every time tmdb, imdb, tvdb, or trakt list was run.
 - [#110](https://github.com/mza921/Plex-Auto-Collections/issues/110) - Added `add_to_radarr` as a collection level attribute override
-- Upgrade tmdbv3api dependency to 1.7.0
+- Upgrade tmdbv3api dependency to 1.7.1
 
 ### Fixed
 - [#109](https://github.com/mza921/Plex-Auto-Collections/issues/109) - The Cache shouldn't be created unless it has to be

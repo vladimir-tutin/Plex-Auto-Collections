@@ -169,8 +169,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_popular",
         "tmdb_top_rated",
         "tmdb_now_playing",
-        #"tmdb_trending_daily", #TURNON: TRENDING
-        #"tmdb_trending_weekly", #TURNON: TRENDING
+        "tmdb_trending_daily",
+        "tmdb_trending_weekly",
         "tmdb_list",
         "tmdb_movie",
         "tmdb_show",
