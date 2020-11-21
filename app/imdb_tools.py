@@ -127,8 +127,8 @@ def tmdb_get_movies(config_path, plex, plex_map, data, method):
         total_pages = int(os.environ["total_pages"])
         total_results = int(os.environ["total_results"])
         limit = int(attrs.pop('limit'))
-        amount = total_results if total_results < limit else limit
-        print("| Processing {}: {} items".format(method, amount))
+        amount = total_results if limit == 0 or total_results < limit else limit
+        print("| Processing {}: {} movies".format(method, amount))
         for attr, value in attrs.items():
             print("|            {}: {}".format(attr, value))
         for x in range(total_pages):
@@ -243,7 +243,7 @@ def get_tautulli(config_path, plex, data):
 
     return matched, missing
 
-def tmdb_get_shows(config_path, plex, data, method):
+def tmdb_get_shows(config_path, plex, plex_map, data, method):
     config_tools.TraktClient(config_path)
 
     t_tvs = []
@@ -253,18 +253,30 @@ def tmdb_get_shows(config_path, plex, data, method):
         raise KeyError("Invalid TMDb API Key")
 
     count = 0
-    if method == "tmdb_discover":
-        attrs = data.copy()
+    if method in ["tmdb_discover", "tmdb_company", "tmdb_network"]:
+        if method in ["tmdb_company", "tmdb_network"]:
+            tmdb = Company() if method == "tmdb_company" else Network()
+            tmdb.api_key = t_tv.api_key
+            tmdb_id = int(data)
+            tmdb_name = str(tmdb.details(tmdb_id))
+            discover_method = "with_companies" if method == "tmdb_company" else "with_networks"
+            attrs = {discover_method: tmdb_id}
+            limit = 0
+        else:
+            attrs = data.copy()
+            limit = int(attrs.pop('limit'))
         discover = Discover()
         discover.api_key = t_tv.api_key
         discover.discover_tv_shows(attrs)
         total_pages = int(os.environ["total_pages"])
         total_results = int(os.environ["total_results"])
-        limit = int(attrs.pop('limit'))
-        amount = total_results if total_results < limit else limit
-        print("| Processing {}: {} items".format(method, amount))
-        for attr, value in attrs.items():
-            print("|            {}: {}".format(attr, value))
+        amount = total_results if limit == 0 or total_results < limit else limit
+        if method in ["tmdb_company", "tmdb_network"]:
+            print("| Processing {}: {} ({} {} shows)".format(method, tmdb_id, amount, tmdb_name))
+        else:
+            print("| Processing {}: {} shows".format(method, amount))
+            for attr, value in attrs.items():
+                print("|            {}: {}".format(attr, value))
         for x in range(total_pages):
             attrs["page"] = x + 1
             tmdb_shows = discover.discover_tv_shows(attrs)
@@ -308,19 +320,6 @@ def tmdb_get_shows(config_path, plex, data, method):
                         t_tvs.append(ttv.id)
             except:
                 raise ValueError("| Config Error: TMDb List: {} not found".format(tmdb_id))
-        elif method in ["tmdb_company", "tmdb_network"]:
-            if method == "tmdb_company":
-                tmdb = Company()
-                tmdb.api_key = t_tv.api_key
-                tmdb_name = str(tmdb.details(tmdb_id))
-            else:
-                tmdb = Network()
-                tmdb.api_key = t_tv.api_key
-                tmdb_name = str(tmdb.details(tmdb_id))
-            discover_method = "with_companies" if method == "tmdb_company" else "with_networks"
-            tmdb_shows = discover.discover_tv_shows({discover_method: tmdb_id})
-            for tshow in tmdb_shows:
-                t_tvs.append(tshow.id)
         else:
             try:
                 t_tv.details(tmdb_id).number_of_seasons
@@ -335,7 +334,7 @@ def tmdb_get_shows(config_path, plex, data, method):
     for mid in t_tvs:
         tvdb_id = tmdb_get_tvdb(config_path, mid)
         if tvdb_id is None:
-            print("| TMDb Error: tmdb_id: {} has no associated tvdb_id try just using tvdb_id instead".format(mid))
+            print("| TMDb Error: tmdb_id: {} ({}) has no associated tvdb_id try just using tvdb_id instead".format(mid, t_tv.details(mid).name))
         elif tvdb_id in plex_map:
             matched.append(plex.Server.fetchItem(plex_map[tvdb_id]))
         else:
@@ -343,7 +342,7 @@ def tmdb_get_shows(config_path, plex, data, method):
 
     return matched, missing
 
-def tvdb_get_shows(config_path, plex, data):
+def tvdb_get_shows(config_path, plex, plex_map, data):
     config_tools.TraktClient(config_path)
 
     tvdb_id = int(data)

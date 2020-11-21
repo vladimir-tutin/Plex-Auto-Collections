@@ -194,8 +194,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     ]
     show_only_lists = [
         "tmdb_show",
-        "tvdb_show"
-        "tmdb_network",
+        "tvdb_show",
+        "tmdb_network"
     ]
     movie_only_lists = [
         "tmdb_collection",
@@ -406,7 +406,13 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             print("| Config Error: add_to_radarr must be either true or false")
                     else:
                         details[check_name] = check_value
-                if method_name == "details":
+                if method_name not in all_lists:
+                    print("| Config Error: {} attribute not supported".format(method_name))
+                elif method_name in show_only_lists and libtype == "movie":
+                    print("| Config Error: {} attribute only works for show libraries".format(method_name))
+                elif (method_name in movie_only_filters or method_name in movie_only_lists) and libtype == "show":
+                    print("| Config Error: {} attribute only works for movie libraries".format(method_name))
+                elif method_name == "details":
                     print("| Config Error: Please remove the details attribute all its old sub-attributes should be one level higher")
                     for detail_m in collections[c][m]:
                         if detail_m in alias:
