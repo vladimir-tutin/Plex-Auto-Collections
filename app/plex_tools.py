@@ -28,42 +28,23 @@ def adjust_space(old_length, display_title):
         display_title += " " * space_length
     return display_title
 
-def get_movie(plex, data):
-    # If an int is passed as data, assume it is a movie's rating key
-    if isinstance(data, int):
-        try:
-            return plex.Server.fetchItem(data)
-        except PlexExceptions.BadRequest:
-            print("| Nothing found")
-            return None
-    elif isinstance(data, Movie):
-        return data
-    else:
-        movie_list = plex.Library.search(title=data)
-        if movie_list:
-            return movie_list
-        else:
-            print("| Movie: {} not found".format(data))
-            return None
-
 def get_item(plex, data):
-    # If an int is passed as data, assume it is a movie's rating key
-    if isinstance(data, int):
+    if isinstance(data, int) or isinstance(data, Movie) or isinstance(data, Show):
+        if isinstance(data, Movie) or isinstance(data, Show):
+            rk = data.ratingKey
+        else:
+            rk = data
         try:
-            return plex.Server.fetchItem(data)
+            return plex.Server.fetchItem(rk)
         except PlexExceptions.BadRequest:
             return "Nothing found"
-    elif isinstance(data, Movie):
-        return data
-    elif isinstance(data, Show):
-        return data
     else:
         print(data)
         item_list = plex.Library.search(title=data)
         if item_list:
             return item_list
         else:
-            return "Item: " + data + " not found"
+            return "Item: {} not found".format(data)
 
 def get_actor_rkey(plex, data):
     """Takes in actors name as str and returns as Plex's corresponding rating key ID"""
@@ -308,8 +289,7 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
         max_str_len = len(str(movie_max))
         current_length = 0
         for rk in movies:
-            current_m = get_movie(plex, rk)
-            current_m.reload()
+            current_m = get_item(plex, rk)
             movie_count += 1
             count_str_len = len(str(movie_count))
             display_count = (" " * (max_str_len - count_str_len)) + str(movie_count)
@@ -383,7 +363,6 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
         current_length = 0
         for rk in shows:
             current_s = get_item(plex, rk)
-            current_s.reload()
             show_count += 1
             match = True
             if filters:

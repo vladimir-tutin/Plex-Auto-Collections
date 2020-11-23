@@ -17,7 +17,7 @@ from plex_tools import add_to_collection
 from plex_tools import delete_collection
 from plex_tools import get_actor_rkey
 from plex_tools import get_collection
-from plex_tools import get_movie
+from plex_tools import get_item
 from imdb_tools import tmdb_get_metadata
 from imdb_tools import imdb_get_ids
 from config_tools import Config
@@ -836,12 +836,12 @@ def append_collection(config_path, config_update=None):
                             method = "movie"
                             value = input("| Enter Movie (Name or Rating Key): ")
                             if value is int:
-                                plex_movie = get_movie(plex, int(value))
+                                plex_movie = get_item(plex, int(value))
                                 print('| +++ Adding %s to collection %s' % (
                                     plex_movie.title, selected_collection.title))
                                 plex_movie.addCollection(selected_collection.title)
                             else:
-                                results = get_movie(plex, value)
+                                results = get_item(plex, value)
                                 if len(results) > 1:
                                     while True:
                                         i = 1
