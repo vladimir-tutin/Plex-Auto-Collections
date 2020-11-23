@@ -179,6 +179,7 @@ The only required attribute for each collection is the list type. There are many
 
 Note that most list types supports multiple lists, with the following exceptions:
 - TMDb Popular
+- TMDb Trending
 - TMDb Top Rated
 - TMDb Now Playing
 - TMDb Discover
@@ -865,9 +866,9 @@ Note that if you have multiple movie Libraries or multiple show Libraries Tautul
 ###### Works with Movie and TV Show Libraries
 
 The next optional attribute for any collection is the `filters` attribute. Collection filters allows for you to filter every movie/show added to the collection from every List Type. All collection filter options are listed below.
-In addition you can also use the `.not` at the end of any standard collection filter to do an inverse search matching everything that doesn't have the value specified. You can use `all: true` to start you filter from your entire library.
+In addition you can also use the `.not` at the end of any standard collection filter to do an inverse search matching everything that doesn't have the value specified. You can use `all: true` to start your filter from your entire library.
 
-| Search Option | Description | Movie<br>Libraries | Show<br>Libraries |
+| Standard Filters | Description | Movie<br>Libraries | Show<br>Libraries |
 | :-- | :-- | :--: | :--: |
 | `actor` | Matches every movie/show with the specified actor | :heavy_check_mark: | :heavy_check_mark: |
 | `content_rating` | Matches every movie/show with the specified content rating | :heavy_check_mark: | :heavy_check_mark: |
@@ -876,10 +877,13 @@ In addition you can also use the `.not` at the end of any standard collection fi
 | `genre` | Matches every movie/show with the specified genre | :heavy_check_mark: | :heavy_check_mark: |
 | `studio` | Matches every movie/show with the specified studio | :heavy_check_mark: | :heavy_check_mark: |
 | `year` | Matches every movie/show with the specified year | :heavy_check_mark: | :heavy_check_mark: |
-| `writer` | Matches every movie with the specified writer) | :heavy_check_mark: | :x: |
+| `writer` | Matches every movie with the specified writer | :heavy_check_mark: | :x: |
 | `video_resolution` | Matches every movie with the specified video resolution | :heavy_check_mark: | :x: |
 | `audio_language` | Matches every movie with the specified audio language | :heavy_check_mark: | :x: |
 | `subtitle_language` | Matches every movie with the specified subtitle language | :heavy_check_mark: | :x: |
+
+| Advanced Filters | Description | Movie<br>Libraries | Show<br>Libraries |
+| :-- | :-- | :--: | :--: |
 | `max_age` | Matches any movie/show whose Originally Available date is within the last specified number of days | :heavy_check_mark: | :heavy_check_mark: |
 | `year.gte` | Matches any movie/show whose year is greater then or equal to the specified year | :heavy_check_mark: | :heavy_check_mark: |
 | `year.lte` | Matches any movie/show whose year is less then or equal to the specified year | :heavy_check_mark: | :heavy_check_mark: |
@@ -887,6 +891,8 @@ In addition you can also use the `.not` at the end of any standard collection fi
 | `rating.lte` | Matches any movie/show whose rating is less then or equal to the specified rating | :heavy_check_mark: | :heavy_check_mark: |
 | `originally_available.gte` | Matches any movie/show whose originally_available date is greater then or equal to the specified originally_available date (Date must be in the MM/DD/YYYY Format) | :heavy_check_mark: | :heavy_check_mark: |
 | `originally_available.lte` | Matches any movie/show whose originally_available date is less then or equal to the specified originally_available date (Date must be in the MM/DD/YYYY Format) | :heavy_check_mark: | :heavy_check_mark: |
+
+Note only standard filters can take multiple values
 
 ```yaml
 collections:

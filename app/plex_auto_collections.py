@@ -5,6 +5,7 @@ import sys
 import threading
 import glob
 import datetime
+import trakt
 from plexapi.server import PlexServer
 from plexapi.video import Movie
 from plexapi.video import Show
@@ -406,9 +407,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             print("| Config Error: add_to_radarr must be either true or false")
                     else:
                         details[check_name] = check_value
-                if method_name not in all_lists:
-                    print("| Config Error: {} attribute not supported".format(method_name))
-                elif method_name in show_only_lists and libtype == "movie":
+                if method_name in show_only_lists and libtype == "movie":
                     print("| Config Error: {} attribute only works for show libraries".format(method_name))
                 elif (method_name in movie_only_filters or method_name in movie_only_lists) and libtype == "show":
                     print("| Config Error: {} attribute only works for movie libraries".format(method_name))
