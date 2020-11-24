@@ -30,16 +30,11 @@ def adjust_space(old_length, display_title):
 
 def get_item(plex, data):
     if isinstance(data, int) or isinstance(data, Movie) or isinstance(data, Show):
-        if isinstance(data, Movie) or isinstance(data, Show):
-            rk = data.ratingKey
-        else:
-            rk = data
         try:
-            return plex.Server.fetchItem(rk)
+            return plex.Server.fetchItem(data.ratingKey if isinstance(data, Movie) or isinstance(data, Show) else data)
         except PlexExceptions.BadRequest:
             return "Nothing found"
     else:
-        print(data)
         item_list = plex.Library.search(title=data)
         if item_list:
             return item_list
@@ -275,6 +270,7 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
         "video_resolution": "video_resolution",
         "audio_language": "audio_language",
         "subtitle_language": "subtitle_language",
+        "plex_collection": "collections",
     }
 
     if movies:
@@ -295,10 +291,10 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
             display_count = (" " * (max_str_len - count_str_len)) + str(movie_count)
             match = True
             if filters:
+                print_display = "| Filtering {}/{} {}".format(display_count, movie_max, current_m.title)
+                print(adjust_space(current_length, print_display), end = "\r")
+                current_length = len(print_display)
                 for f in filters:
-                    print_display = "| Filtering {}/{} {}".format(display_count, movie_max, current_m.title)
-                    print(adjust_space(current_length, print_display), end = "\r")
-                    current_length = len(print_display)
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
@@ -332,7 +328,7 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
                                         mv_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
                         elif method in ["contentRating", "studio", "year", "rating", "originallyAvailableAt"]:                    # Otherwise, it's a string. Make it a list.
                             mv_attrs = [str(getattr(current_m, method))]
-                        elif method in ["actors", "countries", "directors", "genres", "writers"]:
+                        elif method in ["actors", "countries", "directors", "genres", "writers", "collections"]:
                             mv_attrs = [getattr(x, 'tag') for x in getattr(current_m, method)]
 
                         # Get the intersection of the user's terms and movie's terms
@@ -366,10 +362,10 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
             show_count += 1
             match = True
             if filters:
+                print_display = "| Filtering {}/{} {}".format(show_count, show_max, current_s.title)
+                print(adjust_space(current_length, print_display), end = "\r")
+                current_length = len(print_display)
                 for f in filters:
-                    print_display = "| Filtering {}/{} {}".format(show_count, show_max, current_s.title)
-                    print(adjust_space(current_length, print_display), end = "\r")
-                    current_length = len(print_display)
                     modifier = f[0][-4:]
                     method = filter_alias[f[0][:-4]] if modifier in [".not", ".lte", ".gte"] else filter_alias[f[0]]
                     if method == "max_age":
@@ -402,9 +398,9 @@ def add_to_collection(config_path, plex, method, value, c, plex_map=None, map=No
                         #             if method == "subtitle_language":
                         #                 show_attrs = ([subtitle_stream.language for subtitle_stream in part.subtitleStreams()])
                         if method in ["contentRating", "studio", "year", "rating", "originallyAvailableAt"]:
-                            mv_attrs = [str(getattr(current_s, method))]
-                        elif method in ["actors", "genres"]:
-                            mv_attrs = [getattr(x, 'tag') for x in getattr(current_s, method)]
+                            show_attrs = [str(getattr(current_s, method))]
+                        elif method in ["actors", "genres", "collections"]:
+                            show_attrs = [getattr(x, 'tag') for x in getattr(current_s, method)]
 
                         # Get the intersection of the user's terms and show's terms
                         # If it's empty and modifier is not .not, it's not a match

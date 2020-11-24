@@ -231,7 +231,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "originally_available.gte", "originally_available.lte",
         "video_resolution", "video_resolution.not",
         "audio_language", "audio_language.not",
-        "subtitle_language", "subtitle_language.not"
+        "subtitle_language", "subtitle_language.not",
+        "plex_collection", "plex_collection.not"
     ]
     movie_only_filters = [
         "country", "country.not",
@@ -456,7 +457,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     final_collections = []
                     for new_collection in collection_list:
                         try:
-                            final_collections.append(get_collection(plex, new_collection, headless))
+                            final_collections.append(get_collection(plex, str(new_collection), headless))
                         except ValueError as e:
                             print("| Config Error: {} {} Not Found".format(method_name, new_collection))
                     if len(final_collections) > 0:
