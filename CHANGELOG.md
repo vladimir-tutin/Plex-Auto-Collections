@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.7.0] - 2020-11-24 - [#115](https://github.com/mza921/Plex-Auto-Collections/pull/115)
 ### Added
 - Added `tmdb_trending_daily` and `tmdb_trending_weekly`
-- [#98](https://github.com/mza921/Plex-Auto-Collections/issues/98) - Added `cache` attribute to cache the IDs of movies/shows for quicker lookup
+- [#98](https://github.com/mza921/Plex-Auto-Collections/issues/98) - Added `cache` attribute to cache the IDs of movies/shows for quicker lookup and `cache_update_interval` to determine how often to update the cache
 - [#123](https://github.com/mza921/Plex-Auto-Collections/issues/123) - Added new filter `plex_collection`
 
 ### Changed

@@ -92,7 +92,7 @@ def get_map(config_path, plex):
             key_id = None
             error_message = "Unable to map {} ID".format("TMDb" if plex.library_type == "movie" else "TVDb")
             if plex.cache == True:
-                key_id, update = query_cache(config_path, item.guid)
+                key_id, update = query_cache(config_path, plex.cache_interval, item.guid)
             if key_id is None or update:
                 guid = urlparse(item.guid)
                 item_type = guid.scheme.split('.')[-1]
@@ -146,7 +146,7 @@ def get_map(config_path, plex):
                     error_message = "Agent {} not supported".format(item_type)
                 if plex.cache == True and key_id:
                     print(adjust_space(current_length, "| Cache | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
-                    update_cache(config_path, item.guid, key_id)
+                    update_cache(config_path, item.guid, key_id, True if update == True else False, plex.cache_interval)
             if key_id:
                 plex_map[key_id] = item.ratingKey
             else:
@@ -459,7 +459,7 @@ def create_cache(config_path):
         else:
             print("| Using cache database at {}".format(cache))
 
-def query_cache(config_path, key):
+def query_cache(config_path, cache_interval, key):
     cache = "{}.cache".format(os.path.splitext(config_path)[0])
     id_to_return = None
     update = None
@@ -472,11 +472,11 @@ def query_cache(config_path, key):
             datetime_object = datetime.strptime(row["updated"], "%Y-%m-%d")
             time_between_insertion = datetime.now() - datetime_object
             id_to_return = int(row["id"])
-            update = True if time_between_insertion.days > 30 else False
+            update = True if time_between_insertion.days > cache_interval else False
     return id_to_return, update
 
-def update_cache(config_path, plex_guid, input_id):
-    updated_date = datetime.now() - timedelta(days=random.randint(1,10))
+def update_cache(config_path, plex_guid, input_id, update, cache_interval):
+    updated_date = datetime.now() if update == True else (datetime.now() - timedelta(days=random.randint(1, cache_interval)))
     cache = "{}.cache".format(os.path.splitext(config_path)[0])
     with sqlite3.connect(cache) as connection:
         connection.row_factory = sqlite3.Row

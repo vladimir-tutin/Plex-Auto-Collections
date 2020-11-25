@@ -159,6 +159,11 @@ class Plex:
         except SystemExit as e:
             self.cache = check_for_attribute(config, "cache", parent="plex", var_type="bool", default=False, do_print=False)
             message = message + "\n" + str(e) if len(message) > 0 else str(e)
+        try:
+            self.cache_interval = check_for_attribute(config, "cache_update_interval", parent="plex", var_type="int", default=60, throw=True)
+        except SystemExit as e:
+            self.cache_interval = check_for_attribute(config, "cache_update_interval", parent="plex", var_type="int", default=60, do_print=False)
+            message = message + "\n" + str(e) if len(message) > 0 else str(e)
         self.timeout = 60
         if len(fatal_message) > 0:
             sys.exit(fatal_message + "\n" + message)
