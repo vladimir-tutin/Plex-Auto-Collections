@@ -1,37 +1,39 @@
-import os
-import argparse
-import re
-import sys
-import threading
-import glob
-import datetime
-import trakt
-from plexapi.server import PlexServer
-from plexapi.video import Movie
-from plexapi.video import Show
-from plexapi.library import MovieSection
-from plexapi.library import ShowSection
-from plexapi.library import Collections
-from plex_tools import get_map
-from plex_tools import add_to_collection
-from plex_tools import delete_collection
-from plex_tools import get_actor_rkey
-from plex_tools import get_collection
-from plex_tools import get_item
-from imdb_tools import tmdb_get_metadata
-from imdb_tools import imdb_get_ids
-from config_tools import Config
-from config_tools import Plex
-from config_tools import Radarr
-from config_tools import TMDB
-from config_tools import Tautulli
-from config_tools import TraktClient
-from config_tools import ImageServer
-from config_tools import modify_config
-from config_tools import check_for_attribute
-from radarr_tools import add_to_radarr
-from urllib.parse import urlparse
-
+try:
+    import os
+    import argparse
+    import re
+    import sys
+    import threading
+    import glob
+    import datetime
+    from plexapi.server import PlexServer
+    from plexapi.video import Movie
+    from plexapi.video import Show
+    from plexapi.library import MovieSection
+    from plexapi.library import ShowSection
+    from plexapi.library import Collections
+    from plex_tools import get_map
+    from plex_tools import add_to_collection
+    from plex_tools import delete_collection
+    from plex_tools import get_actor_rkey
+    from plex_tools import get_collection
+    from plex_tools import get_item
+    from imdb_tools import tmdb_get_metadata
+    from imdb_tools import imdb_get_ids
+    from config_tools import Config
+    from config_tools import Plex
+    from config_tools import Radarr
+    from config_tools import TMDB
+    from config_tools import Tautulli
+    from config_tools import TraktClient
+    from config_tools import ImageServer
+    from config_tools import modify_config
+    from config_tools import check_for_attribute
+    from radarr_tools import add_to_radarr
+    from urllib.parse import urlparse
+except ModuleNotFoundError:
+    print('|\n| Requirements Error: Please install requirements using "pip install -r requirements.txt"\n|')
+    sys.exit(0)
 
 def regex_first_int(data, method, id_type="number", default=None):
     try:

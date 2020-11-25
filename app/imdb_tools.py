@@ -3,19 +3,23 @@ import requests
 import math
 import sys
 import os
-from urllib.parse import urlparse
-from lxml import html
-from tmdbv3api import TMDb
-from tmdbv3api import Movie
-from tmdbv3api import List
-from tmdbv3api import TV
-from tmdbv3api import Discover
-from tmdbv3api import Collection
-from tmdbv3api import Company
-from tmdbv3api import Network
-from tmdbv3api import Person
-from tmdbv3api import Trending
 import config_tools
+try:
+    from urllib.parse import urlparse
+    from lxml import html
+    from tmdbv3api import TMDb
+    from tmdbv3api import Movie
+    from tmdbv3api import List
+    from tmdbv3api import TV
+    from tmdbv3api import Discover
+    from tmdbv3api import Collection
+    from tmdbv3api import Company
+    from tmdbv3api import Network
+    from tmdbv3api import Person
+    from tmdbv3api import Trending
+except ImportError:
+    print('|\n| Requirements Error: Please update requirements using "pip install -r requirements.txt"\n|')
+    sys.exit(0)
 
 def imdb_get_ids(plex, imdb_url):
     imdb_url = imdb_url.strip()
