@@ -4,6 +4,7 @@ import sys
 import yaml
 import ruamel.yaml
 import requests
+from yaml.scanner import ScannerError
 from urllib.parse import urlparse
 from tmdbv3api import Collection
 from plexapi.exceptions import Unauthorized
@@ -75,8 +76,11 @@ class Config:
             Config.headless = headless
         Config.config_path = config_path
         self.config_path = config_path
-        with open(self.config_path, 'rt', encoding='utf-8') as yml:
-            self.data = yaml.load(yml, Loader=yaml.FullLoader)
+        try:
+            with open(self.config_path, 'rt', encoding='utf-8') as yml:
+                self.data = yaml.load(yml, Loader=yaml.FullLoader)
+        except ScannerError as e:
+            sys.exit("| Scan Error: {}".format(str(e).replace('\n', '\n|\t      ')))
         if Config.valid == True:
             self.collections = check_for_attribute(self.data, "collections", default={}, do_print=False)
             self.plex = self.data['plex']

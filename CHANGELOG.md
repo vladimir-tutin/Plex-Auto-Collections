@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added requirements checking with an error message telling the user to update their requirements
 - [#98](https://github.com/mza921/Plex-Auto-Collections/issues/98) - Added `cache` attribute to cache the IDs of movies/shows for quicker lookup and `cache_update_interval` to determine how often to update the cache
 - [#123](https://github.com/mza921/Plex-Auto-Collections/issues/123) - Added new filter `plex_collection`
+- [#125](https://github.com/mza921/Plex-Auto-Collections/issues/125) - Added error message for YAML Scan Failures
 
 ### Changed
 - Created a mapping for TMDb ID to Plex Rating Key once each run instead of every time tmdb, imdb, tvdb, or trakt list was run.
