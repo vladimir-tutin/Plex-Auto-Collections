@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.7.0] - 2020-11-24 - [#115](https://github.com/mza921/Plex-Auto-Collections/pull/115)
+## [2.7.0] - 2020-11-26 - [#115](https://github.com/mza921/Plex-Auto-Collections/pull/115)
 ### Added
 - Added `tmdb_trending_daily` and `tmdb_trending_weekly`
 - Added requirements checking with an error message telling the user to update their requirements

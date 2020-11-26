@@ -347,8 +347,6 @@ def tmdb_get_shows(config_path, plex, plex_map, data, method):
     return matched, missing
 
 def tvdb_get_shows(config_path, plex, plex_map, data):
-    config_tools.TraktClient(config_path)
-
     tvdb_id = int(data)
     matched = []
     missing = []
