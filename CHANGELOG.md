@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2020-11-26 - [#115](https://github.com/mza921/Plex-Auto-Collections/pull/115)
+### Added
+- Added `tmdb_trending_daily` and `tmdb_trending_weekly`
+- Added requirements checking with an error message telling the user to update their requirements
+- [#98](https://github.com/mza921/Plex-Auto-Collections/issues/98) - Added `cache` attribute to cache the IDs of movies/shows for quicker lookup and `cache_update_interval` to determine how often to update the cache
+- [#123](https://github.com/mza921/Plex-Auto-Collections/issues/123) - Added new filter `plex_collection`
+- [#125](https://github.com/mza921/Plex-Auto-Collections/issues/125) - Added error message for YAML Scan Failures
+
+### Changed
+- Created a mapping for TMDb ID to Plex Rating Key once each run instead of every time tmdb, imdb, tvdb, or trakt list was run.
+- [#110](https://github.com/mza921/Plex-Auto-Collections/issues/110) - Added `add_to_radarr` as a collection level attribute override
+- [#121](https://github.com/mza921/Plex-Auto-Collections/issues/121) - Added paging to `tmdb_network` and `tmdb_company` for show libraries
+- Upgrade tmdbv3api dependency to 1.7.1
+
+### Fixed
+- [#109](https://github.com/mza921/Plex-Auto-Collections/issues/109) - The Cache shouldn't be created unless it has to be
+- [#117](https://github.com/mza921/Plex-Auto-Collections/issues/117) - Typo
+- [#118](https://github.com/mza921/Plex-Auto-Collections/issues/118) - Check for to see if the tmdb attribute exists
+- [#120](https://github.com/mza921/Plex-Auto-Collections/issues/120) - Sometimes the collection wasn't found
+
 ## [2.6.0] - 2020-11-12 - [#113](https://github.com/mza921/Plex-Auto-Collections/pull/113)
 ### Added
 - [#107](https://github.com/mza921/Plex-Auto-Collections/issues/107) - Added `plex_collection`
@@ -23,7 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - [#50](https://github.com/mza921/Plex-Auto-Collections/issues/50) - Trakt access_token refresh
 
-
 ## [2.4.7] - 2020-11-09 - [#103](https://github.com/mza921/Plex-Auto-Collections/pull/103)
 ### Fixed
 - [#92](https://github.com/mza921/Plex-Auto-Collections/issues/92) - fixed New Plex Movie Agent id lookup behind a proxy
@@ -36,8 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - actually fixed `max_age`
-
-
 
 ## [2.4.5] - 2020-11-05 - [#97](https://github.com/mza921/Plex-Auto-Collections/pull/97)
 ### Changed
