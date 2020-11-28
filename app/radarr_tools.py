@@ -12,19 +12,28 @@ def add_to_radarr(config_path, missing):
     tmdb.language = config_tmdb.language
 
     movie = Movie()
-    for tmdb_id in missing:
+    for m in missing:
+        # Get TMDb ID data from IMDb ID
+        search = movie.external(external_id=str(m), external_source="imdb_id")['movie_results']
+        if len(search) == 1:
+            tmdb_details = search[0]
+        else:
+            print("| --- Unable to match TMDb ID for IMDb ID {}, skipping".format(m))
+            continue
+
+        # Validate TMDb information (very few TMDb entries don't yet have basic information)
         try:
-            tmovie = movie.details(tmdb_id)
-            tmdb_title = tmovie.title
-        except AttributeError:
+            tmdb_title = tmdb_details['title']
+            tmdb_id = tmdb_details['id']
+        except IndexError:
             print("| --- Unable to fetch necessary TMDb information for IMDb ID {}, skipping".format(m))
             continue
 
         # Validate TMDb year (several TMDb entries don't yet have release dates)
         try:
             # This might be overly punitive
-            tmdb_year = tmovie.release_date.split("-")[0]
-        except AttributeError:
+            tmdb_year = tmdb_details['release_date'].split("-")[0]
+        except KeyError:
             print("| --- {} does not have a release date on TMDb yet, skipping".format(tmdb_title))
             continue
 
@@ -32,7 +41,7 @@ def add_to_radarr(config_path, missing):
             print("| --- {} does not have a release date on TMDb yet, skipping".format(tmdb_title))
             continue
 
-        tmdb_poster = "https://image.tmdb.org/t/p/original{}".format(tmovie.poster_path)
+        tmdb_poster = "https://image.tmdb.org/t/p/original{}".format(tmdb_details['poster_path'])
 
         titleslug = "{} {}".format(tmdb_title, tmdb_year)
         titleslug = re.sub(r'([^\s\w]|_)+', '', titleslug)

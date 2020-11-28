@@ -9,4 +9,3 @@ app/config.yml
 config/config-*
 config/*.pickle
 **/cache.db*
-**/*.cache*

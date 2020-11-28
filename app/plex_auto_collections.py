@@ -1,39 +1,34 @@
-try:
-    import os
-    import argparse
-    import re
-    import sys
-    import threading
-    import glob
-    import datetime
-    from plexapi.server import PlexServer
-    from plexapi.video import Movie
-    from plexapi.video import Show
-    from plexapi.library import MovieSection
-    from plexapi.library import ShowSection
-    from plexapi.library import Collections
-    from plex_tools import get_map
-    from plex_tools import add_to_collection
-    from plex_tools import delete_collection
-    from plex_tools import get_actor_rkey
-    from plex_tools import get_collection
-    from plex_tools import get_item
-    from imdb_tools import tmdb_get_metadata
-    from imdb_tools import imdb_get_ids
-    from config_tools import Config
-    from config_tools import Plex
-    from config_tools import Radarr
-    from config_tools import TMDB
-    from config_tools import Tautulli
-    from config_tools import TraktClient
-    from config_tools import ImageServer
-    from config_tools import modify_config
-    from config_tools import check_for_attribute
-    from radarr_tools import add_to_radarr
-    from urllib.parse import urlparse
-except ModuleNotFoundError:
-    print('|\n| Requirements Error: Please install requirements using "pip install -r requirements.txt"\n|')
-    sys.exit(0)
+import os
+import argparse
+import re
+import sys
+import threading
+import glob
+import datetime
+from plexapi.server import PlexServer
+from plexapi.video import Movie
+from plexapi.video import Show
+from plexapi.library import MovieSection
+from plexapi.library import ShowSection
+from plexapi.library import Collections
+from plex_tools import add_to_collection
+from plex_tools import delete_collection
+from plex_tools import get_actor_rkey
+from plex_tools import get_collection
+from plex_tools import get_movie
+from imdb_tools import tmdb_get_metadata
+from imdb_tools import imdb_get_ids
+from config_tools import Config
+from config_tools import Plex
+from config_tools import Radarr
+from config_tools import TMDB
+from config_tools import Tautulli
+from config_tools import TraktClient
+from config_tools import ImageServer
+from config_tools import modify_config
+from config_tools import check_for_attribute
+from radarr_tools import add_to_radarr
+from urllib.parse import urlparse
 
 def regex_first_int(data, method, id_type="number", default=None):
     try:
@@ -109,15 +104,12 @@ def get_method_pair_year(method_to_parse, values_to_parse):
 def update_from_config(config_path, plex, headless=False, no_meta=False, no_images=False):
     config = Config(config_path)
     collections = config.collections
-    if not headless:
-        print("|\n|===================================================================================================|")
     if isinstance(plex.Library, MovieSection):
-        radarr = Radarr(config_path) if Radarr.valid else None
         libtype = "movie"
     elif isinstance(plex.Library, ShowSection):
-        radarr = None
         libtype = "show"
-    plex_map = get_map(config_path, plex)
+    if not headless:
+        print("|\n|===================================================================================================|")
     alias = {
         "actors": "actor", "role": "actor", "roles": "actor",
         "content_ratings": "content_rating", "contentRating": "content_rating", "contentRatings": "content_rating",
@@ -138,26 +130,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "subfilters": "filters",
         "collection_sort": "collection_order"
     }
-    pretty_names = {
-        "tmdb_collection": "TMDb Collection",
-        "tmdb_id": "TMDb ID",
-        "tmdb_company": "TMDb Company",
-        "tmdb_network": "TMDb Network",
-        "tmdb_discover": "TMDb Discover",
-        "tmdb_popular": "TMDb Popular",
-        "tmdb_top_rated": "TMDb Top Rated",
-        "tmdb_now_playing": "TMDb Now Playing",
-        "tmdb_trending_daily": "TMDb Trending Daily",
-        "tmdb_trending_weekly": "TMDb Trending Weekly",
-        "tmdb_list": "TMDb List",
-        "tmdb_movie": "TMDb Movie",
-        "tmdb_show": "TMDb Show",
-        "tvdb_show": "TVDb Show",
-        "imdb_list": "IMDb List",
-        "trakt_list": "Trakt List",
-        "trakt_trending": "Trakt Trending",
-        "trakt_watchlist": "Trakt Watchlist"
-    }
     all_lists = [
         "plex_search",
         "plex_collection",
@@ -172,8 +144,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "tmdb_popular",
         "tmdb_top_rated",
         "tmdb_now_playing",
-        "tmdb_trending_daily",
-        "tmdb_trending_weekly",
+        #"tmdb_trending_daily",     #TURNON:Trending
+        #"tmdb_trending_weekly",    #TURNON:Trending
         "tmdb_list",
         "tmdb_movie",
         "tmdb_show",
@@ -197,8 +169,8 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
     ]
     show_only_lists = [
         "tmdb_show",
-        "tvdb_show",
-        "tmdb_network"
+        "tvdb_show"
+        "tmdb_network",
     ]
     movie_only_lists = [
         "tmdb_collection",
@@ -233,8 +205,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "originally_available.gte", "originally_available.lte",
         "video_resolution", "video_resolution.not",
         "audio_language", "audio_language.not",
-        "subtitle_language", "subtitle_language.not",
-        "plex_collection", "plex_collection.not"
+        "subtitle_language", "subtitle_language.not"
     ]
     movie_only_filters = [
         "country", "country.not",
@@ -250,7 +221,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
         "collection_mode", "collection_order",
         "poster", "tmdb_poster", "tmdb_profile", "file_poster",
         "background", "file_background",
-        "name_mapping", "add_to_radarr"
+        "name_mapping"
     ]
     discover_movie = [
         "language", "with_original_language", "region", "sort_by",
@@ -337,7 +308,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
             if ("tmdb" in m or "imdb" in m) and not TMDB.valid:
                 print("| Config Error: {} skipped. tmdb incorrectly configured".format(m))
                 map = {}
-            elif "trakt" in m and not TraktClient.valid:
+            elif ("trakt" in m or (("tmdb" in m or "tvdb" in m) and plex.library_type == "show")) and not TraktClient.valid:
                 print("| Config Error: {} skipped. trakt incorrectly configured".format(m))
                 map = {}
             elif m == "tautulli" and not Tautulli.valid:
@@ -378,12 +349,12 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         posters_found.append(["url", check_value, check_name])
                     elif check_name == "tmdb_poster":
                         try:
-                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "poster"), check_name])
+                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "poster_path"), check_name])
                         except ValueError as e:
                             print(e)
                     elif check_name == "tmdb_profile":
                         try:
-                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "profile"), check_name])
+                            posters_found.append(["url", tmdb_get_metadata(config_path, check_value, "profile_path"), check_name])
                         except ValueError as e:
                             print(e)
                     elif check_name == "file_poster":
@@ -395,7 +366,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                         backgrounds_found.append(["url", check_value, check_name])
                     elif check_name == "tmdb_background":
                         try:
-                            backgrounds_found.append(["url", tmdb_get_metadata(config_path, check_value, "backdrop"), check_name])
+                            backgrounds_found.append(["url", tmdb_get_metadata(config_path, check_value, "backdrop_path"), check_name])
                         except ValueError as e:
                             print(e)
                     elif check_name == "file_background":
@@ -403,18 +374,9 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             backgrounds_found.append(["file", os.path.abspath(check_value), check_name])
                         else:
                             print("| Config Error: Background Path Does Not Exist: {}".format(os.path.abspath(check_value)))
-                    elif check_name == "add_to_radarr":
-                        if check_value == True or check_value == False:
-                            details[check_name] = check_value
-                        else:
-                            print("| Config Error: add_to_radarr must be either true or false")
                     else:
                         details[check_name] = check_value
-                if method_name in show_only_lists and libtype == "movie":
-                    print("| Config Error: {} attribute only works for show libraries".format(method_name))
-                elif (method_name in movie_only_filters or method_name in movie_only_lists) and libtype == "show":
-                    print("| Config Error: {} attribute only works for movie libraries".format(method_name))
-                elif method_name == "details":
+                if method_name == "details":
                     print("| Config Error: Please remove the details attribute all its old sub-attributes should be one level higher")
                     for detail_m in collections[c][m]:
                         if detail_m in alias:
@@ -443,7 +405,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                             if person_id is None:
                                 if "summary" not in details:
                                     details["summary"] = tmdb_get_metadata(config_path, id, "biography")
-                                details["poster"] = ["url", tmdb_get_metadata(config_path, id, "profile"), method_name]
+                                details["poster"] = ["url", tmdb_get_metadata(config_path, id, "profile_path"), method_name]
                                 person_id = id
                                 person_method = method_name
                             if method_name == "tmdb_actor":
@@ -459,9 +421,9 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     final_collections = []
                     for new_collection in collection_list:
                         try:
-                            final_collections.append(get_collection(plex, str(new_collection), headless))
+                            final_collections.append(get_collection(plex, new_collection, headless))
                         except ValueError as e:
-                            print("| Config Error: {} {} Not Found".format(method_name, new_collection))
+                            print("| Config Error: {} {}".format(method_name, new_collection))
                     if len(final_collections) > 0:
                         methods.append(("plex_collection", final_collections))
                 elif method_name == "tmdb_collection":
@@ -472,18 +434,9 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                     id = get_method_pair_tmdb(method_name, collections[c][m], "TMDb ID")
                     if tmdb_id is None:
                         if "summary" not in details:
-                            try:
-                                details["summary"] = tmdb_get_metadata(config_path, id[1][0], "overview")
-                            except ValueError as e:
-                                print(e)
-                        try:
-                            details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "poster"), method_name]
-                        except ValueError as e:
-                            print(e)
-                        try:
-                            details["background"] = ["url", tmdb_get_metadata(config_path, id[1][0], "backdrop"), method_name]
-                        except ValueError as e:
-                            print(e)
+                            details["summary"] = tmdb_get_metadata(config_path, id[1][0], "overview")
+                        details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "poster_path"), method_name]
+                        details["poster"] = ["url", tmdb_get_metadata(config_path, id[1][0], "backdrop_path"), method_name]
                         tmdb_id = id[1][0]
                     methods.append(id)
                 elif method_name in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly"]:
@@ -649,12 +602,6 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 first_filter = False
             print("| Collection Filter {}: {}".format(f[0], f[1]))
 
-        do_radarr = False
-        if radarr:
-            do_radarr = radarr.add_to_radarr
-            if "add_to_radarr" in details:
-                do_radarr = details["add_to_radarr"]
-
         # Loops though and actually processes the methods
         for m, values in methods:
             for v in values:
@@ -665,26 +612,39 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                 elif m not in ["plex_search", "tmdb_list", "tmdb_id", "tmdb_movie", "tmdb_collection", "tmdb_company", "tmdb_network", "tmdb_discover", "tmdb_show"]:
                     print("| \n| Processing {}: {}".format(m, v))
                 try:
-                    missing, map = add_to_collection(config_path, plex, m, v, c, plex_map, map, filters)
+                    missing, map = add_to_collection(config_path, plex, m, v, c, map, filters)
                 except (KeyError, ValueError, SystemExit) as e:
                     print(e)
                     missing = False
                 if missing:
-                    def missing_print(display_value):
-                        print("| {} missing {}{} from {}: {}".format(len(missing), libtype, "s" if len(missing) > 1 else "", pretty_names[m], display_value))
+                    if libtype == "movie":
+                        method_name = "IMDb" if "imdb" in m else "Trakt" if "trakt" in m else "TMDb"
+                        if m in ["trakt_list", "trakt_watchlist", "tmdb_list"]:
+                            print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        elif m == "imdb_list":
+                            print("| {} missing movie{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v[0]))
+                        elif m == "tmdb_collection":
+                            print("| {} missing movie{} from {} Collection: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        elif m == "trakt_trending":
+                            print("| {} missing movie{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        else:
+                            print("| {} ID: {} missing".format(method_name, v))
+                        if Radarr.valid:
+                            radarr = Radarr(config_path)
+                            if radarr.add_movie:
+                                print("| Adding missing movies to Radarr")
+                                add_to_radarr(config_path, missing)
+                            elif not headless and radarr.add_movie is None and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
+                                add_to_radarr(config_path, missing)
+                    elif libtype == "show":
+                        method_name = "Trakt" if "trakt" in m else "TVDb" if "tvdb" in m else "TMDb"
+                        if m in ["trakt_list", "trakt_watchlist", "tmdb_list"]:
+                            print("| {} missing show{} from {} List: {}".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        elif m == "trakt_trending":
+                            print("| {} missing show{} from {} List: Trending (top {})".format(len(missing), "s" if len(missing) > 1 else "", method_name, v))
+                        else:
+                            print("| {} ID: {} missing".format(method_name, v))
 
-                    if m in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly", "trakt_trending"]:
-                        missing_print("Top {}".format(v))
-                    elif m == "imdb_list":
-                        missing_print(v[0])
-                    else:
-                        missing_print(v)
-
-                    if do_radarr:
-                        print("| Adding missing movies to Radarr")
-                        add_to_radarr(config_path, missing)
-                    elif do_radarr is None and not headless and input("| Add missing movies to Radarr? (y/n): ").upper() == "Y":
-                        add_to_radarr(config_path, missing)
                         # if not skip_sonarr:
                         #     if input("Add missing shows to Sonarr? (y/n): ").upper() == "Y":
                         #         add_to_radarr(missing_shows)
@@ -839,12 +799,12 @@ def append_collection(config_path, config_update=None):
                             method = "movie"
                             value = input("| Enter Movie (Name or Rating Key): ")
                             if value is int:
-                                plex_movie = get_item(plex, int(value))
+                                plex_movie = get_movie(plex, int(value))
                                 print('| +++ Adding %s to collection %s' % (
                                     plex_movie.title, selected_collection.title))
                                 plex_movie.addCollection(selected_collection.title)
                             else:
-                                results = get_item(plex, value)
+                                results = get_movie(plex, value)
                                 if len(results) > 1:
                                     while True:
                                         i = 1
@@ -1002,7 +962,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.7.0")
+print("| Version 2.6.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))
