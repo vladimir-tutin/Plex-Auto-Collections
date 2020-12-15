@@ -118,7 +118,7 @@ def get_map(config_path, plex):
                     elif imdb_id:
                         key_id = imdb_id
                         print(adjust_space(current_length, "| Cache | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
-                        update_guid_map(config_path, item.guid, tmdb_id=key_id)
+                        update_guid_map(config_path, item.guid, imdb_id=key_id)
             elif item_type == 'imdb' and plex.library_type == "movie":
                 key_id = None
                 if TMDB.valid and key_id is None:
@@ -433,7 +433,10 @@ def query_guid_map(config_path, key, column):
             cursor.execute("SELECT * FROM guids WHERE plex_guid = ?", (key, ))
             row = cursor.fetchone()
             if row:
-                return row[column]
+                if row[column] and column == 'tmdb_id':
+                    return int(row[column])
+                else:
+                    return row[column]
 
 def update_guid_map(config_path, plex_guid, **kwargs):
     config_dir = os.path.dirname(config_path)
