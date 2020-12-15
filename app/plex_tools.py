@@ -18,7 +18,10 @@ from tmdbv3api import TMDb
 from tmdbv3api import Movie as TMDb_Movie
 import os
 import sqlite3
-import random
+import tempfile
+import glob
+import shutil
+from contextlib import closing
 
 
 def adjust_space(old_length, display_title):
@@ -78,8 +81,13 @@ def get_map(config_path, plex):
         tmdb.api_key = TMDB(config_path).apikey
         tmovie = TMDb_Movie()
     print("|")
-    if plex.cache:
-        create_cache(config_path)
+    if plex.library_type == "movie":
+        config_dir = os.path.dirname(config_path)
+        db_dir = os.path.join(config_dir, 'db')
+        guid_map = os.path.join(db_dir, "{}_guid.db".format(os.path.splitext(os.path.basename(config_path))[0]))    
+        if not os.path.isfile(guid_map):
+            create_guid_map(config_path)
+            update_guid_map_from_db(config_path, plex)
     print("| Mapping Plex {}".format("Movies" if plex.library_type == "movie" else "Shows"))
     plex_items = plex.Library.all()
     try:
@@ -90,67 +98,76 @@ def get_map(config_path, plex):
             current_length = len(print_display)
             update = None
             key_id = None
-            error_message = "Unable to map {} ID".format("TMDb" if plex.library_type == "movie" else "TVDb")
-            if plex.cache == True:
-                key_id, update = query_cache(config_path, plex.cache_interval, item.guid)
-            if key_id is None or update:
-                guid = urlparse(item.guid)
-                item_type = guid.scheme.split('.')[-1]
-                check_id = guid.netloc
-                if item_type == 'plex' and plex.library_type == "movie":
-                    key_id = new_movie_agent_get_tmdb(plex, item)
-                elif item_type == 'imdb' and plex.library_type == "movie":
-                    key_id = None
-                    if TMDB.valid and key_id is None:
-                        key_id = imdb_tools.imdb_get_tmdb(config_path, check_id)
-                    if TraktClient.valid and key_id is None:
-                        key_id = trakt_tools.trakt_imdb_to_tmdb(config_path, check_id)
-                    if key_id is None:
-                        if TMDB.valid and TraktClient.valid:
-                            error_message = "Unable to convert IMDb ID: {} to TMDb ID using TMDb or Trakt".format(check_id)
-                        elif TMDB.valid:
-                            error_message = "Unable to convert IMDb ID: {} to TMDb ID using TMDb".format(check_id)
-                        elif TraktClient.valid:
-                            error_message = "Unable to convert IMDb ID: {} to TMDb ID using Trakt".format(check_id)
-                        else:
-                            error_message = "Configure TMDb or Trakt to covert IMDb ID: {} to TMDb ID".format(check_id)
-                elif item_type == 'themoviedb' and plex.library_type == "movie":
-                    tmdbapi = tmovie.details(check_id)
-                    if hasattr(tmdbapi, 'id'):
-                        key_id = tmdbapi.id
+            error_message = "Unable to map {} ID".format("TMDb/IMDb" if plex.library_type == "movie" else "TVDb")
+
+            guid = urlparse(item.guid)
+            item_type = guid.scheme.split('.')[-1]
+            check_id = guid.netloc
+            if item_type == 'plex' and plex.library_type == "movie":
+                # Check GUID map for TMDb ID
+                key_id = query_guid_map(config_path, item.guid, 'tmdb_id')
+                # Check GUID map for for IMDb ID
+                if not key_id:
+                    key_id = query_guid_map(config_path, item.guid, 'imdb_id')
+                if not key_id:
+                    imdb_id, tmdb_id = alt_id_lookup(plex, item)
+                    if tmdb_id:
+                        key_id = tmdb_id
+                        print(adjust_space(current_length, "| Cache | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
+                        update_guid_map(config_path, item.guid, tmdb_id=key_id)
+                    elif imdb_id:
+                        key_id = imdb_id
+                        print(adjust_space(current_length, "| Cache | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
+                        update_guid_map(config_path, item.guid, tmdb_id=key_id)
+            elif item_type == 'imdb' and plex.library_type == "movie":
+                key_id = None
+                if TMDB.valid and key_id is None:
+                    key_id = imdb_tools.imdb_get_tmdb(config_path, check_id)
+                if TraktClient.valid and key_id is None:
+                    key_id = trakt_tools.trakt_imdb_to_tmdb(config_path, check_id)
+                if key_id is None:
+                    if TMDB.valid and TraktClient.valid:
+                        error_message = "Unable to convert IMDb ID: {} to TMDb ID using TMDb or Trakt".format(check_id)
+                    elif TMDB.valid:
+                        error_message = "Unable to convert IMDb ID: {} to TMDb ID using TMDb".format(check_id)
+                    elif TraktClient.valid:
+                        error_message = "Unable to convert IMDb ID: {} to TMDb ID using Trakt".format(check_id)
                     else:
-                        key_id = None
-                        error_message = "TMDb ID: {} Invalid".format(check_id)
-                elif item_type == 'thetvdb' and plex.library_type == "show":
-                    key_id = check_id
-                elif item_type == 'themoviedb' and plex.library_type == "show":
-                    key_id = None
-                    if TMDB.valid and key_id is None:
-                        key_id = imdb_tools.tmdb_get_tvdb(config_path, check_id)
-                    if TraktClient.valid and key_id is None:
-                        key_id = trakt_tools.trakt_tmdb_to_tvdb(config_path, check_id)
-                    if key_id is None:
-                        if TMDB.valid and TraktClient.valid:
-                            error_message = "Unable to convert TMDb ID: {} to TVDb ID using TMDb or Trakt".format(check_id)
-                        elif TMDB.valid:
-                            error_message = "Unable to convert TMDb ID: {} to TVDb ID using TMDb".format(check_id)
-                        elif TraktClient.valid:
-                            error_message = "Unable to convert TMDb ID: {} to TVDb ID using Trakt".format(check_id)
-                        else:
-                            error_message = "Configure TMDb or Trakt to covert TMDb ID: {} to TVDb ID".format(check_id)
-                elif item_type == "local":
-                    key_id = None
-                    error_message = "No match in Plex"
+                        error_message = "Configure TMDb or Trakt to covert IMDb ID: {} to TMDb ID".format(check_id)
+            elif item_type == 'themoviedb' and plex.library_type == "movie":
+                tmdbapi = tmovie.details(check_id)
+                if hasattr(tmdbapi, 'id'):
+                    key_id = tmdbapi.id
                 else:
                     key_id = None
-                    error_message = "Agent {} not supported".format(item_type)
-                if plex.cache == True and key_id:
-                    print(adjust_space(current_length, "| Cache | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
-                    update_cache(config_path, item.guid, key_id, True if update == True else False, plex.cache_interval)
+                    error_message = "TMDb ID: {} Invalid".format(check_id)
+            elif item_type == 'thetvdb' and plex.library_type == "show":
+                key_id = check_id
+            elif item_type == 'themoviedb' and plex.library_type == "show":
+                key_id = None
+                if TMDB.valid and key_id is None:
+                    key_id = imdb_tools.tmdb_get_tvdb(config_path, check_id)
+                if TraktClient.valid and key_id is None:
+                    key_id = trakt_tools.trakt_tmdb_to_tvdb(config_path, check_id)
+                if key_id is None:
+                    if TMDB.valid and TraktClient.valid:
+                        error_message = "Unable to convert TMDb ID: {} to TVDb ID using TMDb or Trakt".format(check_id)
+                    elif TMDB.valid:
+                        error_message = "Unable to convert TMDb ID: {} to TVDb ID using TMDb".format(check_id)
+                    elif TraktClient.valid:
+                        error_message = "Unable to convert TMDb ID: {} to TVDb ID using Trakt".format(check_id)
+                    else:
+                        error_message = "Configure TMDb or Trakt to covert TMDb ID: {} to TVDb ID".format(check_id)
+            elif item_type == "local":
+                key_id = None
+                error_message = "No match in Plex"
+            else:
+                key_id = None
+                error_message = "Agent {} not supported".format(item_type)
             if key_id:
                 plex_map[key_id] = item.ratingKey
             else:
-                print(adjust_space(current_length, "| {} {:<46} | {} for {}".format("Cache | ! |" if plex.cache == True else "Mapping Error:", item.guid, error_message, item.title)))
+                print(adjust_space(current_length, "| {} {:<46} | {} for {}".format("Cache | ! |", item.guid, error_message, item.title)))
         print(adjust_space(current_length, "| Processed {} {}".format(len(plex_items), "Movies" if plex.library_type == "movie" else "Shows")))
     except:
         print()
@@ -341,55 +358,97 @@ def delete_collection(data):
         data.delete()
         print("| Collection deleted")
 
-def new_movie_agent_get_tmdb(plex, movie):
+def alt_id_lookup(plex, movie):
     req = Request('{}{}'.format(plex.url, movie.key))
     req.add_header('X-Plex-Token', plex.token)
     req.add_header('User-Agent', 'Mozilla/5.0')
     with urlopen(req) as response:
         contents = response.read()
     bs = BeautifulSoup(contents, 'lxml')
+    imdb_id = None
     tmdb_id = None
     for guid_tag in bs.find_all('guid'):
         agent = urlparse(guid_tag['id']).scheme
         guid = urlparse(guid_tag['id']).netloc
-        if agent == 'tmdb':
+        if agent == 'imdb':
+            imdb_id = guid
+        elif agent == 'tmdb':
             tmdb_id = guid
-            break
-    return tmdb_id
+    return imdb_id, tmdb_id
 
-def create_cache(config_path):
-    cache = "{}.cache".format(os.path.splitext(config_path)[0])
-    with sqlite3.connect(cache) as connection:
+def create_guid_map(config_path):
+    config_dir = os.path.dirname(config_path)
+    db_dir = os.path.join(config_dir, 'db')
+    os.makedirs(db_dir, exist_ok=True)
+    guid_map = os.path.join(db_dir, "{}_guid.db".format(os.path.splitext(os.path.basename(config_path))[0]))
+    with closing(sqlite3.connect(guid_map)) as connection:
         connection.row_factory = sqlite3.Row
-        cursor = connection.cursor()
-        cursor.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='guids' ''')
-        if cursor.fetchone()[0] != 1:
-            print("| Initializing cache database at {}".format(cache))
-            cursor.execute('CREATE TABLE IF NOT EXISTS guids (plex_guid TEXT PRIMARY KEY, id TEXT, updated TEXT)')
-        else:
-            print("| Using cache database at {}".format(cache))
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='guids' ''')
+            if cursor.fetchone()[0] != 1:
+                print("| Initializing GUID map database at {}".format(guid_map))
+                cursor.execute('CREATE TABLE IF NOT EXISTS guids (plex_guid TEXT PRIMARY KEY, imdb_id TEXT, tmdb_id TEXT, updated TEXT)')
+            else:
+                print("| Using GUID map database at {}".format(guid_map))
 
-def query_cache(config_path, cache_interval, key):
-    cache = "{}.cache".format(os.path.splitext(config_path)[0])
-    id_to_return = None
-    update = None
-    with sqlite3.connect(cache) as connection:
+def update_guid_map_from_db(config_path, plex):
+    config_dir = os.path.dirname(config_path)
+    temp_dir = tempfile.mkdtemp(dir=config_dir)
+    print("| Downloading temporary database to {}".format(temp_dir))
+    plex.Server.downloadDatabases(savepath=temp_dir, unpack=True)
+    os.remove(glob.glob(os.path.join(temp_dir, '*.zip'))[0])
+    plex_temp_db = glob.glob(os.path.join(temp_dir, '*'))[0]
+    print("| Updating GUID map from database")
+    with closing(sqlite3.connect(plex_temp_db)) as connection:
         connection.row_factory = sqlite3.Row
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM guids WHERE plex_guid = ?", (key, ))
-        row = cursor.fetchone()
-        if row and row["id"]:
-            datetime_object = datetime.strptime(row["updated"], "%Y-%m-%d")
-            time_between_insertion = datetime.now() - datetime_object
-            id_to_return = int(row["id"])
-            update = True if time_between_insertion.days > cache_interval else False
-    return id_to_return, update
+        with closing(connection.cursor()) as cursor:
+            for row in cursor.execute(
+                    '''SELECT t.tag, mdi.guid, mdi.title, mdi.year
+                    FROM metadata_items mdi
+                    JOIN taggings tg
+                    ON tg.metadata_item_id = mdi.id
+                    JOIN tags t
+                    ON t.id = tg.tag_id
+                    AND t.tag_type = 314
+                    WHERE mdi.metadata_type = 1
+                    AND mdi.library_section_id = ?
+                    AND (t.tag LIKE 'tmdb://%'
+                    OR t.tag LIKE 'imdb://%')
+                    GROUP BY mdi.id, t.tag''', (plex.Library.key, )):
+                if 'imdb' in row['tag']:
+                    update_guid_map(config_path, row['guid'], imdb_id=urlparse(row['tag']).netloc)
+                elif 'tmdb' in row['tag']:
+                    update_guid_map(config_path, row['guid'], tmdb_id=urlparse(row['tag']).netloc)
+                print("| GUID map | + | {:38} | {:<9} | {} ({})".format(row['guid'], urlparse(row['tag']).netloc, row['title'], row['year']))
+    shutil.rmtree(temp_dir)
 
-def update_cache(config_path, plex_guid, input_id, update, cache_interval):
-    updated_date = datetime.now() if update == True else (datetime.now() - timedelta(days=random.randint(1, cache_interval)))
-    cache = "{}.cache".format(os.path.splitext(config_path)[0])
-    with sqlite3.connect(cache) as connection:
+
+def query_guid_map(config_path, key, column):
+    config_dir = os.path.dirname(config_path)
+    db_dir = os.path.join(config_dir, 'db')
+    guid_map = os.path.join(db_dir, "{}_guid.db".format(os.path.splitext(os.path.basename(config_path))[0]))
+    with closing(sqlite3.connect(guid_map)) as connection:
         connection.row_factory = sqlite3.Row
-        cursor = connection.cursor()
-        cursor.execute('INSERT OR IGNORE INTO guids(plex_guid) VALUES(?)', (plex_guid, ))
-        cursor.execute('UPDATE guids SET id = ?, updated = ? WHERE plex_guid = ?', (input_id, updated_date.strftime("%Y-%m-%d"), plex_guid))
+        with closing(connection.cursor()) as cursor:
+            cursor.execute("SELECT * FROM guids WHERE plex_guid = ?", (key, ))
+            row = cursor.fetchone()
+            if row:
+                return row[column]
+
+def update_guid_map(config_path, plex_guid, **kwargs):
+    config_dir = os.path.dirname(config_path)
+    db_dir = os.path.join(config_dir, 'db')
+    guid_map = os.path.join(db_dir, "{}_guid.db".format(os.path.splitext(os.path.basename(config_path))[0]))
+    with closing(sqlite3.connect(guid_map)) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute('INSERT OR IGNORE INTO guids(plex_guid) VALUES(?)', (plex_guid, ))
+            if 'imdb_id' in kwargs:
+                imdb_id = kwargs['imdb_id']
+                cursor.execute('INSERT OR IGNORE INTO guids(plex_guid, imdb_id, updated) VALUES(?, ?, ?)', (plex_guid, imdb_id, datetime.now()))
+                cursor.execute('UPDATE guids SET imdb_id = ?, updated = ? WHERE plex_guid = ?', (imdb_id, datetime.now(), plex_guid))
+            if 'tmdb_id' in kwargs:
+                tmdb_id = kwargs['tmdb_id']
+                cursor.execute('INSERT OR IGNORE INTO guids(plex_guid, tmdb_id, updated) VALUES(?, ?, ?)', (plex_guid, tmdb_id, datetime.now()))
+                cursor.execute('UPDATE guids SET tmdb_id = ?, updated = ? WHERE plex_guid = ?', (tmdb_id, datetime.now(), plex_guid))
+        connection.commit()

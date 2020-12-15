@@ -544,7 +544,7 @@ def update_from_config(config_path, plex, headless=False, no_meta=False, no_imag
                                     year_pair = get_method_pair_year(final_attr, collections[c][m][search_attr])
                                     if len(year_pair[1]) > 0:
                                         searches_used.append(final_attr[:-4] if final_attr.endswith(".not") else final_attr)
-                                        search.append(get_method_pair_int(final_attr, collections[c][m][search_attr], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
+                                        search.append(get_method_pair_int(final_attr, year_pair[1], final_attr[:-4] if final_attr.endswith(".not") else final_attr))
                                 elif final_attr in plex_searches:
                                     if final_attr.startswith("tmdb_"):
                                         final_attr = final_attr[5:]
@@ -1002,7 +1002,7 @@ print("|    |  _/| |/ -_)\ \ /  / _ \| || ||  _|/ _ \ | (__ / _ \| || |/ -_)/ _|
 print("|    |_|  |_|\___|/_\_\ /_/ \_\\\\_,_| \__|\___/  \___|\___/|_||_|\___|\__| \__||_|\___/|_||_|/__/    |")
 print("|                                                                                                   |")
 print("|===================================================================================================|")
-print("| Version 2.7.0")
+print("| Version 2.8.0")
 print("| Locating config...")
 config_path = None
 app_dir = os.path.dirname(os.path.abspath(__file__))

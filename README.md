@@ -1,5 +1,5 @@
 # Plex Auto Collections
-##### Version 2.7.0
+##### Version 2.8.0
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -1185,11 +1185,11 @@ plex:                                         # Req
   token: #####                                # Req - User's Plex authentication token
   url: http://192.168.1.1:32400               # Req - URL to access Plex
   sync_mode: append                           # Opt - Global Sync Mode
-  cache: False                                # Opt - Create a cache of IDs
-  cache_update_interval: 60                   # Opt - How often to update each cache entry
 ```
 
 Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
+
+For `movie` libraries that use the new Plex Movie agent, a temporary copy of the Plex database is downloaded to facilitate the identification of movies. This occurs only during an initial run of the script, per config file. Depending on the size of the library, this can result in a large download.
 
 This script can be run on a remote Plex server, but be sure that the `url` provided is publicly addressable and it's recommended to use `HTTPS`.
 
@@ -1199,8 +1199,6 @@ You can set the global default [Sync Mode](#sync-mode-collection-attribute) here
 | :-- | :-- |
 | `append` | Only Add Items to the Collection |
 | `sync` | Add & Remove Items from the Collection |
-
-Setting the `cache` attribute to true will cause the program to create a cache file that allows for faster ID mapping on future runs. Every entry in the cache will update on a interval that can be specified setting  `cache_update_interval` to an integer greater then 0 to represent how many days in between updates.
 
 Lastly, if you need help finding your Plex authentication token, please see Plex's [support article](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 
