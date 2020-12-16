@@ -69,13 +69,11 @@ def imdb_get_ids(plex, imdb_url):
 def tmdb_get_imdb(config_path, tmdb_id):
     movie = Movie()
     movie.api_key = config_tools.TMDB(config_path).apikey
-    # return movie.external_ids(tmdb_id)['imdb_id']
     return str(movie.external_ids(tmdb_id)['imdb_id'])
 
 def tmdb_get_tvdb(config_path, tmdb_id):
     show = TV()
     show.api_key = config_tools.TMDB(config_path).apikey
-    # return show.external_ids(tmdb_id)['tvdb_id']
     return str(show.external_ids(tmdb_id)['tvdb_id'])
 
 def imdb_get_tmdb(config_path, imdb_id):
