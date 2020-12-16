@@ -69,12 +69,14 @@ def imdb_get_ids(plex, imdb_url):
 def tmdb_get_imdb(config_path, tmdb_id):
     movie = Movie()
     movie.api_key = config_tools.TMDB(config_path).apikey
-    return movie.external_ids(tmdb_id)['imdb_id']
+    # return movie.external_ids(tmdb_id)['imdb_id']
+    return str(movie.external_ids(tmdb_id)['imdb_id'])
 
 def tmdb_get_tvdb(config_path, tmdb_id):
     show = TV()
     show.api_key = config_tools.TMDB(config_path).apikey
-    return show.external_ids(tmdb_id)['tvdb_id']
+    # return show.external_ids(tmdb_id)['tvdb_id']
+    return str(show.external_ids(tmdb_id)['tvdb_id'])
 
 def imdb_get_tmdb(config_path, imdb_id):
     movie = Movie()
@@ -82,7 +84,7 @@ def imdb_get_tmdb(config_path, imdb_id):
     search = movie.external(external_id=imdb_id, external_source="imdb_id")['movie_results']
     if len(search) == 1:
         try:
-            return search[0]['id']
+            return str(search[0]['id'])
         except IndexError:
             return None
     else:
@@ -94,7 +96,7 @@ def tvdb_get_tmdb(config_path, tvdb_id):
     search = movie.external(external_id=tvdb_id, external_source="tvdb_id")['tv_results']
     if len(search) == 1:
         try:
-            return search[0]['id']
+            return str(search[0]['id'])
         except IndexError:
             return None
     else:
@@ -148,7 +150,7 @@ def tmdb_get_movies(config_path, plex, plex_map, data, method):
     elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_now_playing", "tmdb_trending_daily", "tmdb_trending_weekly"]:
         trending = Trending()
         trending.api_key = t_movie.api_key
-        for x in range(int(data / 20) + 1):
+        for x in range(int(int(data) / 20) + 1):
             if method == "tmdb_popular":
                 tmdb_movies = t_movie.popular(x + 1)
             elif method == "tmdb_top_rated":
@@ -207,6 +209,7 @@ def tmdb_get_movies(config_path, plex, plex_map, data, method):
     matched = []
     missing = []
     for mid in t_movs:
+        mid = str(mid)
         if mid in plex_map:
             matched.append(plex.Server.fetchItem(plex_map[mid]))
         else:
@@ -347,7 +350,7 @@ def tmdb_get_shows(config_path, plex, plex_map, data, method):
     return matched, missing
 
 def tvdb_get_shows(config_path, plex, plex_map, data):
-    tvdb_id = int(data)
+    tvdb_id = str(data)
     matched = []
     missing = []
     if tvdb_id in plex_map:

@@ -433,10 +433,7 @@ def query_guid_map(config_path, key, column):
             cursor.execute("SELECT * FROM guids WHERE plex_guid = ?", (key, ))
             row = cursor.fetchone()
             if row:
-                if row[column] and column == 'tmdb_id':
-                    return int(row[column])
-                else:
-                    return row[column]
+                return row[column]
 
 def update_guid_map(config_path, plex_guid, **kwargs):
     config_dir = os.path.dirname(config_path)
