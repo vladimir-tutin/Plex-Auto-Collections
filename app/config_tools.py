@@ -4,6 +4,7 @@ import sys
 import yaml
 import ruamel.yaml
 import requests
+from yaml.scanner import ScannerError
 from urllib.parse import urlparse
 from tmdbv3api import Collection
 from plexapi.exceptions import Unauthorized
@@ -14,7 +15,6 @@ from plexapi.library import MovieSection
 from plexapi.library import ShowSection
 from trakt import Trakt
 import trakt_helpers
-import trakt
 
 
 def check_for_attribute(config, attribute, parent=None, test_list=None, options="", default=None, do_print=True, default_is_none=False, var_type="str", throw=False, save=True):
@@ -76,8 +76,11 @@ class Config:
             Config.headless = headless
         Config.config_path = config_path
         self.config_path = config_path
-        with open(self.config_path, 'rt', encoding='utf-8') as yml:
-            self.data = yaml.load(yml, Loader=yaml.FullLoader)
+        try:
+            with open(self.config_path, 'rt', encoding='utf-8') as yml:
+                self.data = yaml.load(yml, Loader=yaml.FullLoader)
+        except ScannerError as e:
+            sys.exit("| Scan Error: {}".format(str(e).replace('\n', '\n|\t      ')))
         if Config.valid == True:
             self.collections = check_for_attribute(self.data, "collections", default={}, do_print=False)
             self.plex = self.data['plex']
@@ -188,7 +191,7 @@ class Radarr:
             self.token = check_for_attribute(config, "token", parent="radarr")
             self.quality_profile_id = check_for_attribute(config, "quality_profile_id", parent="radarr", var_type="int")
             self.root_folder_path = check_for_attribute(config, "root_folder_path", parent="radarr")
-            self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", var_type="bool", default_is_none=True, do_print=False)
+            self.add_to_radarr = check_for_attribute(config, "add_to_radarr", parent="radarr", var_type="bool", default_is_none=True, do_print=False)
             self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", var_type="bool", default=False, do_print=False)
         elif Radarr.valid is None:
             if TMDB.valid:
@@ -216,9 +219,15 @@ class Radarr:
                 except SystemExit as e:
                     fatal_message = fatal_message + "\n" + str(e) if len(fatal_message) > 0 else str(e)
                 try:
-                    self.add_movie = check_for_attribute(config, "add_movie", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", var_type="bool", default_is_none=True, throw=True)
+                    self.add_to_radarr = check_for_attribute(config, "add_to_radarr", parent="radarr", options="| \ttrue (Add missing movies to Radarr)\n| \tfalse (Do not add missing movies to Radarr)", var_type="bool", default_is_none=True, throw=True)
                 except SystemExit as e:
                     message = message + "\n" + str(e) if len(message) > 0 else str(e)
+                if "add_movie" in config:
+                    try:
+                        self.add_to_radarr = check_for_attribute(config, "add_movie", parent="radarr", var_type="bool", throw=True, save=False)
+                        print("| Config Warning: replace add_movie with add_to_radarr")
+                    except SystemExit as e:
+                        pass
                 try:
                     self.search_movie = check_for_attribute(config, "search_movie", parent="radarr", options="| \ttrue (Have Radarr seach the added movies)\n| \tfalse (Do not have Radarr seach the added movies)", var_type="bool", default=False, throw=True)
                 except SystemExit as e:
@@ -314,7 +323,7 @@ class Tautulli:
                 except:
                     print("| Config Error: Invalid url")
                     Tautulli.valid = False
-            print("| tautulli connection {}".format("scuccessful" if Tautulli.valid else "failed"))
+            print("| tautulli Connection {}".format("Successful" if Tautulli.valid else "failed"))
 
 
 class TraktClient:
@@ -362,7 +371,7 @@ class TraktClient:
                     else:
                         self.refreshed_authorization = None
                     if trakt_helpers.check_trakt(self.refreshed_authorization):
-                        # Save the refreshed authorization 
+                        # Save the refreshed authorization
                         trakt_helpers.save_authorization(Config(config_path).config_path, self.refreshed_authorization)
                         TraktClient.valid = True
                     else:

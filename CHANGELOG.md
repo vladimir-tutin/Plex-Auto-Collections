@@ -53,7 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - [#50](https://github.com/mza921/Plex-Auto-Collections/issues/50) - Trakt access_token refresh
 
-
 ## [2.4.7] - 2020-11-09 - [#103](https://github.com/mza921/Plex-Auto-Collections/pull/103)
 ### Fixed
 - [#92](https://github.com/mza921/Plex-Auto-Collections/issues/92) - fixed New Plex Movie Agent id lookup behind a proxy
@@ -66,8 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [#93](https://github.com/mza921/Plex-Auto-Collections/issues/93) - actually fixed `max_age`
-
-
 
 ## [2.4.5] - 2020-11-05 - [#97](https://github.com/mza921/Plex-Auto-Collections/pull/97)
 ### Changed
