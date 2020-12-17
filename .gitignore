@@ -8,5 +8,4 @@ app/images
 app/config.yml
 config/config-*
 config/*.pickle
-config/db/*
 **/cache.db*
