@@ -1,5 +1,6 @@
 # Plex Auto Collections
-##### Version 2.6.0
+##### Version 2.8.0
+
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -1118,13 +1119,16 @@ plex:                                         # Req
 
 Note that Plex does not allow a `show` to be added to a `movie` library or vice versa.
 
+For `movie` libraries that use the new Plex Movie agent, a temporary copy of the Plex database is downloaded to facilitate the identification of movies. This occurs only during an initial run of the script, per config file. Depending on the size of the library, this can result in a large download.
+
 This script can be run on a remote Plex server, but be sure that the `url` provided is publicly addressable and it's recommended to use `HTTPS`.
 
 You can set the global default [Sync Mode](#sync-mode-collection-attribute) here by using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
 
-##### Options
-- `append` (Only Add Items to the Collection)
-- `sync` (Add & Remove Items from the Collection)
+| Sync Options | Description |
+| :-- | :-- |
+| `append` | Only Add Items to the Collection |
+| `sync` | Add & Remove Items from the Collection |
 
 Lastly, if you need help finding your Plex authentication token, please see Plex's [support article](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 

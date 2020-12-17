@@ -22,7 +22,7 @@ def trakt_get_movies(config_path, plex, data, method):
             trakt_url = trakt_url[:-1]
         trakt_list_path = urlparse(trakt_url).path
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
+    title_ids = [str(m.get_key('tmdb')) for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     imdb_map = {}
     plex_tools.create_cache(config_path)
