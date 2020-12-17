@@ -295,7 +295,7 @@ def tmdb_get_shows(config_path, plex, plex_map, data, method):
     elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_trending_daily", "tmdb_trending_weekly"]:
         trending = Trending()
         trending.api_key = t_movie.api_key
-        for x in range(int(data / 20) + 1):
+        for x in range(int(int(data) / 20) + 1):
             if method == "tmdb_popular":
                 tmdb_shows = t_tv.popular(x + 1)
             elif method == "tmdb_top_rated":
