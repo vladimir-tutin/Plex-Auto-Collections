@@ -30,7 +30,7 @@ def trakt_get_movies(config_path, plex, data, method):
             item_type = urlparse(item.guid).scheme.split('.')[-1]
             if item_type == 'plex':
                 # Check cache for imdb_id
-                imdb_id = plex_tools.query_cache(config_path, item.guid, 'imdb_id')
+                imdb_id = plex_tools.query_guid_map(config_path, item.guid, 'imdb_id')
                 if not imdb_id:
                     imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
                     print("| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title))
