@@ -25,7 +25,6 @@ def trakt_get_movies(config_path, plex, data, method):
     title_ids = [str(m.get_key('tmdb')) for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
     imdb_map = {}
-    plex_tools.create_cache(config_path)
     if title_ids:
         for item in plex.Library.all():
             item_type = urlparse(item.guid).scheme.split('.')[-1]
