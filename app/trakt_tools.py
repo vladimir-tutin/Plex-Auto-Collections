@@ -1,11 +1,37 @@
 import config_tools
 from urllib.parse import urlparse
-import plex_tools
 import trakt
 import os
 
 
-def trakt_get_movies(config_path, plex, data, method):
+def trakt_tmdb_to_imdb(config_path, tmdb_id):
+    config_tools.TraktClient(config_path)
+    lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
+    if lookup:
+        lookup = lookup[0] if isinstance(lookup, list) else lookup
+        return lookup.get_key('imdb')
+    else:
+        return None
+
+def trakt_imdb_to_tmdb(config_path, imdb_id):
+    config_tools.TraktClient(config_path)
+    lookup = trakt.Trakt['search'].lookup(imdb_id, 'imdb', 'movie')
+    if lookup:
+        lookup = lookup[0] if isinstance(lookup, list) else lookup
+        return lookup.get_key('tmdb')
+    else:
+        return None
+
+def trakt_tmdb_to_tvdb(config_path, tmdb_id):
+    config_tools.TraktClient(config_path)
+    lookup = trakt.Trakt['search'].lookup(id, 'tmdb', 'show')
+    if lookup:
+        lookup = lookup[0] if isinstance(lookup, list) else lookup
+        return lookup.get_key('tvdb')
+    else:
+        return None
+
+def trakt_get_movies(config_path, plex, plex_map, data, method):
     config_tools.TraktClient(config_path)
     if method == "trakt_trending":
         max_items = int(data)
@@ -22,53 +48,19 @@ def trakt_get_movies(config_path, plex, data, method):
             trakt_url = trakt_url[:-1]
         trakt_list_path = urlparse(trakt_url).path
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
-    title_ids = [m.pk[1] for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
+    title_ids = [str(m.get_key('tmdb')) for m in trakt_list_items if isinstance(m, trakt.objects.movie.Movie)]
 
-    imdb_map = {}
-    if title_ids:
-        for item in plex.Library.all():
-            item_type = urlparse(item.guid).scheme.split('.')[-1]
-            if item_type == 'plex':
-                # Check cache for imdb_id
-                imdb_id = plex_tools.query_guid_map(config_path, item.guid, 'imdb_id')
-                if not imdb_id:
-                    imdb_id, tmdb_id = plex_tools.alt_id_lookup(plex, item)
-                    print("| Cache | + | {} | {} | {} | {}".format(item.guid, imdb_id, tmdb_id, item.title))
-                    plex_tools.update_cache(config_path, item.guid, imdb_id=imdb_id, tmdb_id=tmdb_id)
-            elif item_type == 'imdb':
-                imdb_id = urlparse(item.guid).netloc
-            elif item_type == 'themoviedb':
-                tmdb_id = urlparse(item.guid).netloc
-                # lookup can sometimes return a list
-                lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'movie')
-                if lookup:
-                    lookup = lookup[0] if isinstance(lookup, list) else lookup
-                    imdb_id = lookup.get_key('imdb')
-                else:
-                    imdb_id = None
-            else:
-                imdb_id = None
+    print("| {} Movies found on Trakt".format(len(title_ids)))
+    matched = []
+    missing = []
+    for tmdb_id in title_ids:
+        if tmdb_id in plex_map:
+            matched.append(plex.Server.fetchItem(plex_map[tmdb_id]))
+        else:
+            missing.append(tmdb_id)
+    return matched, missing
 
-            if imdb_id and imdb_id in title_ids:
-                imdb_map[imdb_id] = item
-            else:
-                imdb_map[item.ratingKey] = item
-
-        matched_imdb_movies = []
-        missing_imdb_movies = []
-        for imdb_id in title_ids:
-            movie = imdb_map.pop(imdb_id, None)
-            if movie:
-                matched_imdb_movies.append(plex.Server.fetchItem(movie.ratingKey))
-            else:
-                missing_imdb_movies.append(imdb_id)
-
-        return matched_imdb_movies, missing_imdb_movies
-    else:
-        # No movies
-        return None, None
-
-def trakt_get_shows(config_path, plex, data, method):
+def trakt_get_shows(config_path, plex, plex_map, data, method):
     config_tools.TraktClient(config_path)
     if method == "trakt_trending":
         max_items = int(data)
@@ -86,7 +78,6 @@ def trakt_get_shows(config_path, plex, data, method):
         trakt_list_path = urlparse(trakt_url).path
         trakt_list_items = trakt.Trakt[trakt_list_path].items()
 
-    tvdb_map = {}
     title_ids = []
     for m in trakt_list_items:
         if isinstance(m, trakt.objects.show.Show):
@@ -99,40 +90,11 @@ def trakt_get_shows(config_path, plex, data, method):
             if m.show.pk[1] not in title_ids:
                 title_ids.append(m.show.pk[1])
 
-    if title_ids:
-        for item in plex.Library.all():
-            guid = urlparse(item.guid)
-            item_type = guid.scheme.split('.')[-1]
-            # print('item_type', item, item_type)
-            if item_type == 'thetvdb':
-                tvdb_id = guid.netloc
-            elif item_type == 'themoviedb':
-                tmdb_id = guid.netloc
-                lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')
-                if lookup:
-                    lookup = lookup[0] if isinstance(lookup, list) else lookup
-                    tvdb_id = lookup.get_key('tvdb')
-                else:
-                    tvdb_id = None
-            else:
-                tvdb_id = None
-
-            if tvdb_id and tvdb_id in title_ids:
-                tvdb_map[tvdb_id] = item
-            else:
-                tvdb_map[item.ratingKey] = item
-
-        matched_tvdb_shows = []
-        missing_tvdb_shows = []
-
-        for tvdb_id in title_ids:
-            show = tvdb_map.pop(tvdb_id, None)
-            if show:
-                matched_tvdb_shows.append(plex.Server.fetchItem(show.ratingKey))
-            else:
-                missing_tvdb_shows.append(tvdb_id)
-
-        return matched_tvdb_shows, missing_tvdb_shows
-    else:
-        # No shows
-        return None, None
+    matched = []
+    missing = []
+    for tvdb_id in title_ids:
+        if tvdb_id in plex_map:
+            matched.append(plex.Server.fetchItem(plex_map[tvdb_id]))
+        else:
+            missing.append(tvdb_id)
+    return matched, missing

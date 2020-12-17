@@ -2,7 +2,7 @@
 PyYAML==5.3.1
 # Less common, pinned
 PlexAPI==4.2.0
-tmdbv3api==1.6.2
+tmdbv3api==1.7.1
 trakt.py==4.2.0
 # More common, flexible
 bs4
