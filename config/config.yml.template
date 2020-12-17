@@ -69,7 +69,7 @@ radarr:
   token: ###########################
   quality_profile_id: 4
   root_folder_path: /mnt/user/PlexMedia/movies
-  add_to_radarr: false
+  add_movie: false
   search_movie: false
 tmdb:
   apikey: ############################

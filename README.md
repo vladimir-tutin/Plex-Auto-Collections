@@ -1,5 +1,6 @@
 # Plex Auto Collections
 ##### Version 2.8.0
+
 Plex Auto Collections is a Python 3 script that works off a configuration file to create/update Plex collections. Collection management with this tool can be automated in a varying degree of customizability. Supports IMDB, TMDb, and Trakt lists as well as built in Plex Searches using actors, genres, year, studio and more.
 
 ![https://i.imgur.com/iHAYFIZ.png](https://i.imgur.com/iHAYFIZ.png)
@@ -18,7 +19,6 @@ Plex Auto Collections is a Python 3 script that works off a configuration file t
         - [TMDb Company (List Type)](#tmdb-company-list-type)
         - [TMDb Network (List Type)](#tmdb-network-list-type)
         - [TMDb Popular (List Type)](#tmdb-popular-list-type)
-        - [TMDb Trending (List Type)](#tmdb-trending-list-type)
         - [TMDb Top Rated (List Type)](#tmdb-top-rated-list-type)
         - [TMDb Now Playing (List Type)](#tmdb-now-playing-list-type)
         - [TMDb Discover (List Type)](#tmdb-discover-list-type)
@@ -163,7 +163,6 @@ The only required attribute for each collection is the list type. There are many
 - [TMDb Company](#tmdb-company-list-type)
 - [TMDb Network](#tmdb-network-list-type)
 - [TMDb Popular](#tmdb-popular-list-type)
-- [TMDb Trending](#tmdb-trending-list-type)
 - [TMDb Top Rated](#tmdb-top-rated-list-type)
 - [TMDb Now Playing](#tmdb-now-playing-list-type)
 - [TMDb Discover](#tmdb-discover-list-type)
@@ -178,13 +177,7 @@ The only required attribute for each collection is the list type. There are many
 - [Tautulli List](#tautulli-list-list-type)
 
 Note that most list types supports multiple lists, with the following exceptions:
-- TMDb Popular
-- TMDb Trending
-- TMDb Top Rated
-- TMDb Now Playing
-- TMDb Discover
 - Trakt Trending Lists
-- Trakt Watchlist
 - Tautulli Lists
 
 #### Plex Search (List Type)
@@ -193,19 +186,18 @@ Note that most list types supports multiple lists, with the following exceptions
 
 You can create a collection based on the Plex search feature using the `plex_search` attribute. The search will return any movie/show that matches at least one term from each search option. You can run multiple searches. The search options are listed below.
 
-| Search Option | Description | Movie<br>Libraries | Show<br>Libraries |
-| :-- | :-- | :--: | :--: |
-| `actor` | Gets every movie with the specified actor | :heavy_check_mark: | :x: |
-| `tmdb_actor` | Gets every movie with the specified actor as well as the added TMDb [metadata](#tmdb-people-list-type) | :heavy_check_mark: | :x: |
-| `country` | Gets every movie with the specified country | :heavy_check_mark: | :x: |
-| `decade` | Gets every movie from the specified year + the 9 that follow i.e. 1990 will get you 1990-1999 | :heavy_check_mark: | :x: |
-| `director` | Gets every movie with the specified director | :heavy_check_mark: | :x: |
-| `tmdb_director` | Gets every movie with the specified director as well as the added TMDb [metadata](#tmdb-people-list-type) | :heavy_check_mark: | :x: |
-| `genre` | Gets every movie/show with the specified genre | :heavy_check_mark: | :heavy_check_mark: |
-| `studio` | Gets every movie/show with the specified studio | :heavy_check_mark: | :heavy_check_mark: |
-| `year` | Gets every movie/show with the specified year (Put a `-` between two years for a range i.e. `year: 1990-1999` or end with `NOW` to go till current i.e. `year: 2000-NOW`) | :heavy_check_mark: | :heavy_check_mark: |
-| `writer` | Gets every movie with the specified writer | :heavy_check_mark: | :x: |
-| `tmdb_writer` | Gets every movie with the specified writer as well as the added TMDb [metadata](#tmdb-people-list-type) | :heavy_check_mark: | :x: |
+##### Search Options
+- `actor` (Gets every movie with the specified actor) (Movie libraries only)
+- `tmdb_actor` (Gets every movie with the specified actor as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
+- `country` (Gets every movie with the specified country) (Movie libraries only)
+- `decade` (Gets every movie from the specified year + the 9 that follow i.e. 1990 will get you 1990-1999) (Movie libraries only)
+- `director` (Gets every movie with the specified director) (Movie libraries only)
+- `tmdb_director` (Gets every movie with the specified director as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
+- `genre` (Gets every movie/show with the specified genre)
+- `studio` (Gets every movie/show with the specified studio)
+- `year` (Gets every movie/show with the specified year) (Put a `-` between two years for a range i.e. `year: 1990-1999` or end with `NOW` to go till current i.e. `year: 2000-NOW`)
+- `writer` (Gets every movie with the specified writer) (Movie libraries only)
+- `tmdb_writer` (Gets every movie with the specified writer as well as the added TMDb [metadata](#tmdb-people-list-type)) (Movie libraries only)
 
 Here's some high-level ideas:
 
@@ -444,27 +436,8 @@ You can build a collection using TMDb's most popular movies/shows by using `tmdb
 
 ```yaml
 collections:
-  TMDb Popular:
+  TMDb Trending:
     tmdb_popular: 30
-    sync_mode: sync
-```
-
-#### TMDb Trending (List Type)
-
-###### Works with Movie and TV Show Libraries
-
-You can build a collection using TMDb's daily or weekly trending movies/shows by using `tmdb_trending_daily` or `tmdb_trending_weekly`. Both attributes only support a single integer value. The `sync_mode: sync` option is recommended since the lists are continuously updated.
-
-```yaml
-collections:
-  TMDb Daily Trending:
-    tmdb_trending_daily: 30
-    sync_mode: sync
-```
-```yaml
-collections:
-  TMDb Weekly Trending:
-    tmdb_trending_weekly: 30
     sync_mode: sync
 ```
 
@@ -500,96 +473,63 @@ collections:
 
 You can use [TMDb's discover engine](https://www.themoviedb.org/documentation/api/discover) to create a collection based on the search for movies/shows using all different sorts of parameters shown below. The parameters are directly from [TMDb Movie Discover](https://developers.themoviedb.org/3/discover/movie-discover) and [TMDb TV Discover](https://developers.themoviedb.org/3/discover/tv-discover)
 
-| Type | Description |
-| :-- | :-- |
-| String | Any number of alphanumeric characters |
-| Integer | Any whole number greater then zero i.e. 2, 10, 50 |
-| Number | Any number greater then zero i.e. 2.5, 7.4, 9 |
-| Boolean | Must be `true` or `false` |
-| Date: `MM/DD/YYYY` | Date that fits the specified format |
-| Year: `YYYY` | Year must be a 4 digit integer i.e. 1990 |
+##### TMDb Discover Parameters For Movies
+- `limit` (Specify how many movies you want returned by the query. Value must be an integer greater then 0. default: 100)
+- `language` (Specify a language to query translatable fields with. pattern: `([a-z]{2})-([A-Z]{2})` default: en-US)
+- `region` (Specify a [ISO 3166-1 code](https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes) to filter release dates. Must be uppercase. pattern: `^[A-Z]{2}$`)
+- `sort_by` (Choose from one of the many available sort options. Allowed Values: `popularity.asc`, `popularity.desc`, `release_date.asc`, `release_date.desc`, `revenue.asc`, `revenue.desc`, `primary_release_date.asc`, `primary_release_date.desc`, `original_title.asc`, `original_title.desc`, `vote_average.asc`, `vote_average.desc`, `vote_count.asc`, `vote_count.desc` default: `popularity.desc`)
+- `certification_country` (Used in conjunction with the certification parameter, use this to specify a country with a valid certification.)
+- `certification` (Filter results with a valid certification from the `certification_country` parameter.)
+- `certification.lte` (Filter and only include movies that have a certification that is less than or equal to the specified value.)
+- `certification.gte` (Filter and only include movies that have a certification that is greater than or equal to the specified value.)
+- `include_adult` (A filter and include or exclude adult movies. Must be `true` or `false`)
+- `primary_release_year` (A filter to limit the results to a specific primary release year. Year must be a 4 digit integer i.e. 1990.)
+- `primary_release_date.gte` (Filter and only include movies that have a primary release date that is greater or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `primary_release_date.lte` (Filter and only include movies that have a primary release date that is less than or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `release_date.gte` (Filter and only include movies that have a release date (looking at all release dates) that is greater or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `release_date.lte` (Filter and only include movies that have a release date (looking at all release dates) that is less than or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `year` (A filter to limit the results to a specific year (looking at all release dates). Year must be a 4 digit integer i.e. 1990.)
+- `vote_count.gte` (Filter and only include movies that have a vote count that is greater or equal to the specified value. Value must be an integer greater then 0.)
+- `vote_count.lte` (Filter and only include movies that have a vote count that is less than or equal to the specified value. Value must be an integer greater then 0.)
+- `vote_average.gte` (Filter and only include movies that have a rating that is greater or equal to the specified value. Value must be a number greater then 0.)
+- `vote_average.lte` (Filter and only include movies that have a rating that is less than or equal to the specified value. Value must be an number greater then 0.)
+- `with_cast` (A comma separated list of person ID's. Only include movies that have one of the ID's added as an actor.)
+- `with_crew` (A comma separated list of person ID's. Only include movies that have one of the ID's added as a crew member.)
+- `with_people` (A comma separated list of person ID's. Only include movies that have one of the ID's added as a either a actor or a crew member.)
+- `with_companies` (A comma separated list of production company ID's. Only include movies that have one of the ID's added as a production company.)
+- `with_genres` (Comma separated value of genre ids that you want to include in the results.)
+- `without_genres` (Comma separated value of genre ids that you want to exclude from the results.)
+- `with_keywords` (A comma separated list of keyword ID's. Only includes movies that have one of the ID's added as a keyword.)
+- `without_keywords` (Exclude items with certain keywords. You can comma and pipe seperate these values to create an 'AND' or 'OR' logic.)
+- `with_runtime.gte` (Filter and only include movies that have a runtime that is greater or equal to a value. Value must be an integer greater then 0.)
+- `with_runtime.lte` (Filter and only include movies that have a runtime that is less than or equal to a value. Value must be an integer greater then 0.)
+- `with_original_language` (Specify an ISO 639-1 string to filter results by their original language value.)
 
-### Discover Movies
-| Movie Parameters | Description | Type |
-| :-- | :-- | :--: |
-| `limit` | Specify how many movies you want returned by the query. (default: 100) | Integer |
-| `language` | Specify a language to query translatable fields with. (default: en-US) | `([a-z]{2})-([A-Z]{2})` |
-| `region` | Specify a [ISO 3166-1 code](https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes) to filter release dates. Must be uppercase. | `^[A-Z]{2}$` |
-| `sort_by` | Choose from one of the many available sort options. (default: `popularity.desc`) | See [sort options](#sort-options) below |
-| `certification_country` | Used in conjunction with the certification parameter, use this to specify a country with a valid certification. | String |
-| `certification` | Filter results with a valid certification from the `certification_country` parameter. | String |
-| `certification.lte` | Filter and only include movies that have a certification that is less than or equal to the specified value. | String |
-| `certification.gte` | Filter and only include movies that have a certification that is greater than or equal to the specified value. | String |
-| `include_adult` | A filter and include or exclude adult movies. | Boolean |
-| `primary_release_year` | A filter to limit the results to a specific primary release year. | Year: YYYY |
-| `primary_release_date.gte` | Filter and only include movies that have a primary release date that is greater or equal to the specified value. | Date: `MM/DD/YYYY` |
-| `primary_release_date.lte` | Filter and only include movies that have a primary release date that is less than or equal to the specified value. | Date: `MM/DD/YYYY` |
-| `release_date.gte` | Filter and only include movies that have a release date (looking at all release dates) that is greater or equal to the specified value. | Date: `MM/DD/YYYY` |
-| `release_date.lte` | Filter and only include movies that have a release date (looking at all release dates) that is less than or equal to the specified value. | Date: `MM/DD/YYYY` |
-| `year` | A filter to limit the results to a specific year (looking at all release dates). | Year: YYYY |
-| `vote_count.gte` | Filter and only include movies that have a vote count that is greater or equal to the specified value. | Integer |
-| `vote_count.lte` | Filter and only include movies that have a vote count that is less than or equal to the specified value. | Integer |
-| `vote_average.gte` | Filter and only include movies that have a rating that is greater or equal to the specified value. | Number |
-| `vote_average.lte` | Filter and only include movies that have a rating that is less than or equal to the specified value. | Number |
-| `with_cast` | A comma separated list of person ID's. Only include movies that have one of the ID's added as an actor. | String |
-| `with_crew` | A comma separated list of person ID's. Only include movies that have one of the ID's added as a crew member. | String |
-| `with_people` | A comma separated list of person ID's. Only include movies that have one of the ID's added as a either a actor or a crew member. | String |
-| `with_companies` | A comma separated list of production company ID's. Only include movies that have one of the ID's added as a production company. | String |
-| `with_genres` | Comma separated value of genre ids that you want to include in the results. | String |
-| `without_genres` | Comma separated value of genre ids that you want to exclude from the results. | String |
-| `with_keywords` | A comma separated list of keyword ID's. Only includes movies that have one of the ID's added as a keyword. | String |
-| `without_keywords` | Exclude items with certain keywords. You can comma and pipe separate these values to create an 'AND' or 'OR' logic. | String |
-| `with_runtime.gte` | Filter and only include movies that have a runtime that is greater or equal to a value. | Integer |
-| `with_runtime.lte` | Filter and only include movies that have a runtime that is less than or equal to a value. | Integer |
-| `with_original_language` | Specify an ISO 639-1 string to filter results by their original language value. | String |
-
-### Discover Shows
-| Show Parameters | Description | Type |
-| :-- | :-- | :--: |
-| `limit` | Specify how many movies you want returned by the query. (default: 100) | Integer |
-| `language` | Specify a language to query translatable fields with. (default: en-US) | `([a-z]{2})-([A-Z]{2})` |
-| `sort_by` | Choose from one of the many available sort options. (default: `popularity.desc`) | See [sort options](#sort-options) below |
-| `air_date.gte` | Filter and only include TV shows that have a air date (by looking at all episodes) that is greater or equal to the specified value. | Date: `MM/DD/YYYY` |
-| `air_date.lte` | Filter and only include TV shows that have a air date (by looking at all episodes) that is less than or equal to the specified value. | Date: `MM/DD/YYYY` |
-| `first_air_date.gte` | Filter and only include TV shows that have a original air date that is greater or equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. | Date: `MM/DD/YYYY` |
-| `first_air_date.lte` | Filter and only include TV shows that have a original air date that is less than or equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. | Date: `MM/DD/YYYY` |
-| `first_air_date_year` | Filter and only include TV shows that have a original air date year that equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. | Year: YYYY |
-| `include_null_first_air_dates` | Use this filter to include TV shows that don't have an air date while using any of the `first_air_date` filters. | Boolean |
-| `timezone` | Used in conjunction with the `air_date.gte/lte` filter to calculate the proper UTC offset. (default: America/New_York) | String |
-| `vote_count.gte` | Filter and only include TV that have a vote count that is greater or equal to the specified value. | Integer |
-| `vote_count.lte` | Filter and only include TV that have a vote count that is less than or equal to the specified value. | Integer |
-| `vote_average.gte` | Filter and only include TV that have a rating that is greater or equal to the specified value. | Number |
-| `vote_average.lte` | Filter and only include TV that have a rating that is less than or equal to the specified value. | Number |
-| `with_networks` | Comma separated value of network ids that you want to include in the results. | String |
-| `with_companies` | A comma separated list of production company ID's. Only include movies that have one of the ID's added as a production company. | String |
-| `with_genres` | Comma separated value of genre ids that you want to include in the results. | String |
-| `without_genres` | Comma separated value of genre ids that you want to exclude from the results. | String |
-| `with_keywords` | A comma separated list of keyword ID's. Only includes TV shows that have one of the ID's added as a keyword. | String |
-| `without_keywords` | Exclude items with certain keywords. You can comma and pipe separate these values to create an 'AND' or 'OR' logic. | String |
-| `with_runtime.gte` | Filter and only include TV shows with an episode runtime that is greater than or equal to a value. | Integer |
-| `with_runtime.lte` | Filter and only include TV shows with an episode runtime that is less than or equal to a value. | Integer |
-| `with_original_language` | Specify an ISO 639-1 string to filter results by their original language value. | String |
-| `screened_theatrically` | Filter results to include items that have been screened theatrically. | Boolean |
-
-### Sort Options
-| Sort Option | Movie Sort | Show Sort |
-| :-- | :--: | :--: |
-| `popularity.asc` | :heavy_check_mark: | :heavy_check_mark: |
-| `popularity.desc` | :heavy_check_mark: | :heavy_check_mark: |
-| `original_title.asc` | :heavy_check_mark: | :x: |
-| `original_title.desc` | :heavy_check_mark: | :x: |
-| `revenue.asc` | :heavy_check_mark: | :x: |
-| `revenue.desc` | :heavy_check_mark: | :x: |
-| `release_date.asc` | :heavy_check_mark: | :x: |
-| `release_date.desc` | :heavy_check_mark: | :x: |
-| `primary_release_date.asc` | :heavy_check_mark: | :x: |
-| `primary_release_date.desc` | :heavy_check_mark: | :x: |
-| `first_air_date.asc` | :x: | :heavy_check_mark: |
-| `first_air_date.desc` | :x: | :heavy_check_mark: |
-| `vote_average.asc` | :heavy_check_mark: | :heavy_check_mark: |
-| `vote_average.desc` | :heavy_check_mark: | :heavy_check_mark: |
-| `vote_count.asc` | :heavy_check_mark: | :x: |
-| `vote_count.desc` | :heavy_check_mark: | :x: |
+##### TMDb Discover Parameters For Shows
+- `limit` (Specify how many movies you want returned by the query. Value must be an integer greater then 0. default: 100)
+- `language` (Specify a language to query translatable fields with. pattern: `([a-z]{2})-([A-Z]{2})` default: en-US)
+- `sort_by` (Choose from one of the many available sort options. Allowed Values: `vote_average.desc`, `vote_average.asc`, `first_air_date.desc`, `first_air_date.asc`, `popularity.desc`, `popularity.asc` default: `popularity.desc`)
+- `air_date.gte` (Filter and only include TV shows that have a air date (by looking at all episodes) that is greater or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `air_date.lte` (Filter and only include TV shows that have a air date (by looking at all episodes) that is less than or equal to the specified value. Date must be in the MM/DD/YYYY Format.)
+- `first_air_date.gte` (Filter and only include TV shows that have a original air date that is greater or equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. Date must be in the MM/DD/YYYY Format.)
+- `first_air_date.lte` (Filter and only include TV shows that have a original air date that is less than or equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. Date must be in the MM/DD/YYYY Format.)
+- `first_air_date_year` (Filter and only include TV shows that have a original air date year that equal to the specified value. Can be used in conjunction with the `include_null_first_air_dates` filter if you want to include items with no air date. Year must be a 4 digit integer i.e. 1990.)
+- `include_null_first_air_dates` (Use this filter to include TV shows that don't have an air date while using any of the `first_air_date` filters. Must be `true` or `false`.)
+"- `timezone` (Used in conjunction with the `air_date.gte/lte` filter to calculate the proper UTC offset. default: America/New_York)
+- `vote_count.gte` (Filter and only include TV that have a vote count that is greater or equal to the specified value. Value must be an integer greater then 0.)
+- `vote_count.lte` (Filter and only include TV that have a vote count that is less than or equal to the specified value. Value must be an integer greater then 0.)
+- `vote_average.gte` (Filter and only include TV that have a rating that is greater or equal to the specified value. Value must be a number greater then 0.)
+- `vote_average.lte` (Filter and only include TV that have a rating that is less than or equal to the specified value. Value must be an number greater then 0.)
+- `with_networks` (Comma separated value of network ids that you want to include in the results.)
+- `with_companies` (A comma separated list of production company ID's. Only include movies that have one of the ID's added as a production company.)
+- `with_genres` (Comma separated value of genre ids that you want to include in the results.)
+- `without_genres` (Comma separated value of genre ids that you want to exclude from the results.)
+- `with_keywords` (A comma separated list of keyword ID's. Only includes TV shows that have one of the ID's added as a keyword.)
+- `without_keywords` (Exclude items with certain keywords. You can comma and pipe seperate these values to create an 'AND' or 'OR' logic.)
+- `with_runtime.gte` (Filter and only include TV shows with an episode runtime that is greater than or equal to a value.)
+- `with_runtime.lte` (Filter and only include TV shows with an episode runtime that is less than or equal to a value.)
+- `with_original_language` (Specify an ISO 639-1 string to filter results by their original language value.)
+- `screened_theatrically` (Filter results to include items that have been screened theatrically. Must be `true` or `false`.)
 
 ```yaml
 collections:
@@ -817,7 +757,7 @@ This script can pull items from a Trakt user's Watchlist for [Movies](https://tr
 ```yaml
 collections:
   Trakt Watchlist:
-    trakt_watchlist:
+    trakt_watchlist: 
       - me
       - friendontrakt
     sync_mode: sync
@@ -829,12 +769,10 @@ collections:
 
 Tautulli has watch analytics that can show the most watched or most popular Movies/Shows in your Library. This script can easily leverage that data into making and sync collection based on those lists using the `tautulli` attribute. Unlike other lists this one has subattribute options:
 
-| Attribute | Description | Required | Default |
-| :-- | :-- | :--: | :--: |
-| `list_type` | `watched` (For Most Watched Lists)<br>`popular` (For Most Popular Lists) | :heavy_check_mark: | :x: |
-| `list_days` | Number of Days to look back of the list | :x: | 30 |
-| `list_size` | Number of Movies/Shows to add to this list | :x: | 10 |
-| `list_buffer` | Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries. | :x: | 10 |
+- `list_type`: watched (For Most Watched Lists) or popular (For Most Popular Lists) (Required)
+- `list_days`: Number of Days to look back of the list (Optional Defaults to 30)
+- `list_size`: Number of Movies/Shows to add to this list (Optional Defaults to 10)
+- `list_buffer`: Number of extra Movies/Shows to grab in case you have multiple show/movie Libraries (Optional Defaults to 10)
 
 ```yaml
 collections:
@@ -866,34 +804,29 @@ Note that if you have multiple movie Libraries or multiple show Libraries Tautul
 ###### Works with Movie and TV Show Libraries
 
 The next optional attribute for any collection is the `filters` attribute. Collection filters allows for you to filter every movie/show added to the collection from every List Type. All collection filter options are listed below.
-In addition you can also use the `.not` at the end of any standard collection filter to do an inverse search matching everything that doesn't have the value specified. You can use `all: true` to start your filter from your entire library.
+In addition you can also use the `.not` at the end of any standard collection filter to do an inverse search matching everything that doesn't have the value specified. You can use `all: true` to start you filter from your entire library.
 
-| Standard Filters | Description | Movie<br>Libraries | Show<br>Libraries |
-| :-- | :-- | :--: | :--: |
-| `actor` | Matches every movie/show with the specified actor | :heavy_check_mark: | :heavy_check_mark: |
-| `content_rating` | Matches every movie/show with the specified content rating | :heavy_check_mark: | :heavy_check_mark: |
-| `country` | Matches every movie with the specified country | :heavy_check_mark: | :x: |
-| `director` | Matches every movie with the specified director | :heavy_check_mark: | :x: |
-| `genre` | Matches every movie/show with the specified genre | :heavy_check_mark: | :heavy_check_mark: |
-| `studio` | Matches every movie/show with the specified studio | :heavy_check_mark: | :heavy_check_mark: |
-| `year` | Matches every movie/show with the specified year | :heavy_check_mark: | :heavy_check_mark: |
-| `writer` | Matches every movie with the specified writer | :heavy_check_mark: | :x: |
-| `video_resolution` | Matches every movie with the specified video resolution | :heavy_check_mark: | :x: |
-| `audio_language` | Matches every movie with the specified audio language | :heavy_check_mark: | :x: |
-| `subtitle_language` | Matches every movie with the specified subtitle language | :heavy_check_mark: | :x: |
-| `plex_collection` | Matches every movie/show with the specified plex collection | :heavy_check_mark: | :heavy_check_mark: |
+##### Standard Collection Filters Options
+- `actor` (Matches every movie/show with the specified actor)
+- `content_rating` (Matches every movie/show with the specified content rating)
+- `country` (Matches every movie with the specified country) (Movie libraries only)
+- `director` (Matches every movie with the specified director) (Movie libraries only)
+- `genre` (Matches every movie/show with the specified genre)
+- `studio` (Matches every movie/show with the specified studio)
+- `year` (Matches every movie/show with the specified year)
+- `writer` (Matches every movie with the specified writer) (Movie libraries only)
+- `video_resolution` (Matches every movie with the specified video resolution) (Movie libraries only)
+- `audio_language` (Matches every movie with the specified audio language) (Movie libraries only)
+- `subtitle_language` (Matches every movie with the specified subtitle language) (Movie libraries only)
 
-| Advanced Filters | Description | Movie<br>Libraries | Show<br>Libraries |
-| :-- | :-- | :--: | :--: |
-| `max_age` | Matches any movie/show whose Originally Available date is within the last specified number of days | :heavy_check_mark: | :heavy_check_mark: |
-| `year.gte` | Matches any movie/show whose year is greater then or equal to the specified year | :heavy_check_mark: | :heavy_check_mark: |
-| `year.lte` | Matches any movie/show whose year is less then or equal to the specified year | :heavy_check_mark: | :heavy_check_mark: |
-| `rating.gte` | Matches any movie/show whose rating is greater then or equal to the specified rating | :heavy_check_mark: | :heavy_check_mark: |
-| `rating.lte` | Matches any movie/show whose rating is less then or equal to the specified rating | :heavy_check_mark: | :heavy_check_mark: |
-| `originally_available.gte` | Matches any movie/show whose originally_available date is greater then or equal to the specified originally_available date (Date must be in the MM/DD/YYYY Format) | :heavy_check_mark: | :heavy_check_mark: |
-| `originally_available.lte` | Matches any movie/show whose originally_available date is less then or equal to the specified originally_available date (Date must be in the MM/DD/YYYY Format) | :heavy_check_mark: | :heavy_check_mark: |
-
-Note only standard filters can take multiple values
+##### Special Collection Filters Options (These options can only take one value each)
+- `max_age` (Matches any movie/show whose Originally Available date is within the last specified number of days)
+- `year.gte` (Matches any movie/show whose year is greater then or equal to the specified year)
+- `year.lte` (Matches any movie/show whose year is less then or equal to the specified year)
+- `rating.gte` (Matches any movie/show whose rating is greater then or equal to the specified rating)
+- `rating.lte` (Matches any movie/show whose rating is less then or equal to the specified rating)
+- `originally_available.gte` (Matches any movie/show whose originally_available date is greater then or equal to the specified originally_available date) (Date must be in the MM/DD/YYYY Format)
+- `originally_available.lte` (Matches any movie/show whose originally_available date is less then or equal to the specified originally_available date) (Date must be in the MM/DD/YYYY Format)
 
 ```yaml
 collections:
@@ -962,10 +895,9 @@ Note that multiple collection filters are supported but a movie must match at le
 ### Sync Mode (Collection Attribute)
 You can specify how collections sync using `sync_mode`. Set it to `append` to only add movies/shows to the collection or set it to `sync` to add movies/shows to the collection and remove movies/shows from a collection.
 
-| Sync Options | Description |
-| :-- | :-- |
-| `append` | Only Add Items to the Collection |
-| `sync` | Add & Remove Items from the Collection |
+##### Options
+- `append` (Only Add Items to the Collection)
+- `sync` (Add & Remove Items from the Collection)
 
 ```yaml
 collections:
@@ -1047,12 +979,11 @@ collections:
 
 Plex allows for four different types of collection modes: library default, hide items in this collection, show this collection and its items, and hide collection (more details can be found in [Plex's Collection support article](https://support.plex.tv/articles/201273953-collections/#toc-2)). These options can be set with `default`, `hide_items`, `show_items`, and `hide`.
 
-| Collection Mode Options | Description |
-| :-- | :-- |
-| `default` | Library default |
-| `hide` | Hide Collection |
-| `hide_items` | Hide Items in this Collection |
-| `show_items` | Show this Collection and its Items |
+##### Options
+- `default` (Library default)
+- `hide` (Hide Collection)
+- `hide_items` (Hide Items in this Collection)
+- `show_items` (Show this Collection and its Items)
 
 ```yaml
 collections:
@@ -1068,10 +999,9 @@ collections:
 
 Lastly, Plex allows collections to be sorted by the media's release dates or alphabetically by title. These options can be set with `release` or `alpha`. Plex defaults all collections to `release`, but `alpha` can be helpful for rearranging collections. For example, with collections where the chronology does not follow the release dates, you could create custom sort titles for each media item and then sort the collection alphabetically.
 
-| Collection Sort Options | Description |
-| :-- | :-- |
-| `release` | Order Collection by Release Dates |
-| `alpha` | Order Collection Alphabetically |
+##### Options
+- `release` (Order Collection by Release Dates)
+- `alpha` (Order Collection Alphabetically)
 
 ```yaml
 collections:
@@ -1291,7 +1221,7 @@ radarr:                                       # Opt
   token: #####                                # Req - User's Radarr API key
   quality_profile_id: 4                       # Req - See below
   root_folder_path: /mnt/movies               # Req - See below
-  add_to_radarr: false                        # Opt - Add missing movies to Radarr
+  add_movie: false                            # Opt - Add missing movies to Radarr
   search_movie: false                         # Opt - Search while adding missing movies
 ```
 
@@ -1314,7 +1244,9 @@ If you were to add two more profiles, the `id` would be as follows:
 
 In this example, to set any added movies to the `Ultra-HD` profile, set `quality_profile_id` to `5`. To set any added movies to `HD-1080p`, set `quality_profile_id` to `4`.
 
-The `add_to_radarr` key allows missing to movies to be added to Radarr. If this key is missing, the script will prompt the user to add missing movies or not. If you'd like to add movies but not had Radarr search, then set `search_movie` to `false`. If you want to override this attribute per collection you can add the `add_to_radarr` attribute under a collection and set it to true or false to override any global choice.
+The `add_movie` key allows missing to movies to be added to Radarr. If this key is missing, the script will prompt the user to add missing movies or not. If you'd like to add movies but not had Radarr search, then set `search_movie` to `false`.
+
+Note that Radarr support has not been tested with extensively Trakt lists and Sonarr support has not yet been implemented.
 
 # Acknowledgements
 - [vladimir-tutin](https://github.com/vladimir-tutin) for writing substantially all of the code in this fork
