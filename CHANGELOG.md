@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2020-12-14 - [#142](https://github.com/mza921/Plex-Auto-Collections/pull/150)
+### Fixed
+- [#147](https://github.com/mza921/Plex-Auto-Collections/issues/147) - Bad merge
+- [#148](https://github.com/mza921/Plex-Auto-Collections/issues/148) - Bad merge
+
 ## [2.8.0] - 2020-12-14 - [#142](https://github.com/mza921/Plex-Auto-Collections/pull/142)
 ### Added
 - Faster initialization of a GUID mapping database for the new Plex Movie Agent using the Plex database
