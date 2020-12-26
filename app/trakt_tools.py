@@ -24,7 +24,7 @@ def trakt_imdb_to_tmdb(config_path, imdb_id):
 
 def trakt_tmdb_to_tvdb(config_path, tmdb_id):
     config_tools.TraktClient(config_path)
-    lookup = trakt.Trakt['search'].lookup(id, 'tmdb', 'show')
+    lookup = trakt.Trakt['search'].lookup(tmdb_id, 'tmdb', 'show')
     if lookup:
         lookup = lookup[0] if isinstance(lookup, list) else lookup
         return lookup.get_key('tvdb')
