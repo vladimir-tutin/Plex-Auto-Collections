@@ -17,7 +17,7 @@ def add_to_radarr(config_path, missing):
             tmovie = movie.details(tmdb_id)
             tmdb_title = tmovie.title
         except AttributeError:
-            print("| --- Unable to fetch necessary TMDb information for IMDb ID {}, skipping".format(m))
+            print("| --- Unable to fetch necessary TMDb information for TMDb ID {}, skipping".format(tmdb_id))
             continue
 
         # Validate TMDb year (several TMDb entries don't yet have release dates)
