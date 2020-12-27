@@ -69,12 +69,16 @@ def imdb_get_ids(plex, imdb_url):
 def tmdb_get_imdb(config_path, tmdb_id):
     movie = Movie()
     movie.api_key = config_tools.TMDB(config_path).apikey
-    return str(movie.external_ids(tmdb_id)['imdb_id'])
+    search = movie.external_ids(tmdb_id)['imdb_id']
+    if search:
+        return str(search)
 
 def tmdb_get_tvdb(config_path, tmdb_id):
     show = TV()
     show.api_key = config_tools.TMDB(config_path).apikey
-    return str(show.external_ids(tmdb_id)['tvdb_id'])
+    search = show.external_ids(tmdb_id)['tvdb_id']
+    if search:
+        return str(search)
 
 def imdb_get_tmdb(config_path, imdb_id):
     movie = Movie()
@@ -294,7 +298,7 @@ def tmdb_get_shows(config_path, plex, plex_map, data, method):
                 break
     elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_trending_daily", "tmdb_trending_weekly"]:
         trending = Trending()
-        trending.api_key = t_movie.api_key
+        trending.api_key = t_tv.api_key
         for x in range(int(int(data) / 20) + 1):
             if method == "tmdb_popular":
                 tmdb_shows = t_tv.popular(x + 1)
@@ -339,7 +343,7 @@ def tmdb_get_shows(config_path, plex, plex_map, data, method):
     for mid in t_tvs:
         tvdb_id = tmdb_get_tvdb(config_path, mid)
         if tvdb_id is None:
-            print("| TMDb Error: tmdb_id: {} ({}) has no associated tvdb_id try just using tvdb_id instead".format(mid, t_tv.details(mid).name))
+            print("| TMDb Error: tmdb_id: {} ({}) has no associated tvdb_id. Try just using tvdb_id instead".format(mid, t_tv.details(mid).name))
         elif tvdb_id in plex_map:
             matched.append(plex.Server.fetchItem(plex_map[tvdb_id]))
         else:

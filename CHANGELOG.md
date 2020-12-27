@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.2] - 2020-12-26 - [#156](https://github.com/mza921/Plex-Auto-Collections/pull/156)
+### Fixed
+- [#151](https://github.com/mza921/Plex-Auto-Collections/issues/151) - Fixed variable reference in Radarr integration
+- [#155](https://github.com/mza921/Plex-Auto-Collections/issues/155) - Fix TMDB to TVDB lookups returning "None" as a string
+
 ## [2.8.1] - 2020-12-14 - [#142](https://github.com/mza921/Plex-Auto-Collections/pull/150)
 ### Fixed
 - [#147](https://github.com/mza921/Plex-Auto-Collections/issues/147) - Bad merge
