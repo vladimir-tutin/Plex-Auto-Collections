@@ -10,3 +10,5 @@ config/config-*
 config/*.pickle
 **/cache.db*
 **/*.cache*
+config/*.yml
+config/db/*
