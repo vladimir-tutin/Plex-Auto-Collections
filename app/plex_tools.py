@@ -115,7 +115,7 @@ def get_map(config_path, plex):
                         key_id = tmdb_id
                         print(adjust_space(current_length, "| GUID map | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
                         update_guid_map(config_path, item.guid, tmdb_id=key_id)
-                    elif imdb_id:
+                    if imdb_id:
                         key_id = imdb_id
                         print(adjust_space(current_length, "| GUID map | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
                         update_guid_map(config_path, item.guid, imdb_id=key_id)
