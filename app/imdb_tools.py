@@ -43,8 +43,8 @@ def imdb_get_ids(plex, imdb_url):
                 results = re.search('(?<=<div class="desc lister-total-num-results">).*?(?=</div>)', str(r.content))
                 total = 100 if results is None else re.search('(\\d+)', results.group(0).replace(',', '')).group(1)
             else:
-                results = re.search('<span>\\d+-\\d+ of \\d+ titles.</span>', str(r.content))
-                total = 100 if results is None else re.findall('(\\d+)', results.group(0).replace(',', ''))[2]
+                results = re.search('<span>\\d+-\\d+ of \\S+ titles.</span>', str(r.content))
+                total = 100 if results is None else re.findall('(\\d+)', results.group(0).replace(',', ''))[-1]
             for i in range(1, math.ceil(int(total) / 100)):
                 if imdb_url.startswith("https://www.imdb.com/list/ls"):
                     r = requests.get(imdb_url + '?page={}'.format(i + 1), headers={'Accept-Language': library_language})
