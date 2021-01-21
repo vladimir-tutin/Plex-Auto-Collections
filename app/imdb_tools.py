@@ -292,9 +292,9 @@ def tmdb_get_shows(config_path, plex, plex_map, data, method):
             for tshow in tmdb_shows:
                 count += 1
                 t_tvs.append(tshow.id)
-                if count == amount:
+                if count == data:
                     break
-            if count == amount:
+            if count == data:
                 break
     elif method in ["tmdb_popular", "tmdb_top_rated", "tmdb_trending_daily", "tmdb_trending_weekly"]:
         trending = Trending()
