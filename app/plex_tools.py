@@ -96,7 +96,7 @@ def get_map(config_path, plex):
             print_display = "| Processing: {}/{} {}".format(current_count, len(plex_items), item.title)
             print(adjust_space(current_length, print_display), end="\r")
             current_length = len(print_display)
-            update = None
+            update = None # TODO: Use this to refresh the GUID map
             key_id = None
             error_message = "Unable to map {} ID".format("TMDb/IMDb" if plex.library_type == "movie" else "TVDb")
 
@@ -113,18 +113,25 @@ def get_map(config_path, plex):
                     imdb_id, tmdb_id = alt_id_lookup(plex, item)
                     if tmdb_id:
                         key_id = tmdb_id
-                        print(adjust_space(current_length, "| Cache | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
+                        print(adjust_space(current_length, "| GUID map | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
                         update_guid_map(config_path, item.guid, tmdb_id=key_id)
-                    elif imdb_id:
+                    if imdb_id:
                         key_id = imdb_id
-                        print(adjust_space(current_length, "| Cache | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
+                        print(adjust_space(current_length, "| GUID map | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
                         update_guid_map(config_path, item.guid, imdb_id=key_id)
             elif item_type == 'imdb' and plex.library_type == "movie":
-                key_id = None
+                # Check GUID map for TMDb ID
+                key_id = query_guid_map(config_path, item.guid, 'tmdb_id')
                 if TMDB.valid and key_id is None:
                     key_id = imdb_tools.imdb_get_tmdb(config_path, check_id)
+                    if key_id:
+                        print(adjust_space(current_length, "| GUID map | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
+                        update_guid_map(config_path, item.guid, tmdb_id=key_id)
                 if TraktClient.valid and key_id is None:
                     key_id = trakt_tools.trakt_imdb_to_tmdb(config_path, check_id)
+                    if key_id:
+                        print(adjust_space(current_length, "| GUID map | {} | {:<46} | {:<6} | {}".format("^" if update == True else "+", item.guid, key_id, item.title)))
+                        update_guid_map(config_path, item.guid, tmdb_id=key_id)
                 if key_id is None:
                     if TMDB.valid and TraktClient.valid:
                         error_message = "Unable to convert IMDb ID: {} to TMDb ID using TMDb or Trakt".format(check_id)

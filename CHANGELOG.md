@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2021-01-20 - [#142](https://github.com/mza921/Plex-Auto-Collections/pull/186)
+### Added
+- Legacy Plex Movie Agent GUIDs are now added to the GUID map to improve mapping performance
+
 ## [2.8.2] - 2020-12-26 - [#156](https://github.com/mza921/Plex-Auto-Collections/pull/156)
 ### Fixed
 - [#151](https://github.com/mza921/Plex-Auto-Collections/issues/151) - Fixed variable reference in Radarr integration
