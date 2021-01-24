@@ -1,0 +1,95 @@
+collections:
+  Jurassic Park:
+    tmdb_collection: https://www.themoviedb.org/collection/328
+    tmdb_summary: 328
+    poster: https://i.imgur.com/QMjbyCX.png
+  1080p Documentaries:
+    genres: Documentary
+    collection_mode: show_items
+    filters:
+      video_resolution: 1080
+    summary: A collection of 1080p Documentaries
+  IMDb Top 250:
+    imdb_list: https://www.imdb.com/search/title/?groups=top_250&count=25
+    sync_mode: sync
+    collection_mode: show_items
+  Robin Williams:
+    tvdb_actor: 2157
+    collection_mode: show_items
+  Dave Chappelle:
+    actors: Dave Chappelle
+    tmdb_biography: 4169
+    tmdb_profile: 4169
+    collection_mode: show_items
+  Marvel:
+    trakt_list: https://trakt.tv/users/movistapp/lists/marvel
+    collection_mode: show_items
+  Trakt Trending:
+    trakt_trending: 30
+    sync_mode: sync
+  Trakt Watchlist:
+    trakt_watchlist: me
+    sync_mode: sync
+  Pixar:
+    studio: Pixar
+    summary: A collection of Pixar movies
+    sort_title: *Pixar
+    content_rating: G
+    collection_mode: show_items
+    collection_order: alpha
+  Studio Ghibli:
+    tmdb_company: https://www.themoviedb.org/company/10342
+  CBS:
+    tmdb_network: https://www.themoviedb.org/network/16
+  90s Comedies:
+    plex_search:
+      year: [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999]
+      genre: Comedy
+    summary: A collection of 90s Comedy movies
+  28 Days/Weeks Later:
+    tmdb_id: 1565
+    name_mapping: 28 Days-Weeks Later
+  Anaconda:
+    tmdb_id: 105995, 336560
+  Most Popular Movies (30 Days):
+    sync_mode: sync
+    collection_mode: show_items
+    tautulli:
+      list_type: popular
+      list_days: 30
+      list_size: 10
+plex:
+  library: Movies
+  library_type: ### 'movie' or 'show' ###
+  token: ###################
+  url: http://192.168.1.5:32400
+  sync_mode: append
+radarr:
+  url: http://192.168.1.5:7878/radarr/
+  token: ###########################
+  quality_profile_id: 4
+  root_folder_path: /mnt/user/PlexMedia/movies
+  add_to_radarr: false
+  search_movie: false
+tmdb:
+  apikey: ############################
+  language: en
+tautulli:
+  url: http://192.168.1.5:8181
+  apikey: ############################
+trakt:
+  client_id: ############################
+  client_secret: ############################
+  auto_refresh_token: false
+  # Below is filled in automatically when the script is run
+  authorization:
+    access_token:
+    token_type:
+    expires_in:
+    refresh_token:
+    scope:
+    created_at:
+image_server:
+  poster_directory: ../config/posters
+  background_directory: ../config/backgrounds
+  image_directory: ../config/images

@@ -1,6 +1,11 @@
-PyYAML==5.1.2
-tmdbv3api
+# Remove
+PyYAML==5.3.1
+# Less common, pinned
+PlexAPI==4.2.0
+tmdbv3api==1.7.4
+trakt.py==4.2.0
+# More common, flexible
+bs4
 lxml
-requests
-flask
-git+git://github.com/pkkid/python-plexapi.git#egg=plexapi
+requests>=2.4.2
+ruamel.yaml
